@@ -231,7 +231,9 @@ button{
   display:none;
   text-align:center;
 }
-
+.visit{
+    display:none;
+}
 .circle{
   width:136px;
   height:136px;

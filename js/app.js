@@ -19,3 +19,18 @@ function preparar(){
   },2200);
 
 }
+
+function iniciarVisita(){
+
+    document.getElementById("ready").style.display="none";
+
+    document.getElementById("visit").style.display="block";
+
+}
+function continuarVisita(){
+
+    document.getElementById("visit").style.display="none";
+
+    alert("Módulo Perfil Agrícola del Cliente - siguiente etapa");
+
+}
