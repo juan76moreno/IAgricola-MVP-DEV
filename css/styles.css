@@ -231,8 +231,10 @@ button{
   display:none;
   text-align:center;
 }
+
 .visit{
     display:none;
+    text-align:center;
 }
 .circle{
   width:136px;
