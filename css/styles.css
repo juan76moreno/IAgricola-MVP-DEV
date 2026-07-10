@@ -236,6 +236,29 @@ button{
     display:none;
     text-align:center;
 }
+
+.field{
+    margin:18px 0;
+    text-align:left;
+}
+
+.field label{
+    display:block;
+    margin-bottom:6px;
+    font-size:14px;
+    font-weight:700;
+    color:#526073;
+}
+
+.field input,
+.field select{
+    width:100%;
+    padding:12px;
+    border:1px solid #d9e3ea;
+    border-radius:12px;
+    font-size:15px;
+    background:#ffffff;
+}
 .circle{
   width:136px;
   height:136px;

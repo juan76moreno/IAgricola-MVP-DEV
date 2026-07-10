@@ -81,12 +81,36 @@
   <button onclick="iniciarVisita()">Iniciar visita ▶</button>
 </section>
 <section class="card visit" id="visit">
+<h2>📝 Inicio de Visita</h2>
 
-    <h2>📝 Inicio de Visita</h2>
+<p class="subtitle">
+    Complete la información general de la visita técnica.
+</p>
 
-    <p class="subtitle">
-        Registre la información general de la visita técnica.
-    </p>
+<div class="field">
+    <label for="fechaVisita">Fecha de visita</label>
+    <input type="date" id="fechaVisita">
+</div>
+
+<div class="field">
+    <label for="horaInicio">Hora de inicio</label>
+    <input type="time" id="horaInicio">
+</div>
+
+<div class="field">
+    <label for="tecnico">Técnico responsable</label>
+    <input type="text" id="tecnico" placeholder="Nombre del técnico">
+</div>
+
+<div class="field">
+    <label for="tipoVisita">Tipo de visita</label>
+    <select id="tipoVisita">
+        <option value="Programada">Programada</option>
+        <option value="Seguimiento">Seguimiento</option>
+        <option value="Emergencia">Emergencia</option>
+    </select>
+</div>
+    
 
     <button onclick="continuarVisita()">
         Continuar
