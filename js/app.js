@@ -25,7 +25,9 @@ function iniciarVisita(){
     document.getElementById("ready").style.display="none";
 
     document.getElementById("visit").style.display="block";
+document.getElementById("farm").style.display="none";
 
+document.getElementById("crop").style.display="none";
 }
 function continuarVisita(){
 
@@ -45,6 +47,6 @@ function continuarPerfilRubro(){
 
     document.getElementById("crop").style.display="none";
 
-    alert("Siguiente bloque del Perfil Técnico por Rubro");
+    alert("Aquí iniciará el siguiente módulo del expediente");
 
 }
