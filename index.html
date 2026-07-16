@@ -355,6 +355,102 @@ Número de Registro Tributario
         step="0.01"
         placeholder="Superficie cultivada en hectáreas">
 </div>
+<div class="field">
+    <label for="usoActualSuelo">
+        Uso actual del suelo
+    </label>
+    <input
+        type="text"
+        id="usoActualSuelo"
+        placeholder="Uso actual del suelo">
+</div>
+
+<div class="field">
+    <label for="usoPotencialSuelo">
+        Uso potencial del suelo
+    </label>
+    <input
+        type="text"
+        id="usoPotencialSuelo"
+        placeholder="Uso potencial del suelo">
+</div>
+
+<div class="field">
+    <label for="topografia">
+        Topografía
+    </label>
+    <select id="topografia">
+        <option value="">Seleccione...</option>
+        <option value="Plana">Plana</option>
+        <option value="Ondulada">Ondulada</option>
+        <option value="Quebrada">Quebrada</option>
+        <option value="Montañosa">Montañosa</option>
+    </select>
+</div>
+<div class="field">
+    <label for="fuenteAgua">
+        Fuente principal de agua
+    </label>
+    <select id="fuenteAgua">
+        <option value="">Seleccione...</option>
+        <option value="Pozo">Pozo</option>
+        <option value="Río">Río</option>
+        <option value="Quebrada">Quebrada</option>
+        <option value="Nacimiento">Nacimiento</option>
+        <option value="Embalse">Embalse</option>
+        <option value="Lluvia">Agua de lluvia</option>
+        <option value="Otra">Otra</option>
+    </select>
+</div>
+
+<div class="field">
+    <label for="sistemaRiego">
+        Sistema de riego
+    </label>
+    <select id="sistemaRiego">
+        <option value="">Seleccione...</option>
+        <option value="No posee">No posee</option>
+        <option value="Gravedad">Gravedad</option>
+        <option value="Aspersión">Aspersión</option>
+        <option value="Goteo">Goteo</option>
+        <option value="Microaspersión">Microaspersión</option>
+        <option value="Otro">Otro</option>
+    </select>
+</div>
+<div class="field">
+    <label for="drenaje">
+        Condición de drenaje
+    </label>
+    <select id="drenaje">
+        <option value="">Seleccione...</option>
+        <option value="Bueno">Bueno</option>
+        <option value="Regular">Regular</option>
+        <option value="Deficiente">Deficiente</option>
+    </select>
+</div>
+
+<div class="field">
+    <label for="erosion">
+        Evidencia de erosión
+    </label>
+    <select id="erosion">
+        <option value="">Seleccione...</option>
+        <option value="No">No</option>
+        <option value="Leve">Leve</option>
+        <option value="Moderada">Moderada</option>
+        <option value="Severa">Severa</option>
+    </select>
+</div>
+
+<div class="field">
+    <label for="observacionesTerreno">
+        Observaciones del terreno
+    </label>
+    <input
+        type="text"
+        id="observacionesTerreno"
+        placeholder="Observaciones relevantes del terreno">
+</div>
 <button onclick="continuarCaracterizacion()">
     Continuar
 </button>
