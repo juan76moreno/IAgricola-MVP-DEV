@@ -38,6 +38,13 @@ function continuarCaracterizacion(){
 
     document.getElementById("farm").style.display="none";
 
-    alert("Siguiente bloque de Caracterización de la Finca");
+    document.getElementById("crop").style.display="block";
+
+}
+function continuarPerfilRubro(){
+
+    document.getElementById("crop").style.display="none";
+
+    alert("Siguiente bloque del Perfil Técnico por Rubro");
 
 }
