@@ -451,6 +451,51 @@ Número de Registro Tributario
         id="observacionesTerreno"
         placeholder="Observaciones relevantes del terreno">
 </div>
+<div class="field">
+    <label for="tipoSuelo">
+        Tipo de suelo
+    </label>
+    <input
+        type="text"
+        id="tipoSuelo"
+        placeholder="Tipo de suelo predominante">
+</div>
+
+<div class="field">
+    <label for="texturaSuelo">
+        Textura del suelo
+    </label>
+    <select id="texturaSuelo">
+        <option value="">Seleccione...</option>
+        <option value="Arenoso">Arenoso</option>
+        <option value="Franco">Franco</option>
+        <option value="Arcilloso">Arcilloso</option>
+        <option value="Franco Arcilloso">Franco Arcilloso</option>
+        <option value="Otra">Otra</option>
+    </select>
+</div>
+
+<div class="field">
+    <label for="altitud">
+        Altitud (msnm)
+    </label>
+    <input
+        type="number"
+        id="altitud"
+        min="0"
+        placeholder="Metros sobre el nivel del mar">
+</div>
+
+<div class="field">
+    <label for="precipitacion">
+        Precipitación anual aproximada (mm)
+    </label>
+    <input
+        type="number"
+        id="precipitacion"
+        min="0"
+        placeholder="Milímetros por año">
+</div>
 <button onclick="continuarCaracterizacion()">
     Continuar
 </button>
