@@ -264,6 +264,97 @@ Número de Registro Tributario
         placeholder="Dirección exacta">
 </div>
 
+<div class="field">
+    <label for="centroMercado">
+        Centro de mercado
+    </label>
+    <input
+        type="text"
+        id="centroMercado"
+        placeholder="Centro de mercado">
+</div>
+
+<div class="field">
+    <label for="tipoMercado">
+        Tipo de mercado
+    </label>
+    <select id="tipoMercado">
+        <option value="">Seleccione...</option>
+        <option value="Local">Local</option>
+        <option value="Regional">Regional</option>
+        <option value="Nacional">Nacional</option>
+        <option value="Exportación">Exportación</option>
+    </select>
+</div>
+
+<div class="field">
+    <label for="destinoProduccion">
+        Destino de la producción
+    </label>
+    <input
+        type="text"
+        id="destinoProduccion"
+        placeholder="Destino de la producción">
+</div>
+
+<div class="field">
+    <label for="viasAcceso">
+        Vías de acceso
+    </label>
+    <input
+        type="text"
+        id="viasAcceso"
+        placeholder="Descripción de las vías de acceso">
+</div>
+<div class="field">
+    <label for="tenenciaTierra">
+        Tenencia de la tierra
+    </label>
+    <select id="tenenciaTierra">
+        <option value="">Seleccione...</option>
+        <option value="Propia">Propia</option>
+        <option value="Arrendada">Arrendada</option>
+        <option value="Comodato">Comodato</option>
+        <option value="Adjudicada">Adjudicada</option>
+        <option value="Otra">Otra</option>
+    </select>
+</div>
+
+<div class="field">
+    <label for="superficieTotal">
+        Superficie total de la unidad de producción
+    </label>
+    <input
+        type="number"
+        id="superficieTotal"
+        min="0"
+        step="0.01"
+        placeholder="Superficie total en hectáreas">
+</div>
+
+<div class="field">
+    <label for="superficieAprovechable">
+        Superficie aprovechable
+    </label>
+    <input
+        type="number"
+        id="superficieAprovechable"
+        min="0"
+        step="0.01"
+        placeholder="Superficie aprovechable en hectáreas">
+</div>
+
+<div class="field">
+    <label for="superficieCultivada">
+        Superficie cultivada
+    </label>
+    <input
+        type="number"
+        id="superficieCultivada"
+        min="0"
+        step="0.01"
+        placeholder="Superficie cultivada en hectáreas">
+</div>
 <button onclick="continuarCaracterizacion()">
     Continuar
 </button>
