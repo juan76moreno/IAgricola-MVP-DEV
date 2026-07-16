@@ -50,3 +50,28 @@ function continuarPerfilRubro(){
     alert("Aquí iniciará el siguiente módulo del expediente");
 
 }
+const rubroPrincipal = document.getElementById("rubroPrincipal");
+const perfilRubroDinamico = document.getElementById("perfilRubroDinamico");
+
+rubroPrincipal.addEventListener("change", function(){
+
+    const rubroSeleccionado = rubroPrincipal.options[
+        rubroPrincipal.selectedIndex
+    ].text;
+
+    if(rubroPrincipal.value === ""){
+
+        perfilRubroDinamico.innerHTML = "";
+
+        return;
+
+    }
+
+    perfilRubroDinamico.innerHTML = `
+        <div class="field">
+            <strong>Perfil seleccionado:</strong>
+            ${rubroSeleccionado}
+        </div>
+    `;
+
+});
