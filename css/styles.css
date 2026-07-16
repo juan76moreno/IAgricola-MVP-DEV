@@ -236,6 +236,10 @@ button{
     display:none;
     text-align:center;
 }
+.farm{
+    display:none;
+    text-align:center;
+}
 
 .field{
     margin:18px 0;

@@ -204,9 +204,69 @@
         id="direccionHabitacion"
         placeholder="Dirección de habitación del cliente">
 </div>
+<div class="field">
+    <label for="registroMinisterioAgricultura">
+        Número de registro del Ministerio de Agricultura
+    </label>
+    <input
+        type="text"
+        id="registroMinisterioAgricultura"
+        placeholder="Número de registro del Ministerio de Agricultura">
+</div>
+
+<div class="field">
+    <label for="vigenciaRegistroMinisterio">
+        Fecha de vencimiento del registro
+    </label>
+    <input
+        type="date"
+        id="vigenciaRegistroMinisterio">
+</div>
+<div class="field">
+    <label for="registroTributario">
+Número de Registro Tributario
+</label>   
+
+    <input
+        type="text"
+        id="registroTributario"
+        placeholder="Número de Registro Tributario">
+</div>
     <button onclick="continuarVisita()">
         Continuar
     </button>
+
+</section>
+<section class="card farm" id="farm">
+
+    <h2>🌱 Caracterización de la Finca</h2>
+
+    <p class="subtitle">
+        Identificación de la unidad de producción.
+    </p>
+
+    <div class="field">
+        <label for="parroquia">
+            Parroquia
+        </label>
+        <input
+            type="text"
+            id="parroquia"
+            placeholder="Parroquia">
+    </div>
+    <div class="field">
+    <label for="direccionUnidadProduccion">
+        Dirección exacta de la unidad de producción
+    </label>
+    <input
+        type="text"
+        id="direccionUnidadProduccion"
+        placeholder="Dirección exacta">
+</div>
+
+<button onclick="continuarCaracterizacion()">
+    Continuar
+</button>
 
 </section>
 <nav class="nav">

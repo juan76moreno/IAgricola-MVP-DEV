@@ -31,6 +31,13 @@ function continuarVisita(){
 
     document.getElementById("visit").style.display="none";
 
-    alert("Módulo Perfil Agrícola del Cliente - siguiente etapa");
+    document.getElementById("farm").style.display="block";
+
+}
+function continuarCaracterizacion(){
+
+    document.getElementById("farm").style.display="none";
+
+    alert("Siguiente bloque de Caracterización de la Finca");
 
 }
