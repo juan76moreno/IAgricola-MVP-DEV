@@ -66,12 +66,85 @@ rubroPrincipal.addEventListener("change", function(){
         return;
 
     }
+if(rubroPrincipal.value === "Cafe"){
 
     perfilRubroDinamico.innerHTML = `
         <div class="field">
-            <strong>Perfil seleccionado:</strong>
-            ${rubroSeleccionado}
+            <label for="variedadCafe">Variedad de café</label>
+            <input
+                type="text"
+                id="variedadCafe"
+                placeholder="Variedad o variedades cultivadas">
+        </div>
+
+        <div class="field">
+            <label for="edadCafe">Edad de la plantación (años)</label>
+            <input
+                type="number"
+                id="edadCafe"
+                min="0"
+                placeholder="Edad promedio de la plantación">
+        </div>
+
+        <div class="field">
+            <label for="densidadCafe">Densidad de siembra (plantas/ha)</label>
+            <input
+                type="number"
+                id="densidadCafe"
+                min="0"
+                placeholder="Número de plantas por hectárea">
+        </div>
+
+        <div class="field">
+            <label for="estadoProductivoCafe">Estado productivo</label>
+            <select id="estadoProductivoCafe">
+                <option value="">Seleccione...</option>
+                <option value="Establecimiento">Establecimiento</option>
+                <option value="Desarrollo">Desarrollo</option>
+                <option value="Produccion">Producción</option>
+                <option value="Renovacion">Renovación</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="sombraCafe">Sistema de sombra</label>
+            <select id="sombraCafe">
+                <option value="">Seleccione...</option>
+                <option value="Sin sombra">Sin sombra</option>
+                <option value="Temporal">Sombra temporal</option>
+                <option value="Permanente">Sombra permanente</option>
+                <option value="Mixta">Sombra mixta</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="rendimientoCafe">Rendimiento estimado (kg/ha)</label>
+            <input
+                type="number"
+                id="rendimientoCafe"
+                min="0"
+                step="0.01"
+                placeholder="Kilogramos por hectárea">
+        </div>
+
+        <div class="field">
+            <label for="estadoFitosanitarioCafe">Estado fitosanitario</label>
+            <select id="estadoFitosanitarioCafe">
+                <option value="">Seleccione...</option>
+                <option value="Bueno">Bueno</option>
+                <option value="Regular">Regular</option>
+                <option value="Deficiente">Deficiente</option>
+            </select>
         </div>
     `;
 
+    return;
+}
+
+perfilRubroDinamico.innerHTML = `
+    <div class="field">
+        <strong>Perfil seleccionado:</strong>
+        ${rubroSeleccionado}
+    </div>
+`;
 });
