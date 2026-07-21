@@ -1,3 +1,4 @@
+console.log("Core expediente:", listarActivos());
 function preparar(){
 
   document.getElementById('card').style.display='none';
@@ -66,9 +67,12 @@ rubroPrincipal.addEventListener("change", function(){
         return;
 
     }
+    // PERFIL CAFÉ (Pendiente de migrar a js/perfiles/cafe.js)
 if(rubroPrincipal.value === "Cafe"){
 
-    perfilRubroDinamico.innerHTML = `
+    const perfilCafe = cargarPerfilCafe();
+
+perfilRubroDinamico.innerHTML = `
         <div class="field">
             <label for="variedadCafe">Variedad de café</label>
             <input
