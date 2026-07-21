@@ -56,10 +56,20 @@ const perfilRubroDinamico = document.getElementById("perfilRubroDinamico");
 
 rubroPrincipal.addEventListener("change", function(){
 
+const origenCaptura = "MANUAL";    
     const rubroSeleccionado = rubroPrincipal.options[
         rubroPrincipal.selectedIndex
     ].text;
 
+actualizarActivo(
+    "RUBRO.PRINCIPAL",
+    rubroSeleccionado,
+    origenCaptura
+);
+
+console.log(
+    obtenerActivo("RUBRO.PRINCIPAL")
+);
     if(rubroPrincipal.value === ""){
 
         perfilRubroDinamico.innerHTML = "";
