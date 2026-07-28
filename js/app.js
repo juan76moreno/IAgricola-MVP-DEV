@@ -1,10 +1,301 @@
 console.log("Core expediente:", listarActivos());
+const estadoVisita = {
+
+    modulo: "agenda",
+
+    objeto: null,
+
+    estado: "INICIO"
+
+};
+function cambiarModulo(nombreModulo){
+
+    estadoVisita.modulo = nombreModulo;
+
+    console.log("Módulo activo:", estadoVisita.modulo);
+
+}
+function obtenerModuloActual(){
+
+    return estadoVisita.modulo;
+
+}
+function establecerObjetoActivo(nombreObjeto){
+
+    estadoVisita.objeto = nombreObjeto;
+if(!expedienteInteligente[nombreObjeto]){
+
+    expedienteInteligente[nombreObjeto] = {};
+
+}
+    console.log("Objeto activo:", estadoVisita.objeto);
+
+}
+function mostrarEstadoActual(){
+
+    console.log({
+        modulo: obtenerModuloActual(),
+        objeto: estadoVisita.objeto
+    });
+
+}
+function obtenerEstadoVisita(){
+
+    return {
+
+        modulo: estadoVisita.modulo,
+
+        objeto: estadoVisita.objeto,
+
+        estado: estadoVisita.estado
+
+    };
+
+}
+function registrarDato(campo, valor){
+
+    const captura = {
+
+        modulo: estadoVisita.modulo,
+
+        objeto: estadoVisita.objeto,
+
+        campo,
+
+        valor,
+
+        fecha: new Date().toISOString()
+
+    };
+
+    console.log("Captura:", captura);
+expedienteInteligente.capturas.push(captura);
+if(!expedienteInteligente.historialCapturas){
+
+    expedienteInteligente.historialCapturas = [];
+
+}
+expedienteInteligente.historialCapturas.push(captura);
+expedienteInteligente.ultimaCaptura = captura;
+if(estadoVisita.objeto){
+
+    expedienteInteligente[
+        estadoVisita.objeto
+    ][campo]=valor;
+
+}
+expedienteInteligente.ultimaActualizacion = new Date().toISOString();
+expedienteInteligente.totalCapturas =
+    expedienteInteligente.capturas.length;
+    expedienteInteligente.estadoActual = {
+
+    modulo: estadoVisita.modulo,
+
+   objeto: estadoVisita.objeto,
+fecha: expedienteInteligente.ultimaActualizacion
+};
+expedienteInteligente.resumen = {
+
+    modulo: estadoVisita.modulo,
+
+    objeto: estadoVisita.objeto,
+
+    capturas: expedienteInteligente.totalCapturas
+
+};
+expedienteInteligente.panel = {
+
+    cliente: Object.keys(expedienteInteligente.cliente).length,
+
+    visita: Object.keys(expedienteInteligente.visita).length,
+
+    unidadProduccion: Object.keys(expedienteInteligente.unidadProduccion).length,
+
+    perfilRubro: Object.keys(expedienteInteligente.perfilRubro).length
+
+};
+expedienteInteligente.version = "0.1.0";
+expedienteInteligente.estado = estadoVisita.estado;
+expedienteInteligente.moduloActual =
+    estadoVisita.modulo;
+    expedienteInteligente.objetoActual =
+    estadoVisita.objeto;
+    expedienteInteligente.fechaSistema =
+    new Date().toISOString();
+    expedienteInteligente.origenCaptura = origenCaptura;
+    expedienteInteligente.estadoActual.version =
+    expedienteInteligente.version;
+    expedienteInteligente.estadoActual.totalCapturas =
+    expedienteInteligente.totalCapturas;
+    expedienteInteligente.estadoActual.origenCaptura =
+    expedienteInteligente.origenCaptura;
+    expedienteInteligente.estadoActual.fechaSistema =
+    expedienteInteligente.fechaSistema;
+    expedienteInteligente.estadoActual.ultimaCaptura =
+    expedienteInteligente.ultimaCaptura;
+    expedienteInteligente.estadoActual.ultimaActualizacion =
+    expedienteInteligente.ultimaActualizacion;
+mostrarEstadoActual();
+console.table(expedienteInteligente.capturas);
+console.log("Expediente estructurado:", expedienteInteligente);
+mostrarExpediente();
+    return captura;
+
+
+}
+function registrarDatoFormulario(idCampo){
+
+    const control = document.getElementById(idCampo);
+
+    if(!control){
+
+        return;
+
+    }
+
+    registrarDato(idCampo, control.value);
+
+}
+function registrarFormulario(idsCampos){
+
+    idsCampos.forEach(function(idCampo){
+
+        registrarDatoFormulario(idCampo);
+
+    });
+
+}
+function registrarDatosMinimos(){
+
+    registrarFormulario([
+
+        "fechaVisita",
+
+        "horaInicio",
+
+        "tecnico",
+
+        "tipoVisita"
+
+    ]);
+
+}
+function registrarDatosCliente(){
+
+    registrarFormulario([
+
+        "cliente",
+
+        "finca",
+
+        "municipio",
+
+        "departamento",
+
+        "codigoCliente",
+
+        "identificacionCliente"
+
+    ]);
+
+}
+function registrarCaracterizacion(){
+
+    registrarFormulario([
+
+        "parroquia",
+
+        "direccionUnidadProduccion",
+
+        "centroMercado",
+
+        "tipoMercado",
+
+        "destinoProduccion",
+
+        "viasAcceso",
+
+        "tenenciaTierra",
+
+        "superficieTotal",
+
+        "superficieAprovechable",
+
+        "superficieCultivada"
+
+    ]);
+
+}
+function registrarPerfilRubro(){
+
+    registrarFormulario([
+
+        "rubroPrincipal",
+
+        "rubroSecundario",
+
+        "subsector",
+
+        "tipoSubsector",
+
+        "sectorProduccion"
+
+    ]);
+
+}
+function registrarCapturaCompleta(){
+
+    registrarDatosMinimos();
+
+    registrarDatosCliente();
+
+    registrarCaracterizacion();
+
+    registrarPerfilRubro();
+
+}
+const expedienteInteligente = {
+
+    visita:{},
+
+    cliente:{},
+
+    unidadProduccion:{},
+
+    perfilRubro:{},
+
+    capturas:[],
+
+    evidencias:[],
+
+    alertas:[],
+
+    seguimientos:[]
+
+};
+function obtenerExpediente(){
+
+    return expedienteInteligente;
+
+}
+function mostrarExpediente(){
+
+    console.log(obtenerExpediente());
+    console.table(expedienteInteligente.panel);
+    console.table(expedienteInteligente.estadoActual);
+    console.table(expedienteInteligente.resumen);
+
+}
 function preparar(){
 
   document.getElementById('card').style.display='none';
 
   document.getElementById('prep').style.display='block';
-
+  cambiarModulo("preparacion");
+establecerObjetoActivo("Preparación");
+mostrarEstadoActual();
+registrarDatosMinimos();
+mostrarExpediente();
   setTimeout(function(){
 
     document.getElementById('last').innerText='✓';
@@ -26,6 +317,12 @@ function iniciarVisita(){
     document.getElementById("ready").style.display="none";
 
     document.getElementById("visit").style.display="block";
+    cambiarModulo("visita");
+    establecerObjetoActivo("Inicio de Visita");
+    inicializarVoz();
+    iniciarEscucha();
+    registrarDatosCliente();
+    mostrarExpediente();
 document.getElementById("farm").style.display="none";
 
 document.getElementById("crop").style.display="none";
@@ -35,14 +332,22 @@ function continuarVisita(){
     document.getElementById("visit").style.display="none";
 
     document.getElementById("farm").style.display="block";
-
+    cambiarModulo("caracterizacion");
+establecerObjetoActivo("Caracterización");
+registrarCaracterizacion();
+mostrarEstadoActual();
+mostrarExpediente();
 }
 function continuarCaracterizacion(){
 
     document.getElementById("farm").style.display="none";
 
     document.getElementById("crop").style.display="block";
-
+   cambiarModulo("perfilRubro");
+establecerObjetoActivo("Perfil Técnico por Rubro");
+mostrarEstadoActual();
+registrarPerfilRubro();
+mostrarExpediente();
 }
 function continuarPerfilRubro(){
 
@@ -61,15 +366,7 @@ const origenCaptura = "MANUAL";
         rubroPrincipal.selectedIndex
     ].text;
 
-actualizarActivo(
-    "RUBRO.PRINCIPAL",
-    rubroSeleccionado,
-    origenCaptura
-);
 
-console.log(
-    obtenerActivo("RUBRO.PRINCIPAL")
-);
     if(rubroPrincipal.value === ""){
 
         perfilRubroDinamico.innerHTML = "";
