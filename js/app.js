@@ -122,7 +122,7 @@ expedienteInteligente.moduloActual =
     estadoVisita.objeto;
     expedienteInteligente.fechaSistema =
     new Date().toISOString();
-    expedienteInteligente.origenCaptura = origenCaptura;
+    expedienteInteligente.origenCaptura = campo;
     expedienteInteligente.estadoActual.version =
     expedienteInteligente.version;
     expedienteInteligente.estadoActual.totalCapturas =
