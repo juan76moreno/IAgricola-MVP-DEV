@@ -217,11 +217,11 @@ expedienteInteligente.totalCapturas =
 entidadId: captura.entidadId,
 
 campoId: captura.campoId,
-concepto: captura.concepto,
+unidad: captura.unidadCompletaBCAC ?? null,
 
-unidad: captura.unidad,
 
-fuente: captura.fuente,
+
+fuente: captura.fuente ?? null,
 fecha: expedienteInteligente.ultimaActualizacion
 };
 expedienteInteligente.resumen = {
@@ -230,26 +230,26 @@ expedienteInteligente.resumen = {
 
     objeto: estadoVisita.objeto,
 
-    capturas: expedienteInteligente.totalCapturas
+    capturas: expedienteInteligente.totalCapturas,
 concepto: captura.concepto,
 
-unidad: captura.unidad,
+unidad: captura.unidadCompletaBCAC ?? null,
 
-fuente: captura.fuente,
+fuente: captura.fuente ?? null,
 };
 expedienteInteligente.panel = {
 concepto: captura.concepto,
 
-unidad: captura.unidad,
+unidad: captura.unidadCompletaBCAC ?? null,
 
-fuente: captura.fuente,
+fuente: captura.fuente ?? null,
     cliente: Object.keys(expedienteInteligente.cliente).length,
 
     visita: Object.keys(expedienteInteligente.visita).length,
 
     unidadProduccion: Object.keys(expedienteInteligente.unidadProduccion).length,
 
-    perfilRubro: Object.keys(expedienteInteligente.perfilRubro).length
+    perfilRubro: Object.keys(expedienteInteligente.perfilRubro).length,
 
 };
 expedienteInteligente.version = "0.1.0";
