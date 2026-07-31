@@ -132,7 +132,7 @@ return {
 
     unidadBCAC,
 
-    fuenteBCAC
+   fuenteBCAC,
 conceptoCompletoBCAC: conceptoBCAC
     ? {
         id: conceptoBCAC.id,
@@ -709,7 +709,7 @@ function iniciarEscucha() {
     reconocimiento.start();
 
 }
-<<<<<<< HEAD
+
 
 /* ============================================================
    BCAC - Base de Conocimiento Agronómico Corporativa
@@ -1088,6 +1088,5 @@ riesgos: [
     }
 ]
 };
-=======
 
->>>>>>> 8cc59c943a314129df3fb9c6a49a2c1758e91aec
+
