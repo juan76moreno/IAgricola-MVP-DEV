@@ -618,6 +618,7 @@ function interpretarVoz(texto) {
     console.warn("Interpretando:", texto);
 const textoNormalizado = texto.toLowerCase().trim();
 const entidadesDetectadas = [];
+
 if (textoNormalizado.includes("cliente")) {
 
     console.log("Entidad detectada: cliente");
