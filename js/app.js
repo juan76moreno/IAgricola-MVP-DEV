@@ -632,7 +632,7 @@ if (textoNormalizado.includes("09295372")) {
 registrarDato("codigoCliente", "09295372");
 entidadesDetectadas.push("codigoCliente");
 }
-}
+
 if (entidadesDetectadas.length > 0) {
 
     console.table(entidadesDetectadas);
