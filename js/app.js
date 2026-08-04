@@ -637,17 +637,26 @@ function interpretarVoz(texto) {
     const textoNormalizado = texto.toLowerCase().trim();
     const entidadesDetectadas = [];
 
-    if(
-    textoNormalizado.startsWith("cliente ") ||
-    textoNormalizado.startsWith("cliente:")
-){
+    const patronCliente = /^cliente[:\s]+(.+)$/i;
+
+const coincidenciaCliente = texto.match(patronCliente);
+const nombreCliente = coincidenciaCliente
+    ? coincidenciaCliente[1].trim()
+    : "";
+if(coincidenciaCliente){
 
         console.log("Entidad detectada: cliente");
-        const nombreCliente = texto
-    .replace(/^cliente[: ]/i,"")
-    .trim();
+        registrarDato("cliente", nombreCliente);
 
-registrarDato("cliente",nombreCliente);
+const campoCliente = document.getElementById("cliente");
+
+if(campoCliente){
+
+    campoCliente.value = nombreCliente;
+
+}
+
+
         entidadesDetectadas.push("cliente");
         console.log("Cliente interpretado:",nombreCliente);
 
