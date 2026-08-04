@@ -439,13 +439,13 @@ if(expedienteInteligente.estadoActual){
 
     console.table({
 
-        concepto: expedienteInteligente.estadoActual.concepto,
+    concepto: expedienteInteligente.estadoActual?.concepto ?? null,
 
-        unidad: expedienteInteligente.estadoActual.unidad,
+    unidad: expedienteInteligente.estadoActual?.unidad ?? null,
 
-        fuente: expedienteInteligente.estadoActual.fuente
+    fuente: expedienteInteligente.estadoActual?.fuente ?? null
 
-    });
+});
 
 }
 }
