@@ -637,12 +637,19 @@ function interpretarVoz(texto) {
     const textoNormalizado = texto.toLowerCase().trim();
     const entidadesDetectadas = [];
 
-    if (textoNormalizado.includes("cliente")) {
+    if(
+    textoNormalizado.startsWith("cliente ") ||
+    textoNormalizado.startsWith("cliente:")
+){
 
         console.log("Entidad detectada: cliente");
-        registrarDato("cliente", texto);
+        const nombreCliente = texto
+    .replace(/^cliente[: ]/i,"")
+    .trim();
+
+registrarDato("cliente",nombreCliente);
         entidadesDetectadas.push("cliente");
-        console.log("Cliente interpretado:", texto);
+        console.log("Cliente interpretado:",nombreCliente);
 
     }
 
