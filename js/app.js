@@ -33,21 +33,29 @@ if(!expedienteInteligente[nombreObjeto]){
 }
 function mostrarEstadoActual(){
 
+    if(!expedienteInteligente.estadoActual){
+
+        console.warn("Estado actual no disponible.");
+
+        return;
+
+    }
+
     console.log({
 
-    modulo: obtenerModuloActual(),
+        modulo: obtenerModuloActual(),
 
-    objeto: estadoVisita.objeto,
+        objeto: estadoVisita.objeto,
 
-   estadoActual: expedienteInteligente.estadoActual,
+        estadoActual: expedienteInteligente.estadoActual,
 
-concepto: expedienteInteligente.estadoActual.concepto,
+        concepto: expedienteInteligente.estadoActual.concepto,
 
-unidad: expedienteInteligente.estadoActual.unidad,
+        unidad: expedienteInteligente.estadoActual.unidad,
 
-fuente: expedienteInteligente.estadoActual.fuente
+        fuente: expedienteInteligente.estadoActual.fuente
 
-});
+    });
 
 }
 function obtenerEstadoVisita(){
