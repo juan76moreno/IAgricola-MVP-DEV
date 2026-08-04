@@ -673,9 +673,9 @@ function interpretarVoz(texto) {
 
 }
 
-console.log("Sin entidades reconocidas.");
 
-}
+
+
 
 
     
