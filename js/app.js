@@ -133,7 +133,7 @@ return {
     unidadBCAC,
 
    fuenteBCAC,
-conceptoCompletoBCAC: conceptoBCAC
+conceptoCompletoBCAC: conceptoBCAC 
     ? {
         id: conceptoBCAC.id,
         nombre: conceptoBCAC.concepto,
@@ -616,28 +616,35 @@ let reconocimiento = null;
 function interpretarVoz(texto) {
 
     console.warn("Interpretando:", texto);
-const textoNormalizado = texto.toLowerCase().trim();
-const entidadesDetectadas = [];
 
-if (textoNormalizado.includes("cliente")) {
+    const textoNormalizado = texto.toLowerCase().trim();
+    const entidadesDetectadas = [];
 
-    console.log("Entidad detectada: cliente");
-registrarDato("cliente", texto);
-entidadesDetectadas.push("cliente");
-console.log("Cliente interpretado:", texto);
+    if (textoNormalizado.includes("cliente")) {
+
+        console.log("Entidad detectada: cliente");
+        registrarDato("cliente", texto);
+        entidadesDetectadas.push("cliente");
+        console.log("Cliente interpretado:", texto);
+
+    }
+
+    if (textoNormalizado.includes("09295372")) {
+
+        console.log("Código de cliente detectado: 09295372");
+        registrarDato("codigoCliente", "09295372");
+        entidadesDetectadas.push("codigoCliente");
+
+    }
+
+    if (entidadesDetectadas.length > 0) {
+
+        console.table(entidadesDetectadas);
+        alert("interpretarVoz ejecutada");
+
+    }
 }
-if (textoNormalizado.includes("09295372")) {
 
-    console.log("Código de cliente detectado: 09295372");
-registrarDato("codigoCliente", "09295372");
-entidadesDetectadas.push("codigoCliente");
-}
-
-if (entidadesDetectadas.length > 0) {
-
-    console.table(entidadesDetectadas);
-alert("interpretarVoz ejecutada");
-}
 function inicializarVoz() {
 
     if (!ReconocimientoVoz) {
