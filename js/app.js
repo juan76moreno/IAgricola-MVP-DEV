@@ -616,145 +616,77 @@ perfilRubroDinamico.innerHTML = `
     return;
 }
 
-perfilRubroDinamico.innerHTML = `
-    <div class="field">
-        <strong>Perfil seleccionado:</strong>
-        ${rubroSeleccionado}
-    </div>
-`;
-});
 
 
-
-const ReconocimientoVoz =
-window.SpeechRecognition || window.webkitSpeechRecognition;
-
-let reconocimiento = null;
-function interpretarVoz(texto) {
+    function interpretarVoz(texto) {
 
     console.warn("Interpretando:", texto);
 
-    const textoNormalizado = texto.toLowerCase().trim();
     const entidadesDetectadas = [];
+
     const patrones = [
-    {
-        entidad: "cliente",
-        expresion: /^cliente[:\s]+(.+)$/i
-    },
-    {
-        entidad: "codigoCliente",
-        expresion: /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i
-    }
-];
 
-for (const patron of patrones) {
-    const coincidencia = texto.match(patron.expresion);
+        {
+            entidad: "cliente",
+            expresion: /^cliente[:\s]+(.+)$/i
+        },
 
-    if (!coincidencia) {
-        continue;
-    }
+        {
+            entidad: "codigoCliente",
+            expresion: /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i
+        }
 
-    let valor = coincidencia[1].trim();
+    ];
 
-    if (patron.entidad === "codigoCliente") {
-        valor = valor.replace(/\s+/g, "");
-    }
+    for (const patron of patrones) {
 
-    registrarDato(patron.entidad, valor);
-    entidadesDetectadas.push(patron.entidad);
+        const coincidencia = texto.match(patron.expresion);
 
-    const campo = document.getElementById(patron.entidad);
+        if (!coincidencia) {
 
-    if (campo) {
-        campo.value = valor;
-    }
+            continue;
 
-    console.log(patron.entidad, "interpretado:", valor);
-}
+        }
 
-    {
-        entidad: "cliente",
-        expresion: /^cliente[:\s]+(.+)$/i
-    },
+        let valor = coincidencia[1].trim();
 
-    {
-        entidad: "codigoCliente",
-        expresion: /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i
-    }
-for(const patron of patrones){
+        if (patron.entidad === "codigoCliente") {
 
-    const coincidencia = texto.match(patron.expresion);
+            valor = valor.replace(/\s+/g, "");
 
-    if(!coincidencia){
+        }
 
-        continue;
+        registrarDato(patron.entidad, valor);
 
-    }
+        entidadesDetectadas.push(patron.entidad);
 
-    let valor = coincidencia[1].trim();
+        const campo = document.getElementById(patron.entidad);
 
-if(patron.entidad === "codigoCliente"){
+        if (campo) {
 
-    valor = valor.replace(/\s+/g,"");
+            campo.value = valor;
 
-}
+        }
 
-    registrarDato(patron.entidad, valor);
-
-    entidadesDetectadas.push(patron.entidad);
-
-    const campo = document.getElementById(patron.entidad);
-
-    if(campo){
-
-        campo.value = valor;
-
-    }
-
-    console.log(patron.entidad, "interpretado:", valor);
-
-}
-];
-    const patronCliente = /^cliente[:\s]+(.+)$/i;
-
-const coincidenciaCliente = texto.match(patronCliente);
-const nombreCliente = coincidenciaCliente
-    ? coincidenciaCliente[1].trim()
-    : "";
-if(coincidenciaCliente){
-
-        console.log("Entidad detectada: cliente");
-        registrarDato("cliente", nombreCliente);
-
-const campoCliente = document.getElementById("cliente");
-
-if(campoCliente){
-
-    campoCliente.value = nombreCliente;
-
-}
-
-
-        entidadesDetectadas.push("cliente");
-        console.log("Cliente interpretado:",nombreCliente);
-
-    }
-
-    if (textoNormalizado.includes("09295372")) {
-
-        console.log("Código de cliente detectado: 09295372");
-        registrarDato("codigoCliente", "09295372");
-        entidadesDetectadas.push("codigoCliente");
+        console.log(
+            patron.entidad,
+            "interpretado:",
+            valor
+        );
 
     }
 
     if (entidadesDetectadas.length > 0) {
 
         console.table(entidadesDetectadas);
+
         alert("interpretarVoz ejecutada");
 
     }
-}
+
+
+
+    
 
 function inicializarVoz() {
 
