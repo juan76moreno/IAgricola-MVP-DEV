@@ -161,6 +161,7 @@ entidadId: contextoBCAC.entidadBCAC?.id ?? null,
 
 campoId: contextoBCAC.campoBCAC?.id ?? null,
 unidadId: contextoBCAC.unidadBCAC?.id ?? null,
+unidadCompletaBCAC: contextoBCAC.unidadCompletaBCAC ?? null,
 fuenteId: contextoBCAC.fuenteBCAC?.id ?? null,
 
 fuente: contextoBCAC.fuenteBCAC?.nombre ?? null,
