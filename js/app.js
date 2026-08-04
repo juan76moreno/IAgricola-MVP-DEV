@@ -428,18 +428,26 @@ function obtenerExpediente(){
 function mostrarExpediente(){
 
     console.log(obtenerExpediente());
-    console.table(expedienteInteligente.panel);
-    console.table(expedienteInteligente.estadoActual);
-    console.table(expedienteInteligente.resumen);
-console.table({
 
-    concepto: expedienteInteligente.estadoActual.concepto,
+console.table(expedienteInteligente.panel ?? {});
 
-    unidad: expedienteInteligente.estadoActual.unidad,
+console.table(expedienteInteligente.estadoActual ?? {});
 
-    fuente: expedienteInteligente.estadoActual.fuente
+console.table(expedienteInteligente.resumen ?? {});
 
-});
+if(expedienteInteligente.estadoActual){
+
+    console.table({
+
+        concepto: expedienteInteligente.estadoActual.concepto,
+
+        unidad: expedienteInteligente.estadoActual.unidad,
+
+        fuente: expedienteInteligente.estadoActual.fuente
+
+    });
+
+}
 }
 function preparar(){
 
