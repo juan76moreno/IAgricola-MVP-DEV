@@ -614,7 +614,8 @@ perfilRubroDinamico.innerHTML = `
     `;
 
     return;
-}
+    }
+});
 function interpretarVoz(texto) {
 
     console.warn("Interpretando:", texto);
@@ -673,7 +674,7 @@ function interpretarVoz(texto) {
 
 }
 
-
+}
 
 
 
