@@ -801,7 +801,11 @@ console.log(
 
 function inicializarVoz() {
 
-    if (!ReconocimientoVoz) {
+   const ReconocimientoVoz =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+if (!ReconocimientoVoz) {
 
         console.error("Reconocimiento de voz no disponible.");
 
@@ -809,47 +813,37 @@ function inicializarVoz() {
 
     }
 
-    reconocimiento = new ReconocimientoVoz();
+    window.reconocimiento = new ReconocimientoVoz();
 
-    reconocimiento.lang = "es-VE";
+    window.reconocimiento.lang = "es-VE";
 
-    reconocimiento.continuous = false;
+window.reconocimiento.continuous = false;
 
-    reconocimiento.interimResults = false;
+window.reconocimiento.interimResults = false;
 
-    reconocimiento.maxAlternatives = 1;
+window.reconocimiento.maxAlternatives = 1;
 
-    reconocimiento.onstart = function () {
+window.reconocimiento.onstart = function () {
 
-        console.log("Micrófono activo");
+    console.log("Micrófono activo");
 
-    };
+};
 
-    reconocimiento.onresult = function (evento) {
+window.reconocimiento.onresult = function (evento) {
 
-        const texto = evento.results[0][0].transcript.trim();
+    ...
+};
 
-        console.log("Texto reconocido:", texto);
-        registrarDato("voz", texto);
-console.warn("Antes de interpretar");
-interpretarVoz(texto);
-mostrarExpediente();
+window.reconocimiento.onerror = function (evento) {
 
-console.log(obtenerExpediente());
+    ...
+};
 
-    };
+window.reconocimiento.onend = function () {
 
-    reconocimiento.onerror = function (evento) {
+    console.log("Micrófono detenido");
 
-        console.error("Error de voz:", evento.error);
-
-    };
-
-    reconocimiento.onend = function () {
-
-        console.log("Micrófono detenido");
-
-    };
+};
 
     return true;
 
@@ -857,7 +851,7 @@ console.log(obtenerExpediente());
 
 function iniciarEscucha() {
 
-    if (!reconocimiento) {
+    if (!window.reconocimiento) {
 
         if (!inicializarVoz()) {
 
@@ -868,7 +862,7 @@ function iniciarEscucha() {
     }
 
 
-    reconocimiento.start();
+    window.reconocimiento.start();
 
 }
 
