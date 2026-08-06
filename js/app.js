@@ -159,7 +159,12 @@ conceptoCompletoBCAC: conceptoBCAC
 };
 }
 function registrarDato(campo, valor){
-const contextoBCAC = obtenerContextoBCAC(campo);    
+
+    const fechaCaptura = new Date().toISOString();
+
+    expedienteInteligente.fechaSistema = fechaCaptura;
+
+    const contextoBCAC = obtenerContextoBCAC(campo);   
       const captura = { 
 
    conceptoId: contextoBCAC.conceptoBCAC?.id ?? null,
@@ -181,7 +186,7 @@ campo: campo,
 
         valor: valor,
 
-        fecha: expedienteInteligente.fechaSistema
+        fecha: fechaCaptura
 
     };
 
@@ -267,9 +272,8 @@ expedienteInteligente.moduloActual =
     estadoVisita.modulo;
     expedienteInteligente.objetoActual =
     estadoVisita.objeto;
-    expedienteInteligente.fechaSistema =
-    new Date().toISOString();
-    expedienteInteligente.origenCaptura = campo;
+    expedienteInteligente.fechaSistema = fechaCaptura;
+    expedienteInteligente.origenCaptura = "FUE-000001";
     expedienteInteligente.estadoActual.version =
     expedienteInteligente.version;
     expedienteInteligente.estadoActual.totalCapturas =
@@ -623,53 +627,162 @@ function interpretarVoz(texto) {
     const entidadesDetectadas = [];
 
     const patrones = [
-        {
-            entidad: "cliente",
-            expresion: /^cliente[:\s]+(.+)$/i
-        },
-        {
-            entidad: "codigoCliente",
-            expresion: /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i
-        }
-    ];
+
+    {
+        entidad: "cliente",
+        expresiones: [
+            /^cliente[:\s]+(.+)$/i,
+            /^nombre\s+del\s+cliente[:\s]+(.+)$/i,
+            /^productor[:\s]+(.+)$/i
+        ]
+    },
+
+    {
+        entidad: "codigoCliente",
+        expresiones: [
+            /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i,
+            /^cliente\s+n[uú]mero[:\s]+([0-9\s]+)$/i
+        ]
+    },
+{
+    entidad: "rubroPrincipal",
+    expresiones: [
+        /^rubro[:\s]+(.+)$/i,
+        /^cultivo[:\s]+(.+)$/i,
+        /^rubro\s+principal[:\s]+(.+)$/i
+    ]
+},
+
+{
+    entidad: "superficieTotal",
+    expresiones: [
+        /^superficie[:\s]+(.+)$/i,
+        /^superficie\s+total[:\s]+(.+)$/i,
+        /^tiene\s+sembradas[:\s]+(.+)$/i,
+        /^tiene\s+(.+)\s+hect[aá]reas$/i
+    ]
+},
+
+{
+    entidad: "estadoFitosanitario",
+    expresiones: [
+        /^estado\s+fitosanitario[:\s]+(.+)$/i,
+        /^condici[oó]n\s+fitosanitaria[:\s]+(.+)$/i
+    ]
+}
+];
 
     for (const patron of patrones) {
 
-        const coincidencia = texto.match(patron.expresion);
+        let coincidencia = null;
 
-        if (!coincidencia) {
-            continue;
-        }
+for (const expresion of patron.expresiones) {
+
+    coincidencia = texto.match(expresion);
+
+    if (coincidencia) {
+        break;
+    }
+
+}
+
+if (!coincidencia) {
+    continue;
+}
 
         let valor = coincidencia[1].trim();
 
-        if (patron.entidad === "codigoCliente") {
-            valor = valor.replace(/\s+/g, "");
-        }
+switch (patron.entidad) {
+
+    case "codigoCliente":
+
+        valor = valor.replace(/\s+/g, "");
+
+        break;
+
+    case "cliente":
+
+        valor = valor.replace(/\s{2,}/g, " ");
+
+        break;
+
+    case "rubroPrincipal":
+
+        valor = valor.charAt(0).toUpperCase() +
+                valor.slice(1).toLowerCase();
+
+        break;
+
+}
 
         registrarDato(patron.entidad, valor);
+console.log(
+    "Dato registrado:",
+    patron.entidad,
+    valor
+);
+entidadesDetectadas.push({
 
-        entidadesDetectadas.push(patron.entidad);
+    entidad: patron.entidad,
 
-        const campo = document.getElementById(patron.entidad);
+    destino: patron.entidad,
 
-        if (campo) {
-            campo.value = valor;
-        }
+    valor: valor,
 
-        console.log(
-            patron.entidad + " interpretado:",
-            valor
-        );
+    fecha: new Date().toISOString()
+
+});
+
+const campo = document.getElementById(patron.entidad);
+
+if (campo) {
+
+    campo.value = valor;
+
+    if (campo.tagName === "SELECT") {
+
+        campo.dispatchEvent(new Event("change"));
 
     }
 
-    if (entidadesDetectadas.length > 0) {
+}
 
-    console.table(entidadesDetectadas);
+       console.debug({
 
-    alert("interpretarVoz ejecutada");
+    control: patron.entidad,
 
+    actualizado: campo !== null,
+
+    valor: valor
+
+});
+
+    }
+const entidadesUnicas = [...new Map(
+
+    entidadesDetectadas.map(function(item){
+
+        return [
+            item.entidad + "_" + item.valor,
+            item
+        ];
+
+    })
+
+).values()];
+    if (entidadesUnicas.length > 0) {
+
+    console.table(entidadesUnicas);
+console.table(
+    expedienteInteligente.capturas
+);
+    console.info(
+        "Entidades reconocidas:",
+        entidadesUnicas.length
+    );
+console.log(
+    "Motor de Voz finalizado correctamente."
+);
     return;
 
 }
