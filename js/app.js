@@ -1002,6 +1002,7 @@ campos: [
         codigo: "superficieTotal",
         entidadId: "ENT-000001",
         tipoDato: "numero",
+        unidadId: "UNI-000002",
         activo: true
     },
     {
