@@ -710,12 +710,14 @@ switch (patron.entidad) {
     case "codigoCliente":
 
         valor = valor.replace(/\s+/g, "");
+         valor = valor.padStart(8, "0");
 
         break;
 
     case "cliente":
 
         valor = valor.replace(/\s{2,}/g, " ");
+        
 
         break;
 
