@@ -488,7 +488,7 @@ function iniciarVisita(){
     cambiarModulo("visita");
     establecerObjetoActivo("Inicio de Visita");
     inicializarVoz();
-    iniciarEscucha();
+    
     registrarDatosCliente();
     mostrarExpediente();
 document.getElementById("farm").style.display="none";
