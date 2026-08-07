@@ -675,7 +675,23 @@ function interpretarVoz(texto) {
         /^tiene\s+(.+)\s+hect[aá]reas$/i
     ]
 },
+{
+    entidad: "superficieAprovechable",
+    expresiones: [
+        /^superficie\s+aprovechable[:\s]+(.+)$/i,
+        /^área\s+aprovechable[:\s]+(.+)$/i,
+        /^area\s+aprovechable[:\s]+(.+)$/i
+    ]
+},
 
+{
+    entidad: "superficieCultivada",
+    expresiones: [
+        /^superficie\s+cultivada[:\s]+(.+)$/i,
+        /^área\s+cultivada[:\s]+(.+)$/i,
+        /^area\s+cultivada[:\s]+(.+)$/i
+    ]
+},
 {
     entidad: "estadoFitosanitario",
     expresiones: [
@@ -704,7 +720,7 @@ if (!coincidencia) {
 }
 
         let valor = coincidencia[1].trim();
-
+let unidadSuperficieDetectada = null;
 switch (patron.entidad) {
 
     case "codigoCliente":
@@ -720,14 +736,53 @@ switch (patron.entidad) {
         
 
         break;
-case "superficieTotal": {
+ case "superficieTotal":
+case "superficieAprovechable":
+case "superficieCultivada": {
 
     const superficieDetectada = valor.match(
         /(\d+(?:[.,]\d+)?)\s*(hectareas?|hectáreas?|ha|metros?\s*cuadrados?|m2|m²|acres?|leguas?)?/i
     );
 
     if (superficieDetectada) {
+
         valor = superficieDetectada[1].replace(",", ".");
+
+        const unidadDictada = superficieDetectada[2];
+
+        if (unidadDictada) {
+
+            const unidadNormalizada = unidadDictada
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/\s+/g, " ")
+                .trim();
+
+            if (
+                unidadNormalizada === "ha" ||
+                unidadNormalizada.startsWith("hectarea")
+            ) {
+                unidadSuperficieDetectada = "ha";
+
+            } else if (
+                unidadNormalizada === "m2" ||
+                unidadNormalizada === "m²" ||
+                unidadNormalizada.startsWith("metro cuadrado")
+            ) {
+                unidadSuperficieDetectada = "m²";
+
+            } else if (
+                unidadNormalizada.startsWith("acre")
+            ) {
+                unidadSuperficieDetectada = "acre";
+
+            } else if (
+                unidadNormalizada.startsWith("legua")
+            ) {
+                unidadSuperficieDetectada = "legua";
+            }
+        }
     }
 
     break;
@@ -780,6 +835,26 @@ const campo = document.getElementById(patron.entidad);
 if (campo) {
 
     campo.value = valor;
+
+    if (unidadSuperficieDetectada) {
+
+        const indicadoresUnidad = {
+            superficieTotal: "unidadSuperficieTotal",
+            superficieAprovechable: "unidadSuperficieAprovechable",
+            superficieCultivada: "unidadSuperficieCultivada"
+        };
+
+        const idIndicadorUnidad = indicadoresUnidad[patron.entidad];
+
+        if (idIndicadorUnidad) {
+
+            const indicadorUnidad = document.getElementById(idIndicadorUnidad);
+
+            if (indicadorUnidad) {
+                indicadorUnidad.textContent = unidadSuperficieDetectada;
+            }
+        }
+    }
 
     if (campo.tagName === "SELECT") {
 
