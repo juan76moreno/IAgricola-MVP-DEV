@@ -483,7 +483,7 @@ registrarDatosMinimos();
 function iniciarVisita(){
 
     document.getElementById("ready").style.display="none";
-
+estadoVisita.estado = "EN_VISITA";
     document.getElementById("visit").style.display="block";
     cambiarModulo("visita");
     establecerObjetoActivo("Inicio de Visita");
@@ -896,7 +896,10 @@ window.reconocimiento.onend = function () {
 }
 
 function iniciarEscucha() {
-
+if (estadoVisita.estado !== "EN_VISITA") {
+    console.warn("Micrófono bloqueado: la visita aún no ha iniciado.");
+    return;
+}
     if (!window.reconocimiento) {
 
         if (!inicializarVoz()) {
