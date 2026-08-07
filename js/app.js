@@ -831,12 +831,25 @@ window.reconocimiento.onstart = function () {
 
 window.reconocimiento.onresult = function (evento) {
 
-    ...
+    const texto = evento.results[0][0].transcript.trim();
+
+    console.log("Texto reconocido:", texto);
+
+    registrarDato("voz", texto);
+
+    console.warn("Antes de interpretar");
+    interpretarVoz(texto);
+
+    mostrarExpediente();
+
+    console.log(obtenerExpediente());
+
 };
 
 window.reconocimiento.onerror = function (evento) {
 
-    ...
+    console.error("Error de voz:", evento.error);
+
 };
 
 window.reconocimiento.onend = function () {
