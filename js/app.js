@@ -660,9 +660,9 @@ function interpretarVoz(texto) {
 {
     entidad: "rubroPrincipal",
     expresiones: [
-        /^rubro[:\s]+(.+)$/i,
-        /^cultivo[:\s]+(.+)$/i,
-        /^rubro\s+principal[:\s]+(.+)$/i
+        /^rubro\s+principal[:\s]+(.+)$/i,
+/^rubro[:\s]+(.+)$/i,
+/^cultivo[:\s]+(.+)$/i
     ]
 },
 
