@@ -669,8 +669,8 @@ function interpretarVoz(texto) {
 {
     entidad: "superficieTotal",
     expresiones: [
-        /^superficie[:\s]+(.+)$/i,
         /^superficie\s+total[:\s]+(.+)$/i,
+        /^superficie[:\s]+(?!aprovechable\b|cultivada\b)(.+)$/i,
         /^tiene\s+sembradas[:\s]+(.+)$/i,
         /^tiene\s+(.+)\s+hect[aá]reas$/i
     ]
