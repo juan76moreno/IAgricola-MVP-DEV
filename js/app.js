@@ -529,10 +529,13 @@ const perfilRubroDinamico = document.getElementById("perfilRubroDinamico");
 
 rubroPrincipal.addEventListener("change", function(){
 
-const origenCaptura = "MANUAL";    
-    const rubroSeleccionado = rubroPrincipal.options[
-        rubroPrincipal.selectedIndex
-    ].text;
+const origenCaptura = "MANUAL";
+
+const opcionSeleccionada =
+    rubroPrincipal.options[rubroPrincipal.selectedIndex];
+
+const rubroSeleccionado =
+    opcionSeleccionada ? opcionSeleccionada.text : rubroPrincipal.value;
 
 
     if(rubroPrincipal.value === ""){
@@ -636,7 +639,17 @@ function interpretarVoz(texto) {
             /^productor[:\s]+(.+)$/i
         ]
     },
-
+{
+    entidad: "finca",
+    expresiones: [
+        /^finca[:\s]+(.+)$/i,
+        /^nombre\s+de\s+la\s+finca[:\s]+(.+)$/i,
+        /^unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i,
+        /^parcela[:\s]+(.+)$/i,
+        /^hato[:\s]+(.+)$/i,
+        /^hacienda[:\s]+(.+)$/i
+    ]
+},
     {
         entidad: "codigoCliente",
         expresiones: [
@@ -708,10 +721,26 @@ switch (patron.entidad) {
 
     case "rubroPrincipal":
 
-        valor = valor.charAt(0).toUpperCase() +
-                valor.slice(1).toLowerCase();
+    valor = valor
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
 
-        break;
+    const rubrosValidos = {
+        cafe: "Cafe",
+        cacao: "Cacao",
+        maiz: "Maiz",
+        frijol: "Frijol",
+        hortalizas: "Hortalizas",
+        frutales: "Frutales",
+        ganaderia: "Ganaderia",
+        mixto: "Mixto",
+        otro: "Otro"
+    };
+
+    valor = rubrosValidos[valor] || valor;
+
+    break;
 
 }
 
