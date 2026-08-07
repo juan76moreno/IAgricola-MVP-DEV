@@ -720,7 +720,18 @@ switch (patron.entidad) {
         
 
         break;
+case "superficieTotal": {
 
+    const superficieDetectada = valor.match(
+        /(\d+(?:[.,]\d+)?)\s*(hectareas?|hectáreas?|ha|metros?\s*cuadrados?|m2|m²|acres?|leguas?)?/i
+    );
+
+    if (superficieDetectada) {
+        valor = superficieDetectada[1].replace(",", ".");
+    }
+
+    break;
+}
     case "rubroPrincipal":
 
     valor = valor
