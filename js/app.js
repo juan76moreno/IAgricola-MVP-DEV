@@ -854,6 +854,8 @@ window.reconocimiento.onerror = function (evento) {
 
 window.reconocimiento.onend = function () {
 
+    window.reconocimientoActivo = false;
+
     console.log("Micrófono detenido");
 
 };
@@ -874,8 +876,27 @@ function iniciarEscucha() {
 
     }
 
+    if (window.reconocimientoActivo) {
 
-    window.reconocimiento.start();
+        console.log("Micrófono ya activo.");
+
+        return;
+
+    }
+
+    window.reconocimientoActivo = true;
+
+    try {
+
+        window.reconocimiento.start();
+
+    } catch (error) {
+
+        window.reconocimientoActivo = false;
+
+        console.error("No se pudo iniciar el micrófono:", error);
+
+    }
 
 }
 
