@@ -158,13 +158,31 @@ conceptoCompletoBCAC: conceptoBCAC
     : null,
 };
 }
-function registrarDato(campo, valor){
+function registrarDato(campo, valor, unidadConfirmada = null){
 
     const fechaCaptura = new Date().toISOString();
 
     expedienteInteligente.fechaSistema = fechaCaptura;
 
-    const contextoBCAC = obtenerContextoBCAC(campo);   
+    const contextoBCAC = obtenerContextoBCAC(campo); 
+    const unidadBCACConfirmada = unidadConfirmada
+        ? BCAC.unidades.find(function(unidad) {
+            return unidad.activo === true &&
+                   unidad.simbolo === unidadConfirmada;
+        }) ?? null
+        : null;
+
+    const unidadEfectiva = unidadConfirmada
+    ? unidadBCACConfirmada
+    : contextoBCAC.unidadBCAC;
+     if (unidadConfirmada && !unidadBCACConfirmada) {
+        console.warn(
+            "Unidad reconocida pero aún no habilitada en BCAC:",
+            unidadConfirmada
+        );
+
+        return null;
+    }
       const captura = { 
 
    conceptoId: contextoBCAC.conceptoBCAC?.id ?? null,
@@ -173,8 +191,15 @@ reglaId: contextoBCAC.reglaBCAC?.id ?? null,
 entidadId: contextoBCAC.entidadBCAC?.id ?? null,
 
 campoId: contextoBCAC.campoBCAC?.id ?? null,
-unidadId: contextoBCAC.unidadBCAC?.id ?? null,
-unidadCompletaBCAC: contextoBCAC.unidadCompletaBCAC ?? null,
+unidadId: unidadEfectiva?.id ?? null,
+unidadCompletaBCAC: unidadEfectiva
+    ? {
+        id: unidadEfectiva.id,
+        nombre: unidadEfectiva.nombre,
+        simbolo: unidadEfectiva.simbolo,
+        codigo: unidadEfectiva.id
+    }
+    : null,
 fuenteId: contextoBCAC.fuenteBCAC?.id ?? null,
 
 fuente: contextoBCAC.fuenteBCAC?.nombre ?? null,
@@ -623,10 +648,106 @@ perfilRubroDinamico.innerHTML = `
     return;
     }
 });
+let superficiePendienteUnidad = null;
 function interpretarVoz(texto) {
 
     console.warn("Interpretando:", texto);
+if (superficiePendienteUnidad) {
 
+        const unidadRespuesta = texto
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
+
+        let unidadConfirmada = null;
+
+        if (
+            unidadRespuesta === "ha" ||
+            unidadRespuesta.startsWith("hectarea")
+        ) {
+            unidadConfirmada = "ha";
+
+        } else if (
+            unidadRespuesta === "m2" ||
+            unidadRespuesta === "m²" ||
+            /^metros?\s+cuadrados?$/.test(unidadRespuesta)
+        ) {
+            unidadConfirmada = "m²";
+
+        } else if (
+            unidadRespuesta.startsWith("acre")
+        ) {
+            unidadConfirmada = "acre";
+
+        } else if (
+            unidadRespuesta.startsWith("legua")
+        ) {
+            unidadConfirmada = "legua";
+        }
+
+        if (unidadConfirmada) {
+
+            const pendiente = superficiePendienteUnidad;
+
+            const campoPendiente =
+                document.getElementById(pendiente.entidad);
+
+            const indicadoresUnidad = {
+                superficieTotal: "unidadSuperficieTotal",
+                superficieAprovechable: "unidadSuperficieAprovechable",
+                superficieCultivada: "unidadSuperficieCultivada"
+            };
+
+            const indicadorUnidad = document.getElementById(
+                indicadoresUnidad[pendiente.entidad]
+            );
+
+            
+
+          const registroUnidad = registrarDato(
+    pendiente.entidad,
+    pendiente.valor,
+    unidadConfirmada
+);
+
+if (registroUnidad === null) {
+    console.warn(
+        "La unidad se mantiene pendiente de habilitación BCAC:",
+        unidadConfirmada
+    );
+alert(
+    "La unidad " +
+    unidadConfirmada +
+    " fue reconocida, pero aún no está habilitada para su registro estructurado. " +
+    "El dato se mantiene pendiente."
+);
+    return;
+}
+if (campoPendiente) {
+                campoPendiente.value = pendiente.valor;
+            }
+
+            if (indicadorUnidad) {
+                indicadorUnidad.textContent = unidadConfirmada;
+            }
+            superficiePendienteUnidad = null;
+
+            console.info(
+                "Unidad de superficie confirmada:",
+                unidadConfirmada
+            );
+
+            return;
+        }
+
+        console.warn(
+            "Unidad de superficie no reconocida. Indique hectáreas, metros cuadrados, acres o leguas."
+        );
+
+        return;
+    }
     const entidadesDetectadas = [];
 
     const patrones = [
@@ -750,7 +871,25 @@ case "superficieCultivada": {
         valor = superficieDetectada[1].replace(",", ".");
 
         const unidadDictada = superficieDetectada[2];
+ if (!unidadDictada) {
+                superficiePendienteUnidad = {
+                    entidad: patron.entidad,
+                    valor: valor
+                };
 
+                console.warn(
+                    "Unidad de superficie pendiente para",
+                    patron.entidad,
+                    "valor:",
+                    valor
+                );
+alert(
+                    "Se reconoció una superficie de " +
+                    valor +
+                    ". Indique la unidad: hectáreas, metros cuadrados, acres o leguas."
+                );
+                return;
+            }
         if (unidadDictada) {
 
             const unidadNormalizada = unidadDictada
