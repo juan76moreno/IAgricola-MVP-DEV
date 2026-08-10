@@ -740,9 +740,9 @@ switch (patron.entidad) {
 case "superficieAprovechable":
 case "superficieCultivada": {
 
-    const superficieDetectada = valor.match(
-        /(\d+(?:[.,]\d+)?)\s*(hectareas?|hectáreas?|ha|metros?\s*cuadrados?|m2|m²|acres?|leguas?)?/i
-    );
+    const superficieDetectada = coincidencia[1].match(
+    /(\d+(?:[.,]\d+)?)\s*(hectareas?|hectáreas?|ha|metros?\s*cuadrados?|m2|m²|acres?|leguas?)?/i
+);
 
     if (superficieDetectada) {
 
