@@ -774,7 +774,7 @@ console.log("DIAGNOSTICO SUPERFICIE:", {
             } else if (
                 unidadNormalizada === "m2" ||
                 unidadNormalizada === "m²" ||
-                unidadNormalizada.startsWith("metro cuadrado")
+                /^metros?\s+cuadrados?$/.test(unidadNormalizada)
             ) {
                 unidadSuperficieDetectada = "m²";
 
