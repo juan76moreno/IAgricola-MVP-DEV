@@ -158,6 +158,28 @@ conceptoCompletoBCAC: conceptoBCAC
     : null,
 };
 }
+function formatearNumeroVE(valor) {
+    if (valor === null || valor === undefined || valor === "") {
+        return "";
+    }
+
+    const texto = String(valor).trim();
+
+    const normalizado = texto
+        .replace(/\./g, "")
+        .replace(",", ".");
+
+    const numero = Number(normalizado);
+
+    if (!Number.isFinite(numero)) {
+        return texto;
+    }
+
+    return numero.toLocaleString("es-VE", {
+        useGrouping: true,
+        maximumFractionDigits: 20
+    });
+}
 function registrarDato(campo, valor, unidadConfirmada = null){
 
     const fechaCaptura = new Date().toISOString();
@@ -885,7 +907,7 @@ case "superficieCultivada": {
                 );
 alert(
                     "Se reconoció una superficie de " +
-                    valor +
+                    formatearNumeroVE(valor) +
                     ". Indique la unidad: hectáreas, metros cuadrados, acres o leguas."
                 );
                 return;
