@@ -721,6 +721,7 @@ if (!coincidencia) {
 
         let valor = coincidencia[1].trim();
 let unidadSuperficieDetectada = null;
+console.log("RUTA PATRON:", patron.entidad, "COINCIDENCIA:", coincidencia);
 switch (patron.entidad) {
 
     case "codigoCliente":
