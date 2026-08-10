@@ -721,7 +721,7 @@ if (!coincidencia) {
 
         let valor = coincidencia[1].trim();
 let unidadSuperficieDetectada = null;
-console.log("RUTA PATRON:", patron.entidad, "COINCIDENCIA:", coincidencia);
+
 switch (patron.entidad) {
 
     case "codigoCliente":
@@ -750,12 +750,7 @@ case "superficieCultivada": {
         valor = superficieDetectada[1].replace(",", ".");
 
         const unidadDictada = superficieDetectada[2];
-console.log("DIAGNOSTICO SUPERFICIE:", {
-    entidad: patron.entidad,
-    valorOriginal: coincidencia[1],
-    superficieDetectada: superficieDetectada,
-    unidadDictada: unidadDictada
-});
+
         if (unidadDictada) {
 
             const unidadNormalizada = unidadDictada
