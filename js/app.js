@@ -163,16 +163,26 @@ function formatearNumeroVE(valor) {
         return "";
     }
 
-    const texto = String(valor).trim();
+    let numero;
 
-    const normalizado = texto
-        .replace(/\./g, "")
-        .replace(",", ".");
+    if (typeof valor === "number") {
+        numero = valor;
+    } else {
+        const texto = String(valor).trim();
 
-    const numero = Number(normalizado);
+        const normalizado = texto
+            .replace(/\./g, "")
+            .replace(",", ".");
+
+        numero = Number(normalizado);
+
+        if (!Number.isFinite(numero)) {
+            return texto;
+        }
+    }
 
     if (!Number.isFinite(numero)) {
-        return texto;
+        return String(valor);
     }
 
     return numero.toLocaleString("es-VE", {
