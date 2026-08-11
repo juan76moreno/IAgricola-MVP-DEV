@@ -984,7 +984,17 @@ alert(
 
 }
 
-        registrarDato(patron.entidad, valor);
+       registrarDato(
+    patron.entidad,
+    valor,
+    (
+        patron.entidad === "superficieTotal" ||
+        patron.entidad === "superficieAprovechable" ||
+        patron.entidad === "superficieCultivada"
+    )
+        ? unidadSuperficieDetectada
+        : null
+);
 console.log(
     "Dato registrado:",
     patron.entidad,
