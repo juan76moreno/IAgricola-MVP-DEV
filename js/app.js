@@ -820,7 +820,7 @@ if (campoPendiente) {
     entidad: "rubroPrincipal",
     expresiones: [
         /^rubro\s+principal[:\s]+(.+)$/i,
-/^rubro[:\s]+(.+)$/i,
+/^rubro(?!\s+secundario\b)[:\s]+(.+)$/i,
 /^cultivo[:\s]+(.+)$/i
     ]
 },
