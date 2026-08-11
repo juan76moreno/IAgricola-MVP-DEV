@@ -810,6 +810,12 @@ if (campoPendiente) {
             /^cliente\s+n[uú]mero[:\s]+([0-9\s]+)$/i
         ]
     },
+    {
+    entidad: "rubroSecundario",
+    expresiones: [
+        /^rubro\s+secundario[:\s]+(.+)$/i
+    ]
+},
 {
     entidad: "rubroPrincipal",
     expresiones: [
