@@ -965,6 +965,7 @@ alert(
 
     break;
 }
+case "rubroSecundario":
     case "rubroPrincipal":
 
     valor = valor
