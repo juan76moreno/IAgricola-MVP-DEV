@@ -581,6 +581,27 @@ function continuarPerfilRubro(){
     alert("Aquí iniciará el siguiente módulo del expediente");
 
 }
+function volverACaracterizacion() {
+    document.getElementById("crop").style.display = "none";
+    document.getElementById("farm").style.display = "block";
+
+    cambiarModulo("caracterizacion");
+    establecerObjetoActivo("Caracterización");
+
+    mostrarEstadoActual();
+    mostrarExpediente();
+}
+
+function volverAVisita() {
+    document.getElementById("farm").style.display = "none";
+    document.getElementById("visit").style.display = "block";
+
+    cambiarModulo("visita");
+    establecerObjetoActivo("Inicio de Visita");
+
+    mostrarEstadoActual();
+    mostrarExpediente();
+}
 const rubroPrincipal = document.getElementById("rubroPrincipal");
 const perfilRubroDinamico = document.getElementById("perfilRubroDinamico");
 
