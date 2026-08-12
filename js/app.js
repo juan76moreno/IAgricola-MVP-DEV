@@ -571,11 +571,11 @@ function continuarCaracterizacion(){
    cambiarModulo("perfilRubro");
 establecerObjetoActivo("Perfil Técnico por Rubro");
 mostrarEstadoActual();
-registrarPerfilRubro();
+
 mostrarExpediente();
 }
 function continuarPerfilRubro(){
-
+registrarPerfilRubro();
     document.getElementById("crop").style.display="none";
 
     alert("Aquí iniciará el siguiente módulo del expediente");
