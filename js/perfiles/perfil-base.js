@@ -62,3 +62,29 @@ function resolverValorExistentePerfil(campo) {
 
     return valor;
 }
+function resolverCampoPerfil(campo) {
+
+    if (!campo) {
+        return {
+            estado: "INVALIDO",
+            valor: null,
+            campo: null
+        };
+    }
+
+    const valorExistente = resolverValorExistentePerfil(campo);
+
+    if (valorExistente !== null) {
+        return {
+            estado: "REUTILIZADO",
+            valor: valorExistente,
+            campo: campo
+        };
+    }
+
+    return {
+        estado: "PENDIENTE",
+        valor: null,
+        campo: campo
+    };
+}
