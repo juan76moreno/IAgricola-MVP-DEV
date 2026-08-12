@@ -859,14 +859,14 @@ if (campoPendiente) {
     ]
 }
 ];
-
+function procesarTextoVoz(textoProcesar) {
     for (const patron of patrones) {
 
         let coincidencia = null;
 
 for (const expresion of patron.expresiones) {
 
-    coincidencia = texto.match(expresion);
+    coincidencia = textoProcesar.match(expresion);
 
     if (coincidencia) {
         break;
@@ -1064,6 +1064,8 @@ if (campo) {
 });
 
     }
+    }
+    procesarTextoVoz(texto);
 const entidadesUnicas = [...new Map(
 
     entidadesDetectadas.map(function(item){
