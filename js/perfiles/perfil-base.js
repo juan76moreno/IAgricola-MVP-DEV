@@ -21,3 +21,44 @@ function obtenerPerfilTecnico(nombreRubro) {
 function existePerfilTecnico(nombreRubro) {
     return obtenerPerfilTecnico(nombreRubro) !== null;
 }
+function obtenerCamposPerfilTecnico(nombreRubro) {
+
+    const perfil = obtenerPerfilTecnico(nombreRubro);
+
+    if (!perfil || !Array.isArray(perfil.campos)) {
+        return [];
+    }
+
+    return perfil.campos;
+}
+
+function obtenerDiscriminadoresPerfilTecnico(nombreRubro) {
+
+    const perfil = obtenerPerfilTecnico(nombreRubro);
+
+    if (!perfil || !Array.isArray(perfil.discriminadores)) {
+        return [];
+    }
+
+    return perfil.discriminadores;
+}
+function resolverValorExistentePerfil(campo) {
+
+    if (!campo || !campo.origenExistente) {
+        return null;
+    }
+
+    const control = document.getElementById(campo.origenExistente);
+
+    if (!control) {
+        return null;
+    }
+
+    const valor = control.value;
+
+    if (valor === undefined || valor === null || valor === "") {
+        return null;
+    }
+
+    return valor;
+}
