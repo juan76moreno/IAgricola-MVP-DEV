@@ -1242,11 +1242,12 @@ if (estadoVisita.estado !== "EN_VISITA") {
 
     if (window.reconocimientoActivo) {
 
-        console.log("Micrófono ya activo.");
+    console.log("Deteniendo micrófono por solicitud del especialista.");
 
-        return;
+    window.reconocimiento.stop();
 
-    }
+    return;
+}
 
     window.reconocimientoActivo = true;
 
