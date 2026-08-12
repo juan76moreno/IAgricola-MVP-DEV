@@ -88,3 +88,12 @@ function resolverCampoPerfil(campo) {
         campo: campo
     };
 }
+function resolverDiscriminadoresPerfil(nombreRubro) {
+
+    const discriminadores =
+        obtenerDiscriminadoresPerfilTecnico(nombreRubro);
+
+    return discriminadores.map(function(discriminador) {
+        return resolverCampoPerfil(discriminador);
+    });
+}
