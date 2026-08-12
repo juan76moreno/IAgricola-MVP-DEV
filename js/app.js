@@ -1166,7 +1166,7 @@ if (!ReconocimientoVoz) {
 
     window.reconocimiento.lang = "es-VE";
 
-window.reconocimiento.continuous = false;
+window.reconocimiento.continuous = true;
 
 window.reconocimiento.interimResults = false;
 
@@ -1180,7 +1180,19 @@ window.reconocimiento.onstart = function () {
 
 window.reconocimiento.onresult = function (evento) {
 
-    const texto = evento.results[0][0].transcript.trim();
+    let texto = "";
+
+for (let i = evento.resultIndex; i < evento.results.length; i++) {
+    if (evento.results[i].isFinal) {
+        texto += evento.results[i][0].transcript + " ";
+    }
+}
+
+texto = texto.trim();
+
+if (!texto) {
+    return;
+}
 
     console.log("Texto reconocido:", texto);
 
