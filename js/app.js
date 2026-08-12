@@ -1065,7 +1065,48 @@ if (campo) {
 
     }
     }
+    const iniciosEntidad = [
+    /c[oó]digo(?:\s+del)?\s+cliente/i,
+    /cliente/i,
+    /superficie\s+total/i,
+    /superficie\s+aprovechable/i,
+    /superficie\s+cultivada/i,
+    /rubro\s+principal/i,
+    /rubro\s+secundario/i
+];
+
+const posiciones = [];
+
+for (const inicio of iniciosEntidad) {
+    const coincidenciaInicio = inicio.exec(texto);
+
+    if (coincidenciaInicio) {
+        posiciones.push(coincidenciaInicio.index);
+    }
+}
+
+const posicionesUnicas = [...new Set(posiciones)].sort((a, b) => a - b);
+
+if (posicionesUnicas.length > 1) {
+
+    const segmentos = posicionesUnicas
+        .map((inicio, indice) => {
+            const fin = posicionesUnicas[indice + 1] ?? texto.length;
+            return texto.slice(inicio, fin).trim();
+        })
+        .filter(Boolean);
+
+    console.log("Dictado multientidad:", segmentos);
+
+    for (const segmento of segmentos) {
+        procesarTextoVoz(segmento);
+    }
+
+} else {
+
     procesarTextoVoz(texto);
+}
+   
 const entidadesUnicas = [...new Map(
 
     entidadesDetectadas.map(function(item){
