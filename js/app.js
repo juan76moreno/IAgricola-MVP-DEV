@@ -1067,7 +1067,7 @@ if (campo) {
     }
     const iniciosEntidad = [
     /c[oó]digo(?:\s+del)?\s+cliente/i,
-    /cliente/i,
+    /(?<!c[oó]digo\s)(?<!c[oó]digo\sdel\s)cliente/i,
     /superficie\s+total/i,
     /superficie\s+aprovechable/i,
     /superficie\s+cultivada/i,
