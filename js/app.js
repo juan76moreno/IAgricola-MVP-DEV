@@ -623,6 +623,7 @@ const rubroSeleccionado =
         return;
 
     }
+    registrarDato("rubroPrincipal", rubroPrincipal.value);
     // PERFIL CAFÉ (Pendiente de migrar a js/perfiles/cafe.js)
 if(rubroPrincipal.value === "Cafe"){
 
