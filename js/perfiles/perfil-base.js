@@ -2,7 +2,37 @@
 // No contiene datos económicos ni sustituye perfiles específicos ya validados.
 
 const perfilesTecnicos = {};
+const perfilVegetalComun = {
+    nombre: "Perfil vegetal común",
 
+    reutilizables: [
+        {
+            campo: "superficieTotal",
+            origenExistente: "superficieTotal"
+        },
+        {
+            campo: "superficieCultivada",
+            origenExistente: "superficieCultivada"
+        }
+    ],
+
+    estructuraProductiva: {
+    tipo: "coleccion",
+    campo: "lotes",
+
+    camposPorLote: [
+        {
+            campo: "identificacionLote"
+        },
+        {
+            campo: "hectareas"
+        },
+        {
+            campo: "fechaSiembraMantenimiento"
+        }
+    ]
+}
+};
 function registrarPerfilTecnico(nombreRubro, configuracion) {
     if (!nombreRubro || !configuracion) {
         console.warn("Perfil técnico no registrado: configuración incompleta.");
@@ -41,6 +71,24 @@ function obtenerDiscriminadoresPerfilTecnico(nombreRubro) {
     }
 
     return perfil.discriminadores;
+}
+function obtenerEstructuraProductivaPerfil(nombreRubro) {
+
+    const perfil = obtenerPerfilTecnico(nombreRubro);
+
+    if (!perfil) {
+        return null;
+    }
+
+    if (perfil.estructuraProductiva) {
+        return perfil.estructuraProductiva;
+    }
+
+    if (perfil.patronComun === "vegetal") {
+        return perfilVegetalComun.estructuraProductiva;
+    }
+
+    return null;
 }
 function resolverValorExistentePerfil(campo) {
 
