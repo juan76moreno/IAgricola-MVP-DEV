@@ -31,6 +31,7 @@ nombre: "Cafe",
     };
 
 }
+registrarPerfilTecnico("Cafe", {
 nombre: "Café",
 
     discriminadores: [
