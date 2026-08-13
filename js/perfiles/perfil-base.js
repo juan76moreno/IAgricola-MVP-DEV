@@ -44,23 +44,40 @@ function obtenerDiscriminadoresPerfilTecnico(nombreRubro) {
 }
 function resolverValorExistentePerfil(campo) {
 
-    if (!campo || !campo.origenExistente) {
+    if (!campo) {
         return null;
     }
 
-    const control = document.getElementById(campo.origenExistente);
+    if (campo.origenExistente) {
 
-    if (!control) {
-        return null;
+        const control = document.getElementById(campo.origenExistente);
+
+        if (control) {
+
+            const valor = control.value;
+
+            if (
+                valor !== undefined &&
+                valor !== null &&
+                valor !== ""
+            ) {
+                return valor;
+            }
+        }
     }
 
-    const valor = control.value;
+    const capturaExistente = buscarCapturaExistentePerfil(campo);
 
-    if (valor === undefined || valor === null || valor === "") {
-        return null;
+    if (
+        capturaExistente &&
+        capturaExistente.valor !== undefined &&
+        capturaExistente.valor !== null &&
+        capturaExistente.valor !== ""
+    ) {
+        return capturaExistente.valor;
     }
 
-    return valor;
+    return null;
 }
 function resolverCampoPerfil(campo) {
 
@@ -96,4 +113,48 @@ function resolverDiscriminadoresPerfil(nombreRubro) {
     return discriminadores.map(function(discriminador) {
         return resolverCampoPerfil(discriminador);
     });
+}
+
+function buscarCapturaExistentePerfil(campo) {
+
+    if (!campo || typeof obtenerExpediente !== "function") {
+        return null;
+    }
+
+    const expediente = obtenerExpediente();
+
+    if (!expediente || !Array.isArray(expediente.capturas)) {
+        return null;
+    }
+
+    const capturasCoincidentes = expediente.capturas.filter(function(captura) {
+
+        if (!captura) {
+            return false;
+        }
+
+        if (campo.campoId && captura.campoId !== campo.campoId) {
+            return false;
+        }
+
+        if (campo.campo && captura.campo !== campo.campo) {
+            return false;
+        }
+
+        if (campo.modulo && captura.modulo !== campo.modulo) {
+            return false;
+        }
+
+        if (campo.objeto && captura.objeto !== campo.objeto) {
+            return false;
+        }
+
+        return campo.campoId || campo.campo;
+    });
+
+    if (capturasCoincidentes.length === 0) {
+        return null;
+    }
+
+    return capturasCoincidentes[capturasCoincidentes.length - 1];
 }
