@@ -101,7 +101,7 @@ nombre: "Cafe",
 }
 registrarPerfilTecnico("Cafe", {
 nombre: "Café",
-
+html: cargarPerfilCafe().html,
     discriminadores: [
 
         {

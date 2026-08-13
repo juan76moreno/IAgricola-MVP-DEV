@@ -625,14 +625,18 @@ const rubroSeleccionado =
     }
     registrarDato("rubroPrincipal", rubroPrincipal.value);
     // PERFIL CAFÉ (Pendiente de migrar a js/perfiles/cafe.js)
-if(rubroPrincipal.value === "Cafe"){
+const perfilTecnicoSeleccionado =
+    obtenerPerfilTecnico(rubroPrincipal.value);
 
-    const perfilCafe = cargarPerfilCafe();
-
-perfilRubroDinamico.innerHTML = perfilCafe.html;
+if (
+    perfilTecnicoSeleccionado &&
+    perfilTecnicoSeleccionado.html
+) {
+    perfilRubroDinamico.innerHTML =
+        perfilTecnicoSeleccionado.html;
 
     return;
-    }
+}
 });
 let superficiePendienteUnidad = null;
 function interpretarVoz(texto) {
