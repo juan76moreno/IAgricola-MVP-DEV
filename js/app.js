@@ -637,6 +637,7 @@ if (
 
     return;
 }
+perfilRubroDinamico.innerHTML = "";
 });
 let superficiePendienteUnidad = null;
 function interpretarVoz(texto) {
