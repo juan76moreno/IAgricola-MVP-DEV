@@ -26,3 +26,30 @@ function cargarDatosMultirrubro(datos, metadatos = {}) {
 function obtenerDatosMultirrubro() {
     return estadoMultirrubro;
 }
+function obtenerRubrosMultirrubro() {
+    const rubros = estadoMultirrubro.registros
+        .map(registro => registro.rubro)
+        .filter(rubro => rubro);
+
+    return [...new Set(rubros)];
+}
+
+function obtenerCasuisticasRubro(rubro) {
+    if (!rubro) {
+        return [];
+    }
+
+    return estadoMultirrubro.registros.filter(
+        registro => registro.rubro === rubro
+    );
+}
+
+function obtenerParametrosCasuistica(id) {
+    if (!id) {
+        return null;
+    }
+
+    return estadoMultirrubro.registros.find(
+        registro => registro.id === id
+    ) ?? null;
+}
