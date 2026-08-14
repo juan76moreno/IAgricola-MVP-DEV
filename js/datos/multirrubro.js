@@ -53,3 +53,34 @@ function obtenerParametrosCasuistica(id) {
         registro => registro.id === id
     ) ?? null;
 }
+function normalizarRegistroMultirrubro(registro, clasificacion = {}) {
+    if (!registro || typeof registro !== "object") {
+        return null;
+    }
+
+    const rubroCasuisticaOrigen =
+        registro.rubroCasuisticaOrigen ??
+        registro.rubro ??
+        null;
+
+    return {
+        ...registro,
+
+        rubroCasuisticaOrigen,
+
+        rubro:
+            clasificacion.rubro ??
+            registro.rubro ??
+            null,
+
+        varianteCasuistica:
+            clasificacion.varianteCasuistica ??
+            registro.varianteCasuistica ??
+            null,
+
+        estadoClasificacion:
+            clasificacion.estado ??
+            registro.estadoClasificacion ??
+            "PENDIENTE"
+    };
+}
