@@ -27,7 +27,7 @@ async function sincronizarDatosMultirrubro() {
     cargarDatosMultirrubro(resultado.datos, {
       fuente: "BASE_MAESTRA_APPS_SCRIPT"
     });
-
+cargarSelectorRubrosMultirrubro();
     console.log(
       `Multirrubro sincronizado: ${resultado.datos.length} registros`
     );
@@ -64,7 +64,27 @@ function obtenerRubrosMultirrubro() {
 
     return [...new Set(rubros)];
 }
+function cargarSelectorRubrosMultirrubro() {
+    const selector = document.getElementById("rubroPrincipal");
 
+    if (!selector) {
+        console.warn("No existe el selector rubroPrincipal.");
+        return false;
+    }
+
+    const rubros = obtenerRubrosMultirrubro().sort();
+
+    selector.innerHTML = '<option value="">Seleccione...</option>';
+
+    rubros.forEach(function(rubro) {
+        const opcion = document.createElement("option");
+        opcion.value = rubro;
+        opcion.textContent = rubro;
+        selector.appendChild(opcion);
+    });
+
+    return true;
+}
 function obtenerCasuisticasRubro(rubro) {
     if (!rubro) {
         return [];
