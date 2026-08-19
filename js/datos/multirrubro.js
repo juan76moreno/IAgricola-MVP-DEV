@@ -66,7 +66,7 @@ function obtenerRubrosMultirrubro() {
 
     return [...new Set(rubros)];
 }
-function cargarSelectorRubrosMultirrubro() {
+function cargarSelectorRubrosMultirubro() {
     const selector = document.getElementById("rubroPrincipal");
 
     if (!selector) {
@@ -74,7 +74,7 @@ function cargarSelectorRubrosMultirrubro() {
         return false;
     }
 
-    const rubros = obtenerRubrosMultirrubro().sort();
+    const rubros = obtenerRubrosMultirubro().sort();
 
     selector.innerHTML = '<option value="">Seleccione...</option>';
 
