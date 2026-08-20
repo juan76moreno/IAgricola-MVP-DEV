@@ -156,7 +156,7 @@ window.iAgricolaRecibirDatos = function (respuesta) {
             total: respuesta.datos.length
         }
     );
-
+cargarSelectorRubrosMultirrubro();
     console.log(
         "SUCCESS Base Maestra JSONP:",
         respuesta.datos.length,
