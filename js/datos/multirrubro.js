@@ -61,8 +61,8 @@ function obtenerDatosMultirrubro() {
 }
 function obtenerRubrosMultirrubro() {
     const rubros = estadoMultirrubro.registros
-        .map(registro => registro.rubro)
-        .filter(rubro => rubro);
+    .map(registro => registro.rubro)
+    .filter(Boolean);
 
     return [...new Set(rubros)];
 }
