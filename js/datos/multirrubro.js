@@ -47,7 +47,9 @@ function cargarDatosMultirrubro(datos, metadatos = {}) {
         return false;
     }
 
-    estadoMultirrubro.registros = datos;
+    estadoMultirrubro.registros = datos.map(registro =>
+    normalizarRegistroMultirrubro(registro)
+);
     estadoMultirrubro.version = metadatos.version ?? null;
     estadoMultirrubro.fechaActualizacion =
         metadatos.fechaActualizacion ?? null;
