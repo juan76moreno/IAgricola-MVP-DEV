@@ -89,7 +89,9 @@ function cargarSelectorRubrosMultirubro() {
 
     return true;
 }
+ window.cargarSelectorRubrosMultirrubro = cargarSelectorRubrosMultirrubro;
 function obtenerCasuisticasRubro(rubro) {
+    
     if (!rubro) {
         return [];
     }
