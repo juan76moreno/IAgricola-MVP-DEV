@@ -89,7 +89,77 @@ window.cargarSelectorRubrosMultirrubro = function cargarSelectorRubrosMultirrubr
 
     return true;
 }
+window.inicializarRubrosExplotados = function inicializarRubrosExplotados() {
+    const cantidad = document.getElementById("cantidadRubrosExplotados");
+    const contenedor = document.getElementById("contenedorRubrosExplotados");
+    const rubroPrincipal = document.getElementById("rubroPrincipal");
 
+    if (!cantidad || !contenedor) {
+        return;
+    }
+
+    function renderizarRubros() {
+        contenedor.innerHTML = "";
+
+        const totalRubros =
+            Number.parseInt(cantidad.value, 10) || 0;
+
+        const totalAdicionales = Math.max(totalRubros - 1, 0);
+
+        const rubrosDisponibles =
+            window.obtenerRubrosMultirrubro()
+                .sort()
+                .filter(Boolean);
+
+        for (let i = 1; i <= totalAdicionales; i++) {
+            const campo = document.createElement("div");
+            campo.className = "field";
+
+            const etiqueta = document.createElement("label");
+            etiqueta.textContent = `Rubro ${i + 1}`;
+
+            const selector = document.createElement("select");
+            selector.id = `rubroExplotado_${i}`;
+            selector.dataset.rubroExplotado = "true";
+
+            const opcionInicial = document.createElement("option");
+            opcionInicial.value = "";
+            opcionInicial.textContent = "Seleccione...";
+            selector.appendChild(opcionInicial);
+
+            rubrosDisponibles.forEach(function (rubro) {
+                if (
+                    rubroPrincipal &&
+                    rubro === rubroPrincipal.value
+                ) {
+                    return;
+                }
+
+                const opcion = document.createElement("option");
+                opcion.value = rubro;
+                opcion.textContent = rubro;
+                selector.appendChild(opcion);
+            });
+
+            campo.appendChild(etiqueta);
+            campo.appendChild(selector);
+            contenedor.appendChild(campo);
+        }
+    }
+
+    cantidad.addEventListener("input", renderizarRubros);
+
+    if (rubroPrincipal) {
+        rubroPrincipal.addEventListener(
+            "change",
+            renderizarRubros
+        );
+    }
+
+    renderizarRubros();
+};
+
+window.inicializarRubrosExplotados();
 function obtenerCasuisticasRubro(rubro) {
     
     if (!rubro) {

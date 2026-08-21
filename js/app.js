@@ -437,19 +437,35 @@ function registrarCaracterizacion(){
 function registrarPerfilRubro(){
 
     registrarFormulario([
-
         "rubroPrincipal",
-
-        "rubroSecundario",
-
+        "cantidadRubrosExplotados",
         "subsector",
-
         "tipoSubsector",
-
         "sectorProduccion"
-
     ]);
 
+    const rubroPrincipal =
+        document.getElementById("rubroPrincipal")?.value || "";
+
+    const rubrosSecundarios = Array.from(
+        document.querySelectorAll(
+            'select[data-rubro-explotado="true"]'
+        )
+    )
+    .map(function(select){
+        return select.value;
+    })
+    .filter(Boolean);
+
+    const rubrosExplotados = [
+        rubroPrincipal,
+        ...rubrosSecundarios
+    ].filter(Boolean);
+
+    registrarDato(
+        "rubrosExplotados",
+        rubrosExplotados
+    );
 }
 function registrarCapturaCompleta(){
 
@@ -770,6 +786,16 @@ if (campoPendiente) {
         ]
     },
     {
+    entidad: "cantidadRubrosExplotados",
+    expresiones: [
+        /^cantidad\s+de\s+rubros(?:\s+explotados)?\s*:\s*(\d+)$/i,
+        /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?\s*:\s*(\d+)$/i,
+        /^(?:tengo|exploto|manejo)\s+(\d+)\s+rubros(?:\s+explotados)?$/i,
+        /^cantidad\s+de\s+actividades\s*:\s*(\d+)$/i,
+        /^(?:tengo|exploto|manejo)\s+(\d+)\s+actividades$/i
+    ]
+},
+    {
     entidad: "rubroSecundario",
     expresiones: [
         /^rubro\s+secundario[:\s]+(.+)$/i
@@ -932,19 +958,16 @@ case "rubroSecundario":
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase();
 
-    const rubrosValidos = {
-        cafe: "Cafe",
-        cacao: "Cacao",
-        maiz: "Maiz",
-        frijol: "Frijol",
-        hortalizas: "Hortalizas",
-        frutales: "Frutales",
-        ganaderia: "Ganaderia",
-        mixto: "Mixto",
-        otro: "Otro"
-    };
+    const rubrosDisponibles = window.obtenerRubrosMultirrubro();
 
-    valor = rubrosValidos[valor] || valor;
+const rubroCoincidente = rubrosDisponibles.find(function (rubro) {
+    return rubro
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase() === valor;
+});
+
+valor = rubroCoincidente || valor;
 
     break;
 
@@ -977,13 +1000,32 @@ entidadesDetectadas.push({
     fecha: new Date().toISOString()
 
 });
+if (patron.entidad === "rubroSecundario") {
+    const selectores = Array.from(
+        document.querySelectorAll(
+            'select[data-rubro-explotado="true"]'
+        )
+    );
 
+    const selectorDisponible = selectores.find(function (select) {
+        return !select.value;
+    });
+
+    if (selectorDisponible) {
+        selectorDisponible.value = valor;
+        selectorDisponible.dispatchEvent(new Event("change"));
+    }
+
+    continue;
+}
 const campo = document.getElementById(patron.entidad);
 
 if (campo) {
 
     campo.value = valor;
-
+if (campo.id === "cantidadRubrosExplotados") {
+    campo.dispatchEvent(new Event("input", { bubbles: true }));
+}
     if (unidadSuperficieDetectada) {
 
         const indicadoresUnidad = {

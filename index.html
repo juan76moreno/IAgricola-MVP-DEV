@@ -547,22 +547,19 @@ Número de Registro Tributario
     </select>
 </div>
     <div class="field">
+    <label for="cantidadRubrosExplotados">
+        Cantidad de rubros / actividades explotadas
+    </label>
 
-        <label for="rubroSecundario">
+    <input
+        type="number"
+        id="cantidadRubrosExplotados"
+        min="1"
+        step="1"
+        placeholder="Indique la cantidad">
 
-            Rubro secundario
-
-        </label>
-
-        <input
-
-            type="text"
-
-            id="rubroSecundario"
-
-            placeholder="Si aplica">
-
-    </div>
+    <div id="contenedorRubrosExplotados"></div>
+</div>
  
 <div class="field">
     <label for="subsector">
