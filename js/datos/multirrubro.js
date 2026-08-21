@@ -61,13 +61,13 @@ function cargarDatosMultirrubro(datos, metadatos = {}) {
 function obtenerDatosMultirrubro() {
     return estadoMultirrubro;
 }
-function obtenerRubrosMultirrubro() {
+window.obtenerRubrosMultirrubro = function obtenerRubrosMultirrubro() {
     const rubros = estadoMultirrubro.registros
     .map(registro => registro.rubro)
     .filter(Boolean);
 
     return [...new Set(rubros)];
-}
+};
 window.cargarSelectorRubrosMultirrubro = function cargarSelectorRubrosMultirrubro() {
     const selector = document.getElementById("rubroPrincipal");
 
