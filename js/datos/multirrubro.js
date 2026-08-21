@@ -76,7 +76,7 @@ window.cargarSelectorRubrosMultirrubro = function cargarSelectorRubrosMultirrubr
         return false;
     }
 
-    const rubros = obtenerRubrosMultirubro().sort();
+    const rubros = window.obtenerRubrosMultirrubro().sort();
 
     selector.innerHTML = '<option value="">Seleccione...</option>';
 
