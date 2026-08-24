@@ -58,11 +58,9 @@ function cargarDatosMultirrubro(datos, metadatos = {}) {
     return true;
 }
 
-function obtenerDatosMultirrubro() {
-    return estadoMultirrubro;
-}
-const obtenerDatosMultirubroInterno = obtenerDatosMultirubro;
-window.obtenerDatosMultirubro = obtenerDatosMultirubroInterno;
+window.obtenerDatosMultirrubro = function() {
+  return estadoMultirrubro;
+};
 window.obtenerRubrosMultirrubro = function obtenerRubrosMultirrubro() {
     const rubros = estadoMultirrubro.registros
     .map(registro => registro.rubro)
