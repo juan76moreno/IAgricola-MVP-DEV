@@ -968,7 +968,47 @@ const rubroCoincidente = rubrosDisponibles.find(function (rubro) {
 });
 
 valor = rubroCoincidente || valor;
+if (
+    rubroCoincidente &&
+    patron.entidad === "rubroPrincipal"
+) {
+    const selectorRubro = document.getElementById("rubroPrincipal");
 
+    if (selectorRubro) {
+        const normalizarRubro = texto =>
+            String(texto ?? "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .trim();
+
+        const rubroNormalizado = normalizarRubro(rubroCoincidente);
+
+        const opcionRubro = Array.from(selectorRubro.options).find(
+            opcion =>
+                normalizarRubro(opcion.value) === rubroNormalizado ||
+                normalizarRubro(opcion.textContent) === rubroNormalizado
+        );
+
+        if (opcionRubro) {
+            selectorRubro.value = opcionRubro.value;
+
+            selectorRubro.dispatchEvent(
+                new Event("change", { bubbles: true })
+            );
+
+            console.log(
+                "Rubro principal sincronizado por voz:",
+                opcionRubro.value
+            );
+        } else {
+            console.warn(
+                "Rubro reconocido pero no encontrado en el selector:",
+                rubroCoincidente
+            );
+        }
+    }
+}
     break;
 
 }
