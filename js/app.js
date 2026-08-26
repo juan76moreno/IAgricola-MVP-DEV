@@ -968,6 +968,44 @@ const rubroCoincidente = rubrosDisponibles.find(function (rubro) {
 });
 
 valor = rubroCoincidente || valor;
+       if (
+    !rubroCoincidente &&
+    (
+        patron.entidad === "rubroPrincipal" ||
+        patron.entidad === "rubroSecundario"
+    )
+) {
+    const resultadoCasuistica = window.resolverCasuisticaVoz(valor);
+
+    if (resultadoCasuistica.estado === "UNICA") {
+        const registro = resultadoCasuistica.coincidencias[0];
+
+        valor = registro.rubro;
+
+        console.log(
+            "Casuística reconocida por voz:",
+            registro.varianteCasuistica ||
+            registro.rubroCasuisticaOrigen ||
+            registro.rubro
+        );
+
+        console.log(
+            "Rubro asociado a casuística:",
+            registro.rubro
+        );
+    }
+
+    if (resultadoCasuistica.estado === "AMBIGUA") {
+        console.warn(
+            "Casuística ambigua por voz:",
+            valor,
+            resultadoCasuistica.coincidencias
+        );
+
+        break;
+    }
+}
+}
 if (
     rubroCoincidente &&
     patron.entidad === "rubroPrincipal"
