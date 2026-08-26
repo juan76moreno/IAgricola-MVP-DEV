@@ -1094,7 +1094,7 @@ if (patron.entidad === "rubroSecundario") {
         selectorDisponible.dispatchEvent(new Event("change"));
     }
 
-    continue;
+    
 }
 const campo = document.getElementById(patron.entidad);
 
