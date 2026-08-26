@@ -129,6 +129,7 @@ function resolverCasuisticaVoz(texto) {
     coincidencias: coincidencias
   };
 }
+window.resolverCasuisticaVoz = resolverCasuisticaVoz;
 window.cargarSelectorRubrosMultirrubro = function cargarSelectorRubrosMultirrubro() {
     const selector = document.getElementById("rubroPrincipal");
 
