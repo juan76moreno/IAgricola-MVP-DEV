@@ -68,6 +68,67 @@ window.obtenerRubrosMultirrubro = function obtenerRubrosMultirrubro() {
 
     return [...new Set(rubros)];
 };
+function normalizarTextoCasuistica(texto) {
+  return String(texto ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function resolverCasuisticaVoz(texto) {
+
+  const consulta = normalizarTextoCasuistica(texto);
+
+  if (!consulta) {
+    return {
+      estado: "VACIO",
+      coincidencias: []
+    };
+  }
+
+  const registros = estadoMultirrubro.registros || [];
+
+  const coincidencias = registros.filter(function(registro) {
+
+    const rubro = normalizarTextoCasuistica(registro.rubro);
+    const variante = normalizarTextoCasuistica(
+      registro.varianteCasuistica
+    );
+    const origen = normalizarTextoCasuistica(
+      registro.rubroCasuisticaOrigen
+    );
+
+    return (
+      rubro === consulta ||
+      variante === consulta ||
+      origen === consulta ||
+      rubro.includes(consulta) ||
+      variante.includes(consulta) ||
+      origen.includes(consulta)
+    );
+
+  });
+
+  if (coincidencias.length === 0) {
+    return {
+      estado: "NO_ENCONTRADO",
+      coincidencias: []
+    };
+  }
+
+  if (coincidencias.length === 1) {
+    return {
+      estado: "UNICA",
+      coincidencias: coincidencias
+    };
+  }
+
+  return {
+    estado: "AMBIGUA",
+    coincidencias: coincidencias
+  };
+}
 window.cargarSelectorRubrosMultirrubro = function cargarSelectorRubrosMultirrubro() {
     const selector = document.getElementById("rubroPrincipal");
 
