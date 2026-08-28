@@ -644,15 +644,29 @@ const rubroSeleccionado =
 const perfilTecnicoSeleccionado =
     obtenerPerfilTecnico(rubroPrincipal.value);
 
-if (
-    perfilTecnicoSeleccionado &&
-    perfilTecnicoSeleccionado.html
-) {
-    perfilRubroDinamico.innerHTML =
-        perfilTecnicoSeleccionado.html;
+if (perfilTecnicoSeleccionado) {
+
+    let htmlPerfil = "";
+
+    if (perfilTecnicoSeleccionado.html) {
+        htmlPerfil += perfilTecnicoSeleccionado.html;
+    }
+
+    const estructuraProductivaHTML =
+        typeof construirEstructuraProductivaHTML === "function"
+            ? construirEstructuraProductivaHTML(
+                rubroPrincipal.value
+            )
+            : "";
+
+    htmlPerfil += estructuraProductivaHTML;
+
+    perfilRubroDinamico.innerHTML = htmlPerfil;
 
     return;
 }
+
+
 perfilRubroDinamico.innerHTML = "";
 });
 let superficiePendienteUnidad = null;
@@ -801,6 +815,7 @@ if (campoPendiente) {
         /^rubro\s+secundario[:\s]+(.+)$/i
     ]
 },
+
 {
     entidad: "rubroPrincipal",
     expresiones: [

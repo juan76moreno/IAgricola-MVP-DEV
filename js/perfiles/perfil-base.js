@@ -90,6 +90,66 @@ function obtenerEstructuraProductivaPerfil(nombreRubro) {
 
     return null;
 }
+function construirEstructuraProductivaHTML(nombreRubro) {
+
+    const estructura =
+        obtenerEstructuraProductivaPerfil(nombreRubro);
+
+    if (
+        !estructura ||
+        estructura.tipo !== "coleccion" ||
+        !estructura.campo ||
+        !Array.isArray(estructura.camposPorLote)
+    ) {
+        return "";
+    }
+
+    const camposHTML =
+        estructura.camposPorLote.map(function(configuracion) {
+
+            const campo = String(configuracion.campo);
+
+            const etiqueta =
+                campo
+                    .replace(/([A-Z])/g, " $1")
+                    .replace(/^./, function(letra) {
+                        return letra.toUpperCase();
+                    });
+
+            return `
+                <div class="field">
+                    <label>${etiqueta}</label>
+                    <input
+                        type="text"
+                        data-estructura-productiva="true"
+                        data-campo="${campo}">
+                </div>
+            `;
+        }).join("");
+
+    return `
+        <div
+            id="estructuraProductivaGenerica"
+            data-estructura="${estructura.campo}">
+
+            <div class="field">
+                <label>Cantidad de elementos</label>
+                <input
+                    id="cantidadElementosEstructuraProductiva"
+                    type="number"
+                    min="1"
+                    step="1"
+                    data-estructura-productiva="true"
+                    data-campo="cantidadElementos">
+            </div>
+
+            <div id="elementosEstructuraProductiva">
+                ${camposHTML}
+            </div>
+
+        </div>
+    `;
+}
 function resolverValorExistentePerfil(campo) {
 
     if (!campo) {
