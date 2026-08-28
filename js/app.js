@@ -880,7 +880,7 @@ if (!coincidencia) {
 
         let valor = coincidencia[1].trim();
 let unidadSuperficieDetectada = null;
-
+let rubroCoincidente = null;
 switch (patron.entidad) {
 
     case "codigoCliente":
@@ -975,7 +975,7 @@ case "rubroSecundario":
 
     const rubrosDisponibles = window.obtenerRubrosMultirrubro();
 
-const rubroCoincidente = rubrosDisponibles.find(function (rubro) {
+rubroCoincidente = rubrosDisponibles.find(function (rubro) {
     return rubro
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
