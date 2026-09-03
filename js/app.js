@@ -1158,7 +1158,7 @@ if (campo.id === "cantidadRubrosExplotados") {
 });
 
     }
-    
+    }
     const iniciosEntidad = [
     /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
     /(?<!c[oó]digo\s)(?<!c[oó]digo\sde\s)(?<!c[oó]digo\sdel\s)cliente/i,
