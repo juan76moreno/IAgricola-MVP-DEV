@@ -1020,7 +1020,7 @@ valor = rubroCoincidente || valor;
         break;
     }
 }
-
+}
 if (
     rubroCoincidente &&
     patron.entidad === "rubroPrincipal"
