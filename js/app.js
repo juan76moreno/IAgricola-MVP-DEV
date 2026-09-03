@@ -1064,7 +1064,7 @@ if (
 }
     break;
 
-}
+
 
        registrarDato(
     patron.entidad,
