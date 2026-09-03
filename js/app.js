@@ -802,10 +802,10 @@ if (campoPendiente) {
     {
     entidad: "cantidadRubrosExplotados",
     expresiones: [
-        /^cantidad\s+de\s+rubros(?:\s+explotados)?\s*:\s*(\d+)$/i,
-        /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?\s*:\s*(\d+)$/i,
+        /^cantidad\s+de\s+rubros(?:\s+explotados)?\s*:?\s*(\d+)$/i,
+        /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?\s*:?\s*(\d+)$/i,
         /^(?:tengo|exploto|manejo)\s+(\d+)\s+rubros(?:\s+explotados)?$/i,
-        /^cantidad\s+de\s+actividades\s*:\s*(\d+)$/i,
+        /^cantidad\s+de\s+actividades\s*:?\s*(\d+)$/i,
         /^(?:tengo|exploto|manejo)\s+(\d+)\s+actividades$/i
     ]
 },
