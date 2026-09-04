@@ -802,11 +802,11 @@ if (campoPendiente) {
     {
     entidad: "cantidadRubrosExplotados",
     expresiones: [
-        /^cantidad\s+de\s+rubros(?:\s+explotados)?\s*:?\s*(\d+)$/i,
-        /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?\s*:?\s*(\d+)$/i,
-        /^(?:tengo|exploto|manejo)\s+(\d+)\s+rubros(?:\s+explotados)?$/i,
-        /^cantidad\s+de\s+actividades\s*:?\s*(\d+)$/i,
-        /^(?:tengo|exploto|manejo)\s+(\d+)\s+actividades$/i
+        /^cantidad\s+de\s+rubros(?:\s+explotados)?\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
+        /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
+        /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+rubros(?:\s+explotados)?$/i,
+        /^cantidad\s+de\s+actividades\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
+        /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+actividades$/i
     ]
 },
     {
@@ -879,6 +879,21 @@ if (!coincidencia) {
 }
 
         let valor = coincidencia[1].trim();
+
+const numerosVoz = {
+    uno: "1",
+    dos: "2",
+    tres: "3",
+    cuatro: "4",
+    cinco: "5",
+    seis: "6",
+    siete: "7",
+    ocho: "8",
+    nueve: "9",
+    diez: "10"
+};
+
+valor = numerosVoz[valor.toLowerCase()] ?? valor;
 let unidadSuperficieDetectada = null;
 let rubroCoincidente = null;
 switch (patron.entidad) {
