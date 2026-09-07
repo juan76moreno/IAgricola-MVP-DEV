@@ -802,8 +802,8 @@ if (campoPendiente) {
     {
     entidad: "cantidadRubrosExplotados",
     expresiones: [
-        /^cantidad\s+de\s+rubros(?:\s+explotados)?\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
-        /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
+        /^cantidad\s+de\s+rubros(?:\s+explotados)?(?:\s*:\s*|\s+)(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
+        /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?(?:\s*:\s*|\s+)(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
         /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+rubros(?:\s+explotados)?$/i,
         /^cantidad\s+de\s+actividades\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
         /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+actividades$/i
