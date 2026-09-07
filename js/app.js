@@ -670,6 +670,79 @@ if (perfilTecnicoSeleccionado) {
 perfilRubroDinamico.innerHTML = "";
 });
 let superficiePendienteUnidad = null;
+function obtenerNombreCampoVoz(patron) {
+    if (!patron) {
+        return "el dato indicado";
+    }
+
+    if (patron.entidad === "rubroSecundario") {
+        return Number.isInteger(patron.indiceRubro)
+            ? "Rubro " + (patron.indiceRubro + 2)
+            : "rubro secundario";
+    }
+
+    const nombres = {
+        cliente: "el nombre del cliente",
+        codigoCliente: "el código de cliente",
+        finca: "la finca",
+        cantidadRubrosExplotados: "la cantidad de rubros",
+        rubroPrincipal: "el rubro principal",
+        superficieTotal: "la superficie total",
+        superficieAprovechable: "la superficie aprovechable",
+        superficieCultivada: "la superficie cultivada",
+        estadoFitosanitario: "el estado fitosanitario"
+    };
+
+    return nombres[patron.entidad] || patron.entidad;
+}
+
+function obtenerEjemploVoz(patron) {
+    if (!patron) {
+        return "Código de cliente 00000001";
+    }
+
+    if (patron.entidad === "rubroSecundario") {
+        const ejemplosRubros = {
+            0: "Rubro dos maíz",
+            1: "Rubro tres arroz",
+            2: "Rubro cuatro yuca",
+            3: "Rubro cinco frijol"
+        };
+
+        return ejemplosRubros[patron.indiceRubro] || "Rubro secundario maíz";
+    }
+
+    const ejemplos = {
+        cliente: "Cliente Juan Moreno",
+        codigoCliente: "Código de cliente 00000001",
+        finca: "Finca La Esperanza",
+        cantidadRubrosExplotados: "Cantidad de rubros cinco",
+        rubroPrincipal: "Rubro principal café",
+        superficieTotal: "Superficie total 12 hectáreas",
+        superficieAprovechable: "Superficie aprovechable 10 hectáreas",
+        superficieCultivada: "Superficie cultivada 8 hectáreas",
+        estadoFitosanitario: "Estado fitosanitario bueno"
+    };
+
+    return ejemplos[patron.entidad] || "Código de cliente 00000001";
+}
+
+function notificarFalloVoz(patron, detalle = "") {
+    const campo = obtenerNombreCampoVoz(patron);
+    const ejemplo = obtenerEjemploVoz(patron);
+
+    const mensaje = detalle
+    ? "No pude registrar " + campo + ". " + detalle + ". Repita lentamente, por ejemplo: '" + ejemplo + "'."
+    : "No pude registrar " + campo + ". Repita lentamente, por ejemplo: '" + ejemplo + "'.";
+
+    console.warn(mensaje);
+
+    if (typeof alert === "function") {
+        alert(mensaje);
+    }
+
+    return mensaje;
+}
 function interpretarVoz(texto) {
 
     console.warn("Interpretando:", texto);
@@ -763,11 +836,12 @@ if (campoPendiente) {
             return;
         }
 
-        console.warn(
-            "Unidad de superficie no reconocida. Indique hectáreas, metros cuadrados, acres o leguas."
-        );
+        notificarFalloVoz(
+    { entidad: superficiePendienteUnidad.entidad },
+    "Detecté la superficie, pero no pude identificar la unidad indicada"
+);
 
-        return;
+return;
     }
     const entidadesDetectadas = [];
 
@@ -1054,14 +1128,13 @@ valor = rubroCoincidente || valor;
     }
 
     if (resultadoCasuistica.estado === "AMBIGUA") {
-        console.warn(
-            "Casuística ambigua por voz:",
-            valor,
-            resultadoCasuistica.coincidencias
-        );
+    notificarFalloVoz(
+        patron,
+        "El rubro indicado es ambiguo y puede corresponder a más de una opción"
+    );
 
-        break;
-    }
+    return;
+}
 }
 }
 if (
@@ -1098,10 +1171,10 @@ if (
                 opcionRubro.value
             );
         } else {
-            console.warn(
-                "Rubro reconocido pero no encontrado en el selector:",
-                rubroCoincidente
-            );
+            notificarFalloVoz(
+    patron,
+    "Reconocí el rubro '" + rubroCoincidente + "', pero no lo encontré en la lista disponible"
+);
         }
     }
 }
@@ -1181,19 +1254,17 @@ if (patron.entidad === "rubroSecundario") {
                 opcionRubro.value
             );
         } else {
-            console.warn(
-                "Rubro secundario reconocido pero no encontrado en selector:",
-                valor,
-                patron.indiceRubro
-            );
+            notificarFalloVoz(
+    patron,
+    "Reconocí el rubro '" + valor + "', pero no lo encontré en la lista disponible"
+);
         }
     } else {
-        console.warn(
-            "No se encontró selector disponible para rubro secundario:",
-            patron.indiceRubro,
-            valor
-        );
-    }
+    notificarFalloVoz(
+        patron,
+        "No encontré el campo disponible en pantalla"
+    );
+}
 }
 const numerosPorVoz = {
     uno: "1",
@@ -1325,19 +1396,24 @@ const entidadesUnicas = [...new Map(
     if (entidadesUnicas.length > 0) {
 
     console.table(entidadesUnicas);
-console.table(
-    expedienteInteligente.capturas
-);
+    console.table(
+        expedienteInteligente.capturas
+    );
     console.info(
         "Entidades reconocidas:",
         entidadesUnicas.length
     );
-console.log(
-    "Motor de Voz finalizado correctamente."
-);
+    console.log(
+        "Motor de Voz finalizado correctamente."
+    );
     return;
 
 }
+
+notificarFalloVoz(
+    null,
+    "No pude identificar el campo ni el valor indicado"
+);
 
 }
 
