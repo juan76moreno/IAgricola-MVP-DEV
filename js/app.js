@@ -811,8 +811,36 @@ if (campoPendiente) {
 },
     {
     entidad: "rubroSecundario",
+    indiceRubro: 0,
     expresiones: [
-        /^rubro\s+secundario[:\s]+(.+)$/i
+        /^rubro\s+secundario[:\s]+(.+)$/i,
+        /^rubro\s+(?:2|dos|segundo)[:\s]+(.+)$/i,
+        /^segundo\s+rubro[:\s]+(.+)$/i
+    ]
+},
+{
+    entidad: "rubroSecundario",
+    indiceRubro: 1,
+    expresiones: [
+        /^rubro\s+(?:3|tres|tercero)[:\s]+(.+)$/i,
+        /^tercer\s+rubro[:\s]+(.+)$/i,
+        /^tercero\s+rubro[:\s]+(.+)$/i
+    ]
+},
+{
+    entidad: "rubroSecundario",
+    indiceRubro: 2,
+    expresiones: [
+        /^rubro\s+(?:4|cuatro|cuarto)[:\s]+(.+)$/i,
+        /^cuarto\s+rubro[:\s]+(.+)$/i
+    ]
+},
+{
+    entidad: "rubroSecundario",
+    indiceRubro: 3,
+    expresiones: [
+        /^rubro\s+(?:5|cinco|quinto)[:\s]+(.+)$/i,
+        /^quinto\s+rubro[:\s]+(.+)$/i
     ]
 },
 
@@ -1115,16 +1143,33 @@ if (patron.entidad === "rubroSecundario") {
         )
     );
 
-    const selectorDisponible = selectores.find(function (select) {
-        return !select.value;
-    });
+    const selectorDisponible =
+        Number.isInteger(patron.indiceRubro)
+            ? selectores[patron.indiceRubro]
+            : selectores.find(function (select) {
+                return !select.value;
+            });
 
     if (selectorDisponible) {
         selectorDisponible.value = valor;
-        selectorDisponible.dispatchEvent(new Event("change"));
-    }
+        selectorDisponible.dispatchEvent(
+            new Event("change", { bubbles: true })
+        );
 
-    
+        console.log(
+            "Rubro secundario sincronizado por voz:",
+            patron.indiceRubro !== undefined
+                ? "Rubro " + (patron.indiceRubro + 2)
+                : "Primer disponible",
+            valor
+        );
+    } else {
+        console.warn(
+            "No se encontró selector disponible para rubro secundario:",
+            patron.indiceRubro,
+            valor
+        );
+    }
 }
 const numerosPorVoz = {
     uno: "1",
@@ -1197,7 +1242,16 @@ break;
     /superficie\s+aprovechable/i,
     /superficie\s+cultivada/i,
     /rubro\s+principal/i,
-    /rubro\s+secundario/i
+    /rubro\s+secundario/i,
+    /rubro\s+(?:2|dos|segundo)/i,
+    /segundo\s+rubro/i,
+    /rubro\s+(?:3|tres|tercero)/i,
+    /tercer\s+rubro/i,
+    /tercero\s+rubro/i,
+    /rubro\s+(?:4|cuatro|cuarto)/i,
+    /cuarto\s+rubro/i,
+    /rubro\s+(?:5|cinco|quinto)/i,
+    /quinto\s+rubro/i
 ];
 
 const posiciones = [];
