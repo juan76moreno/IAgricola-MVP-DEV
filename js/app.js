@@ -1151,18 +1151,42 @@ if (patron.entidad === "rubroSecundario") {
             });
 
     if (selectorDisponible) {
-        selectorDisponible.value = valor;
-        selectorDisponible.dispatchEvent(
-            new Event("change", { bubbles: true })
+        const normalizarRubro = texto =>
+            String(texto ?? "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .trim();
+
+        const valorNormalizado = normalizarRubro(valor);
+
+        const opcionRubro = Array.from(selectorDisponible.options).find(
+            opcion =>
+                normalizarRubro(opcion.value) === valorNormalizado ||
+                normalizarRubro(opcion.textContent) === valorNormalizado
         );
 
-        console.log(
-            "Rubro secundario sincronizado por voz:",
-            patron.indiceRubro !== undefined
-                ? "Rubro " + (patron.indiceRubro + 2)
-                : "Primer disponible",
-            valor
-        );
+        if (opcionRubro) {
+            selectorDisponible.value = opcionRubro.value;
+
+            selectorDisponible.dispatchEvent(
+                new Event("change", { bubbles: true })
+            );
+
+            console.log(
+                "Rubro secundario sincronizado por voz:",
+                patron.indiceRubro !== undefined
+                    ? "Rubro " + (patron.indiceRubro + 2)
+                    : "Primer disponible",
+                opcionRubro.value
+            );
+        } else {
+            console.warn(
+                "Rubro secundario reconocido pero no encontrado en selector:",
+                valor,
+                patron.indiceRubro
+            );
+        }
     } else {
         console.warn(
             "No se encontró selector disponible para rubro secundario:",
