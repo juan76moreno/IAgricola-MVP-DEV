@@ -1077,7 +1077,7 @@ if (
         }
     }
 }
-    break;
+    
 
 
 
@@ -1187,7 +1187,7 @@ if (campo.id === "cantidadRubrosExplotados") {
     valor: valor
 
 });
-
+break;
     }
     }
     const iniciosEntidad = [
