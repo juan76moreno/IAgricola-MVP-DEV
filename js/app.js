@@ -743,17 +743,37 @@ function notificarFalloVoz(patron, detalle = "") {
 
     return mensaje;
 }
-function interpretarVoz(texto) {
-
-    console.warn("Interpretando:", texto);
-
-    texto = texto
+function normalizarTextoVoz(texto) {
+    return String(texto ?? "")
         .replace(/\bruro\b/gi, "rubro")
         .replace(/\bruvo\b/gi, "rubro")
         .replace(/\brubo\b/gi, "rubro")
         .replace(/\brublo\b/gi, "rubro")
         .replace(/\brubro\s+tree\b/gi, "rubro tres")
-        .replace(/\brubro\s+tercero\b/gi, "rubro tres");
+        .replace(/\brubro\s+tercero\b/gi, "rubro tres")
+        .replace(/\bclente\b/gi, "cliente")
+        .replace(/\bclienta\b/gi, "cliente")
+        .replace(/\bcodico\b/gi, "código")
+        .replace(/\bcodgo\b/gi, "código")
+        .replace(/\bcodigo\b/gi, "código")
+        .replace(/\bfinca\s+el\b/gi, "finca El")
+        .replace(/\bsuperfisie\b/gi, "superficie")
+        .replace(/\bsuperficie\s+totao\b/gi, "superficie total")
+        .replace(/\baprobechable\b/gi, "aprovechable")
+        .replace(/\baprovechavle\b/gi, "aprovechable")
+        .replace(/\bcultibada\b/gi, "cultivada")
+        .replace(/\bcultivao\b/gi, "cultivada")
+        .replace(/\bfitosanitareo\b/gi, "fitosanitario")
+        .replace(/\bfitosanitaria\b/gi, "fitosanitario")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function interpretarVoz(texto) {
+
+    console.warn("Interpretando:", texto);
+
+    texto = normalizarTextoVoz(texto);
 
 if (superficiePendienteUnidad) {
 
