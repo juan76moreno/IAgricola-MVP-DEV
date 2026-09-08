@@ -746,6 +746,15 @@ function notificarFalloVoz(patron, detalle = "") {
 function interpretarVoz(texto) {
 
     console.warn("Interpretando:", texto);
+
+    texto = texto
+        .replace(/\bruro\b/gi, "rubro")
+        .replace(/\bruvo\b/gi, "rubro")
+        .replace(/\brubo\b/gi, "rubro")
+        .replace(/\brublo\b/gi, "rubro")
+        .replace(/\brubro\s+tree\b/gi, "rubro tres")
+        .replace(/\brubro\s+tercero\b/gi, "rubro tres");
+
 if (superficiePendienteUnidad) {
 
         const unidadRespuesta = texto
