@@ -774,8 +774,10 @@ function normalizarTextoVoz(texto) {
         .replace(/\bfitosanitareo\b/gi, "fitosanitario")
         .replace(/\bfitosanitaria\b/gi, "fitosanitario")
         .replace(/\bte\s+invito\s+responsable\b/gi, "técnico responsable")
+        .replace(/\bte\s+cnico\s+responsable\b/gi, "técnico responsable")
         .replace(/\btecnico\s+responsable\b/gi, "técnico responsable")
         .replace(/\bt[eé]cnico\s+responsable\b/gi, "técnico responsable")
+        .replace(/\bt[eé]cnica\s+responsable\b/gi, "técnico responsable")
         .replace(/\bt[eé]cnico\s+responsable\s+responsable\b/gi, "técnico responsable")
         .replace(/\s+/g, " ")
         .trim();
@@ -922,11 +924,15 @@ function interpretarVoz(texto) {
         {
             entidad: "tecnico",
             expresiones: [
-                /^t[eé]cnico[:\s]+(.+)$/i,
                 /^t[eé]cnico\s+responsable[:\s]+(.+)$/i,
+                /^t[eé]cnica\s+responsable[:\s]+(.+)$/i,
                 /^nombre\s+del\s+t[eé]cnico[:\s]+(.+)$/i,
+                /^nombre\s+de\s+la\s+t[eé]cnica[:\s]+(.+)$/i,
                 /^responsable\s+t[eé]cnico[:\s]+(.+)$/i,
-                /^especialista\s+agr[ií]cola[:\s]+(.+)$/i
+                /^responsable\s+t[eé]cnica[:\s]+(.+)$/i,
+                /^especialista\s+agr[ií]cola[:\s]+(.+)$/i,
+                /^t[eé]cnico[:\s]+(.+)$/i,
+                /^t[eé]cnica[:\s]+(.+)$/i
             ]
         },
         {
@@ -949,10 +955,27 @@ function interpretarVoz(texto) {
             expresiones: [
                 /^finca[:\s]+(.+)$/i,
                 /^nombre\s+de\s+la\s+finca[:\s]+(.+)$/i,
+                /^nombre\s+(?:de\s+)?finca[:\s]+(.+)$/i,
                 /^unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i,
                 /^parcela[:\s]+(.+)$/i,
                 /^hato[:\s]+(.+)$/i,
                 /^hacienda[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "municipio",
+            expresiones: [
+                /^municipio[:\s]+(.+)$/i,
+                /^municipio\s+de[:\s]+(.+)$/i,
+                /^ubicaci[oó]n\s+municipio[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "departamento",
+            expresiones: [
+                /^departamento[:\s]+(.+)$/i,
+                /^estado[:\s]+(.+)$/i,
+                /^entidad\s+federal[:\s]+(.+)$/i
             ]
         },
         {
@@ -1088,6 +1111,13 @@ function interpretarVoz(texto) {
             .replace(/(^|\s)\S/g, function(letra) {
                 return letra.toUpperCase();
             });
+    }
+
+    function capitalizarNombreFinca(textoValor) {
+        return capitalizarTexto(textoValor)
+            .replace(/\bC\.\s*A\.?\b/gi, "C.A.")
+            .replace(/\bS\.\s*A\.?\b/gi, "S.A.")
+            .replace(/\bS\.\s*R\.\s*L\.?\b/gi, "S.R.L.");
     }
 
     function normalizarFechaVisitaVoz(valorOriginal) {
@@ -1545,9 +1575,20 @@ function interpretarVoz(texto) {
                     valor = normalizarTipoVisitaVoz(valor);
                     break;
 
-                case "cliente":
                 case "tecnico":
+                    valor = valor
+                        .replace(/^(responsable\s+)+/i, "")
+                        .replace(/^t[eé]cnic[oa]\s+responsable\s+/i, "")
+                        .replace(/^especialista\s+agr[ií]cola\s+/i, "")
+                        .replace(/\s{2,}/g, " ")
+                        .trim();
+                    break;
+
                 case "finca":
+                    valor = capitalizarNombreFinca(valor.replace(/\s{2,}/g, " ").trim());
+                    break;
+
+                case "cliente":
                 case "municipio":
                 case "departamento":
                     valor = valor.replace(/\s{2,}/g, " ").trim();
@@ -1704,6 +1745,13 @@ function interpretarVoz(texto) {
         /tipo\s+(?:de\s+)?visita/i,
         /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
         /(?<!c[oó]digo\s)(?<!c[oó]digo\sde\s)(?<!c[oó]digo\sdel\s)cliente/i,
+        /nombre\s+de\s+la\s+finca/i,
+        /nombre\s+(?:de\s+)?finca/i,
+        /unidad\s+de\s+producci[oó]n/i,
+        /(?:^|\s)finca/i,
+        /(?:^|\s)municipio/i,
+        /(?:^|\s)departamento/i,
+        /(?:^|\s)estado/i,
         /superficie\s+total/i,
         /superficie\s+aprovechable/i,
         /superficie\s+cultivada/i,
