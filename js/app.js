@@ -20,6 +20,83 @@ function obtenerModuloActual(){
     return estadoVisita.modulo;
 
 }
+
+const TIPOS_VISITA_VALIDOS = [
+    "Programada",
+    "Seguimiento",
+    "SEGUIMIENTO AL CULTIVO",
+    "ACTUALIZACION DE INFORME AVALUO",
+    "SOLICITUD DE PRORROGA",
+    "ACTUALIZACION INFORME TECNICO DE SOLICITUD",
+    "CARTERAS (REPORTES)",
+    "CONVENIO BBVA-AGROINDOCA",
+    "CONVENIO BBVA-MISION AGROVENEZUELA",
+    "CONVENIO BBVA-SOCA PORTUGUESA",
+    "CONVENIO BBVA-SOCARISA",
+    "SOLICITUD DE RECUPERACIONES",
+    "SEGUIMIENTO DE LEY",
+    "SOLICITUD DE CREDITO",
+    "DE VALIDACION",
+    "LEY DE ATENCION AL SECTOR AGRICOLA",
+    "DE GARANTIA PIGNORADA",
+    "MANTENIMIENTO DE AVALUO",
+    "PETICIONES ESPECIALES",
+    "INSPECCION DE CAFE",
+    "PREDECIDIDO DE MAIZ",
+    "RATIFICACION OFICINA",
+    "DE REESTRUCTURACION",
+    "SEGUNDA PARTIDA DE MAIZ"
+];
+
+function sincronizarOpcionesTipoVisita() {
+    const selectorTipoVisita = document.getElementById("tipoVisita");
+
+    if (!selectorTipoVisita) {
+        return false;
+    }
+
+    const valorActual = selectorTipoVisita.value;
+    const opcionesExistentes = Array.from(selectorTipoVisita.options).map(function(opcion) {
+        return opcion.value || opcion.textContent;
+    });
+
+    TIPOS_VISITA_VALIDOS.forEach(function(tipoVisita) {
+        const existe = opcionesExistentes.some(function(opcion) {
+            return String(opcion).trim().toLowerCase() === tipoVisita.toLowerCase();
+        });
+
+        if (!existe) {
+            const opcion = document.createElement("option");
+            opcion.value = tipoVisita;
+            opcion.textContent = tipoVisita;
+            selectorTipoVisita.appendChild(opcion);
+        }
+    });
+
+    if (valorActual) {
+        const valorNormalizado = normalizarClaveTipoVisitaLocal(valorActual);
+        const opcionActual = Array.from(selectorTipoVisita.options).find(function(opcion) {
+            return normalizarClaveTipoVisitaLocal(opcion.value || opcion.textContent) === valorNormalizado;
+        });
+
+        if (opcionActual) {
+            selectorTipoVisita.value = opcionActual.value;
+        }
+    }
+
+    return true;
+}
+
+function normalizarClaveTipoVisitaLocal(valor) {
+    return String(valor ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[()]/g, " ")
+        .replace(/[\-_/]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
 function establecerObjetoActivo(nombreObjeto){
 
     estadoVisita.objeto = nombreObjeto;
@@ -560,6 +637,7 @@ estadoVisita.estado = "EN_VISITA";
     document.getElementById("visit").style.display="block";
     cambiarModulo("visita");
     establecerObjetoActivo("Inicio de Visita");
+    sincronizarOpcionesTipoVisita();
     inicializarVoz();
     
     registrarDatosCliente();
@@ -688,6 +766,7 @@ function obtenerNombreCampoVoz(patron) {
         tipoVisita: "el tipo de visita",
         cliente: "el nombre del cliente",
         codigoCliente: "el código de cliente",
+        identificacionCliente: "la cédula de identidad o RIF",
         finca: "la finca",
         cantidadRubrosExplotados: "la cantidad de rubros",
         rubroPrincipal: "el rubro principal",
@@ -764,6 +843,8 @@ function normalizarTextoVoz(texto) {
         .replace(/\bcodico\b/gi, "código")
         .replace(/\bcodgo\b/gi, "código")
         .replace(/\bcodigo\b/gi, "código")
+        .replace(/\bcedula\b/gi, "cédula")
+        .replace(/\br\s*i\s*f\b/gi, "RIF")
         .replace(/\bfinca\s+el\b/gi, "finca El")
         .replace(/\bsuperfisie\b/gi, "superficie")
         .replace(/\bsuperficie\s+totao\b/gi, "superficie total")
@@ -939,7 +1020,9 @@ function interpretarVoz(texto) {
             entidad: "tipoVisita",
             expresiones: [
                 /^tipo\s+(?:de\s+)?visita[:\s]+(.+)$/i,
-                /^visita\s+(programada|planificada|ordinaria|seguimiento|extraordinaria|no\s+programada|imprevista)$/i
+                /^motivo\s+(?:de\s+)?(?:la\s+)?inspecci[oó]n[:\s]+(.+)$/i,
+                /^motivo[:\s]+(.+)$/i,
+                /^visita\s+(.+)$/i
             ]
         },
         {
@@ -983,6 +1066,19 @@ function interpretarVoz(texto) {
             expresiones: [
                 /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i,
                 /^cliente\s+n[uú]mero[:\s]+([0-9\s]+)$/i
+            ]
+        },
+        {
+            entidad: "identificacionCliente",
+            expresiones: [
+                /^c[eé]dula\s+de\s+identidad\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal[:\s]+(.+)$/i,
+                /^c[eé]dula\s+o\s+(?:rif|r\.?i\.?f\.?)[:\s]+(.+)$/i,
+                /^c[eé]dula(?:\s+de\s+identidad)?[:\s]+(.+)$/i,
+                /^n[uú]mero\s+de\s+c[eé]dula[:\s]+(.+)$/i,
+                /^registro\s+de\s+informaci[oó]n\s+fiscal[:\s]+(.+)$/i,
+                /^(?:rif|r\.?i\.?f\.?)[:\s]+(.+)$/i,
+                /^identificaci[oó]n\s+(?:del\s+cliente|fiscal)[:\s]+(.+)$/i,
+                /^documento\s+de\s+identidad[:\s]+(.+)$/i
             ]
         },
         {
@@ -1128,6 +1224,35 @@ function interpretarVoz(texto) {
             .replace(/\bGps\b/g, "GPS");
     }
 
+    function normalizarIdentificacionClienteVoz(valorOriginal) {
+        let valor = String(valorOriginal ?? "")
+            .trim()
+            .replace(/\s{2,}/g, " ");
+
+        valor = valor
+            .replace(/\b(r\s*\.?\s*i\s*\.?\s*f\.?)\b/gi, "RIF")
+            .replace(/\s*-\s*/g, "-")
+            .trim();
+
+        const soloDigitosSeparados = valor.match(/^[0-9\s]+$/);
+
+        if (soloDigitosSeparados) {
+            return valor.replace(/\s+/g, "");
+        }
+
+        const rifSeparado = valor.match(/^([VEJGP])\s*-?\s*([0-9\s]+)(?:\s*-?\s*([0-9]))?$/i);
+
+        if (rifSeparado) {
+            const letra = rifSeparado[1].toUpperCase();
+            const numero = rifSeparado[2].replace(/\s+/g, "");
+            const digito = rifSeparado[3] ? "-" + rifSeparado[3] : "";
+
+            return letra + "-" + numero + digito;
+        }
+
+        return valor.toUpperCase();
+    }
+
 
     function normalizarFechaVisitaVoz(valorOriginal) {
         const textoFecha = normalizarClave(valorOriginal);
@@ -1236,7 +1361,10 @@ function interpretarVoz(texto) {
     }
 
     function normalizarTipoVisitaVoz(valorOriginal) {
-        const clave = normalizarClave(valorOriginal);
+        const clave = normalizarClave(valorOriginal)
+            .replace(/^motivo\s+(?:de\s+)?(?:la\s+)?inspecci[oó]n\s+/, "")
+            .replace(/^tipo\s+(?:de\s+)?visita\s+/, "")
+            .trim();
 
         const mapaTipoVisita = {
             programada: "Programada",
@@ -1244,12 +1372,97 @@ function interpretarVoz(texto) {
             ordinaria: "Programada",
             seguimiento: "Seguimiento",
             "de seguimiento": "Seguimiento",
+
+            "seguimiento al cultivo": "SEGUIMIENTO AL CULTIVO",
+            "seguimiento cultivo": "SEGUIMIENTO AL CULTIVO",
+            cultivo: "SEGUIMIENTO AL CULTIVO",
+
+            "actualizacion de informe avaluo": "ACTUALIZACION DE INFORME AVALUO",
+            "actualizacion informe avaluo": "ACTUALIZACION DE INFORME AVALUO",
+            "actualizacion de avaluo": "ACTUALIZACION DE INFORME AVALUO",
+
+            "solicitud de prorroga": "SOLICITUD DE PRORROGA",
+            prorroga: "SOLICITUD DE PRORROGA",
+
+            "actualizacion informe tecnico de solicitud": "ACTUALIZACION INFORME TECNICO DE SOLICITUD",
+            "actualizacion de informe tecnico de solicitud": "ACTUALIZACION INFORME TECNICO DE SOLICITUD",
+            "informe tecnico de solicitud": "ACTUALIZACION INFORME TECNICO DE SOLICITUD",
+
+            "carteras reportes": "CARTERAS (REPORTES)",
+            "cartera reportes": "CARTERAS (REPORTES)",
+            reportes: "CARTERAS (REPORTES)",
+
+            "convenio bbva agroindoca": "CONVENIO BBVA-AGROINDOCA",
+            agroindoca: "CONVENIO BBVA-AGROINDOCA",
+
+            "convenio bbva mision agrovenezuela": "CONVENIO BBVA-MISION AGROVENEZUELA",
+            "mision agrovenezuela": "CONVENIO BBVA-MISION AGROVENEZUELA",
+            agrovenezuela: "CONVENIO BBVA-MISION AGROVENEZUELA",
+
+            "convenio bbva soca portuguesa": "CONVENIO BBVA-SOCA PORTUGUESA",
+            "soca portuguesa": "CONVENIO BBVA-SOCA PORTUGUESA",
+
+            "convenio bbva socarisa": "CONVENIO BBVA-SOCARISA",
+            socarisa: "CONVENIO BBVA-SOCARISA",
+
+            "solicitud de recuperaciones": "SOLICITUD DE RECUPERACIONES",
+            recuperaciones: "SOLICITUD DE RECUPERACIONES",
+
+            "seguimiento de ley": "SEGUIMIENTO DE LEY",
+
+            "solicitud de credito": "SOLICITUD DE CREDITO",
+            credito: "SOLICITUD DE CREDITO",
+            crédito: "SOLICITUD DE CREDITO",
+
+            "de validacion": "DE VALIDACION",
+            validacion: "DE VALIDACION",
+            validación: "DE VALIDACION",
+
+            "ley de atencion al sector agricola": "LEY DE ATENCION AL SECTOR AGRICOLA",
+            "ley atencion al sector agricola": "LEY DE ATENCION AL SECTOR AGRICOLA",
+            "ley del sector agricola": "LEY DE ATENCION AL SECTOR AGRICOLA",
+
+            "de garantia pignorada": "DE GARANTIA PIGNORADA",
+            "garantia pignorada": "DE GARANTIA PIGNORADA",
+            pignorada: "DE GARANTIA PIGNORADA",
+
+            "mantenimiento de avaluo": "MANTENIMIENTO DE AVALUO",
+
+            "peticiones especiales": "PETICIONES ESPECIALES",
+            "peticion especial": "PETICIONES ESPECIALES",
+            "peticiones especial": "PETICIONES ESPECIALES",
+
+            "inspeccion de cafe": "INSPECCION DE CAFE",
+            "inspeccion cafe": "INSPECCION DE CAFE",
+
+            "predecidido de maiz": "PREDECIDIDO DE MAIZ",
+            "predecidido maiz": "PREDECIDIDO DE MAIZ",
+
+            "ratificacion oficina": "RATIFICACION OFICINA",
+            "ratificacion de oficina": "RATIFICACION OFICINA",
+
+            "de reestructuracion": "DE REESTRUCTURACION",
+            reestructuracion: "DE REESTRUCTURACION",
+
+            "segunda partida de maiz": "SEGUNDA PARTIDA DE MAIZ",
+            "segunda partida maiz": "SEGUNDA PARTIDA DE MAIZ",
+
             extraordinaria: "Extraordinaria",
             "no programada": "No programada",
             imprevista: "No programada"
         };
 
-        return mapaTipoVisita[clave] || capitalizarTexto(valorOriginal);
+        const valorMapeado = mapaTipoVisita[clave] || null;
+
+        if (valorMapeado) {
+            return valorMapeado;
+        }
+
+        const opcionExistente = TIPOS_VISITA_VALIDOS.find(function(tipoVisita) {
+            return normalizarClaveTipoVisitaLocal(tipoVisita) === normalizarClaveTipoVisitaLocal(valorOriginal);
+        });
+
+        return opcionExistente || capitalizarTexto(valorOriginal);
     }
 
     function normalizarCampoTecnico(entidad, valorOriginal) {
@@ -1572,6 +1785,10 @@ function interpretarVoz(texto) {
                     valor = valor.padStart(8, "0");
                     break;
 
+                case "identificacionCliente":
+                    valor = normalizarIdentificacionClienteVoz(valor);
+                    break;
+
                 case "fechaVisita":
                     valor = normalizarFechaVisitaVoz(valor);
                     break;
@@ -1589,6 +1806,7 @@ function interpretarVoz(texto) {
                         .replace(/^(responsable\s+)+/i, "")
                         .replace(/^t[eé]cnic[oa]\s+responsable\s+/i, "")
                         .replace(/^especialista\s+agr[ií]cola\s+/i, "")
+                        .replace(/\s+\b(?:el|la|los|las|de|del)\b$/i, "")
                         .replace(/\s{2,}/g, " ")
                         .trim();
                     valor = normalizarTextoLibreVoz(valor);
@@ -1748,21 +1966,31 @@ function interpretarVoz(texto) {
         /fecha\s+(?:de\s+)?inspecci[oó]n/i,
         /hora\s+(?:de\s+)?inicio/i,
         /hora\s+(?:de\s+)?la\s+visita/i,
-        /t[eé]cnico\s+responsable/i,
+        /(?:^|\s)(?:el\s+)?t[eé]cnico\s+responsable/i,
         /nombre\s+del\s+t[eé]cnico/i,
         /responsable\s+t[eé]cnico/i,
         /especialista\s+agr[ií]cola/i,
-        /(?<!responsable\s)t[eé]cnico/i,
-        /tipo\s+(?:de\s+)?visita/i,
+        /(?<!responsable\s)(?:^|\s)(?:el\s+)?t[eé]cnico/i,
+        /(?:^|\s)(?:el\s+)?tipo\s+(?:de\s+)?visita/i,
+        /(?:^|\s)motivo\s+(?:de\s+)?(?:la\s+)?inspecci[oó]n/i,
+        /(?:^|\s)motivo/i,
         /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
-        /(?<!c[oó]digo\s)(?<!c[oó]digo\sde\s)(?<!c[oó]digo\sdel\s)cliente/i,
+        /(?:^|\s)c[eé]dula\s+de\s+identidad\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal/i,
+        /(?:^|\s)c[eé]dula\s+o\s+(?:rif|r\.?i\.?f\.?)\b/i,
+        /(?:^|\s)c[eé]dula(?:\s+de\s+identidad)?/i,
+        /(?:^|\s)n[uú]mero\s+de\s+c[eé]dula/i,
+        /(?:^|\s)registro\s+de\s+informaci[oó]n\s+fiscal/i,
+        /(?:^|\s)(?:rif|r\.?i\.?f\.?)\b/i,
+        /(?:^|\s)identificaci[oó]n\s+(?:del\s+cliente|fiscal)/i,
+        /(?:^|\s)documento\s+de\s+identidad/i,
+        /(?<!c[oó]digo\s)(?<!c[oó]digo\sde\s)(?<!c[oó]digo\sdel\s)(?:^|\s)(?:el\s+)?cliente/i,
         /nombre\s+de\s+la\s+finca/i,
         /nombre\s+(?:de\s+)?finca/i,
         /unidad\s+de\s+producci[oó]n/i,
-        /(?:^|\s)finca/i,
-        /(?:^|\s)municipio/i,
-        /(?:^|\s)departamento/i,
-        /(?:^|\s)estado/i,
+        /(?:^|\s)(?:la\s+)?finca/i,
+        /(?:^|\s)(?:el\s+)?municipio/i,
+        /(?:^|\s)(?:el\s+)?departamento/i,
+        /(?:^|\s)(?:el\s+)?estado/i,
         /superficie\s+total/i,
         /superficie\s+aprovechable/i,
         /superficie\s+cultivada/i,
