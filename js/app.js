@@ -1147,6 +1147,84 @@ function interpretarVoz(texto) {
             ]
         },
         {
+            entidad: "representanteLegal",
+            expresiones: [
+                /^representante\s+legal[:\s]+(.+)$/i,
+                /^nombre\s+del\s+representante\s+legal[:\s]+(.+)$/i,
+                /^representante[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "identificacionRepresentanteLegal",
+            expresiones: [
+                /^c[eé]dula\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal\s+del\s+representante\s+legal[:\s]+(.+)$/i,
+                /^c[eé]dula\s+(?:de\s+identidad\s+)?del\s+representante\s+legal[:\s]+(.+)$/i,
+                /^c[eé]dula\s+del\s+representante\s+legal[:\s]+(.+)$/i,
+                /^(?:rif|r\.?i\.?f\.?)\s+del\s+representante\s+legal[:\s]+(.+)$/i,
+                /^identificaci[oó]n\s+del\s+representante\s+legal[:\s]+(.+)$/i,
+                /^documento\s+del\s+representante\s+legal[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "telefonoPrincipal",
+            expresiones: [
+                /^tel[eé]fono\s+principal[:\s]+(.+)$/i,
+                /^n[uú]mero\s+de\s+tel[eé]fono\s+principal[:\s]+(.+)$/i,
+                /^tel[eé]fono[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "telefonoAlternativo",
+            expresiones: [
+                /^tel[eé]fono\s+alternativo(?:\s+cuando\s+aplique)?[:\s]+(.+)$/i,
+                /^n[uú]mero\s+de\s+tel[eé]fono\s+alternativo[:\s]+(.+)$/i,
+                /^celular\s+alternativo[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "correoElectronico",
+            expresiones: [
+                /^correo\s+electr[oó]nico[:\s]+(.+)$/i,
+                /^email[:\s]+(.+)$/i,
+                /^e\s*mail[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "direccionHabitacion",
+            expresiones: [
+                /^direcci[oó]n\s+de\s+habitaci[oó]n[:\s]+(.+)$/i,
+                /^direcci[oó]n\s+habitaci[oó]n[:\s]+(.+)$/i,
+                /^domicilio[:\s]+(.+)$/i,
+                /^direcci[oó]n[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "registroMinisterioAgricultura",
+            expresiones: [
+                /^n[uú]mero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura[:\s]+(.+)$/i,
+                /^registro\s+del\s+ministerio\s+de\s+agricultura[:\s]+(.+)$/i,
+                /^registro\s+ministerio\s+agricultura[:\s]+(.+)$/i,
+                /^registro\s+agr[ií]cola[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "fechaVencimientoRegistro",
+            expresiones: [
+                /^fecha\s+de\s+vencimiento\s+del\s+registro[:\s]+(.+)$/i,
+                /^vencimiento\s+del\s+registro[:\s]+(.+)$/i,
+                /^fecha\s+vencimiento\s+registro[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "numeroRegistroTributario",
+            expresiones: [
+                /^n[uú]mero\s+de\s+registro\s+tributario[:\s]+(.+)$/i,
+                /^registro\s+tributario[:\s]+(.+)$/i,
+                /^nrt[:\s]+(.+)$/i,
+                /^n\.?\s*r\.?\s*t\.?[:\s]+(.+)$/i
+            ]
+        },
+        {
             entidad: "identificacionCliente",
             expresiones: [
                 /^c[eé]dula\s+de\s+identidad\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal[:\s]+(.+)$/i,
@@ -1476,6 +1554,14 @@ function interpretarVoz(texto) {
             .replace(/\s+/g, " ")
             .trim();
 
+        const textoFechaDepurado = textoFecha
+            .replace(/\s+(?:hora\s+de\s+inicio|representante\s+legal|t[eé]cnico\s+responsable|tipo\s+de\s+visita|cliente|finca|municipio|parroquia|departamento|c[eé]dula|c[oó]digo\s+cliente)\b.*$/i, "")
+            .trim();
+
+        if (textoFechaDepurado !== textoFecha) {
+            return normalizarFechaVisitaVoz(textoFechaDepurado);
+        }
+
         if (textoFecha === "hoy") {
             {
                 const fechaHoy = new Date();
@@ -1588,6 +1674,10 @@ function interpretarVoz(texto) {
             .replace(/\ben\s+la\s+tarde\b/g, "pm")
             .replace(/\ben\s+la\s+noche\b/g, "pm")
             .replace(/\s+/g, " ")
+            .trim();
+
+        textoHora = textoHora
+            .replace(/\s+(?:representante\s+legal|t[eé]cnico\s+responsable|tipo\s+de\s+visita|cliente|finca|municipio|parroquia|departamento|c[eé]dula|c[oó]digo\s+cliente)\b.*$/i, "")
             .trim();
 
         const numerosHora = {
@@ -1797,6 +1887,79 @@ function interpretarVoz(texto) {
         return opcionExistente || capitalizarTexto(valorOriginal);
     }
 
+    function normalizarTelefonoVoz(valorOriginal) {
+        const mapaNumeros = {
+            cero: "0",
+            uno: "1",
+            un: "1",
+            una: "1",
+            dos: "2",
+            tres: "3",
+            cuatro: "4",
+            cinco: "5",
+            seis: "6",
+            siete: "7",
+            ocho: "8",
+            nueve: "9"
+        };
+
+        const texto = normalizarClave(valorOriginal)
+            .replace(/\bmas\b/g, "+")
+            .replace(/\bmás\b/g, "+")
+            .replace(/\./g, " ")
+            .replace(/,/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        const partes = texto.split(" ");
+        let salida = "";
+
+        for (const parte of partes) {
+            if (parte === "+") {
+                salida += "+";
+            } else if (/^\+?\d+$/.test(parte)) {
+                salida += parte;
+            } else if (mapaNumeros[parte] !== undefined) {
+                salida += mapaNumeros[parte];
+            }
+        }
+
+        return salida || String(valorOriginal ?? "").trim();
+    }
+
+    function normalizarCorreoVoz(valorOriginal) {
+        return normalizarClave(valorOriginal)
+            .replace(/\s+arroba\s+/g, "@")
+            .replace(/\s+at\s+/g, "@")
+            .replace(/\s+punto\s+/g, ".")
+            .replace(/\s+guion\s+/g, "-")
+            .replace(/\s+guión\s+/g, "-")
+            .replace(/\s+guion\s+bajo\s+/g, "_")
+            .replace(/\s+guión\s+bajo\s+/g, "_")
+            .replace(/\s+/g, "")
+            .replace(/gmail\.com$/i, "gmail.com")
+            .replace(/hotmail\.com$/i, "hotmail.com")
+            .replace(/outlook\.com$/i, "outlook.com")
+            .trim();
+    }
+
+    function normalizarRegistroAlfanumericoVoz(valorOriginal) {
+        return String(valorOriginal ?? "")
+            .trim()
+            .replace(/\s*-\s*/g, "-")
+            .replace(/\s{2,}/g, " ")
+            .toUpperCase();
+    }
+
+    function normalizarIdentificacionRepresentanteVoz(valorOriginal) {
+        return normalizarIdentificacionClienteVoz(
+            String(valorOriginal ?? "")
+                .replace(/^del\s+representante\s+legal\s+/i, "")
+                .replace(/^representante\s+legal\s+/i, "")
+                .trim()
+        );
+    }
+
     function normalizarCampoTecnico(entidad, valorOriginal) {
         const clave = normalizarClave(valorOriginal);
 
@@ -1881,8 +2044,81 @@ function interpretarVoz(texto) {
         return valorOriginal;
     }
 
+    const ALIASES_CONTROL_VOZ = {
+        representanteLegal: ["representanteLegal", "representante", "nombreRepresentanteLegal"],
+        identificacionRepresentanteLegal: ["identificacionRepresentanteLegal", "rifRepresentanteLegal", "cedulaRepresentanteLegal", "identificacionFiscalRepresentanteLegal"],
+        telefonoPrincipal: ["telefonoPrincipal", "telefono", "numeroTelefonoPrincipal"],
+        telefonoAlternativo: ["telefonoAlternativo", "telefonoSecundario", "numeroTelefonoAlternativo"],
+        correoElectronico: ["correoElectronico", "correo", "email"],
+        direccionHabitacion: ["direccionHabitacion", "direccion", "direccionCliente"],
+        registroMinisterioAgricultura: ["registroMinisterioAgricultura", "numeroRegistroMinisterioAgricultura", "registroAgricola", "numeroRegistroAgricultura"],
+        fechaVencimientoRegistro: ["fechaVencimientoRegistro", "vencimientoRegistro", "fechaVencimientoMinisterioAgricultura"],
+        numeroRegistroTributario: ["numeroRegistroTributario", "registroTributario", "nrt"]
+    };
+
+    const ETIQUETAS_CONTROL_VOZ = {
+        representanteLegal: ["representante legal"],
+        identificacionRepresentanteLegal: ["identificación del representante legal", "identificacion del representante legal", "registro de información fiscal del representante legal", "registro de informacion fiscal del representante legal"],
+        telefonoPrincipal: ["teléfono principal", "telefono principal"],
+        telefonoAlternativo: ["teléfono alternativo", "telefono alternativo"],
+        correoElectronico: ["correo electrónico", "correo electronico"],
+        direccionHabitacion: ["dirección de habitación", "direccion de habitacion"],
+        registroMinisterioAgricultura: ["número de registro del ministerio de agricultura", "numero de registro del ministerio de agricultura", "registro del ministerio de agricultura"],
+        fechaVencimientoRegistro: ["fecha de vencimiento del registro", "vencimiento del registro"],
+        numeroRegistroTributario: ["número de registro tributario", "numero de registro tributario", "registro tributario"]
+    };
+
+    function buscarControlVoz(entidad) {
+        const directo = document.getElementById(entidad);
+
+        if (directo) {
+            return directo;
+        }
+
+        const alias = ALIASES_CONTROL_VOZ[entidad] || [];
+
+        for (const idAlias of alias) {
+            const campoAlias = document.getElementById(idAlias);
+
+            if (campoAlias) {
+                return campoAlias;
+            }
+        }
+
+        const etiquetas = (ETIQUETAS_CONTROL_VOZ[entidad] || []).map(normalizarClave);
+
+        if (etiquetas.length === 0) {
+            return null;
+        }
+
+        const controles = Array.from(document.querySelectorAll("input, select, textarea"));
+
+        return controles.find(function(control) {
+            const id = control.id || "";
+            const placeholder = control.getAttribute("placeholder") || "";
+            const aria = control.getAttribute("aria-label") || "";
+            const labelFor = id
+                ? document.querySelector('label[for="' + CSS.escape(id) + '"]')?.textContent || ""
+                : "";
+            const textoPrevio = control.previousElementSibling?.textContent || "";
+            const textoContenedor = control.parentElement?.textContent || "";
+            const textoControl = normalizarClave([
+                id,
+                placeholder,
+                aria,
+                labelFor,
+                textoPrevio,
+                textoContenedor
+            ].join(" "));
+
+            return etiquetas.some(function(etiqueta) {
+                return textoControl.includes(etiqueta);
+            });
+        }) || null;
+    }
+
     function sincronizarControl(entidad, valor, unidadSuperficieDetectada = null) {
-        const campo = document.getElementById(entidad);
+        const campo = buscarControlVoz(entidad);
 
         if (!campo) {
             console.debug({
@@ -2098,7 +2334,16 @@ function interpretarVoz(texto) {
 
             valor = numerosVoz[valor.toLowerCase()] ?? valor;
 
+            let entidadDestino = patron.entidad;
+
             const textoNormalizado = normalizarClave(valor);
+
+            if (
+                entidadDestino === "cliente" &&
+                /^([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*$/.test(textoNormalizado)
+            ) {
+                entidadDestino = "codigoCliente";
+            }
 
             if (
                 textoNormalizado.includes("sin informacion") ||
@@ -2110,7 +2355,7 @@ function interpretarVoz(texto) {
 
             let unidadSuperficieDetectada = null;
 
-            switch (patron.entidad) {
+            switch (entidadDestino) {
 
                 case "codigoCliente":
                     valor = normalizarCodigoClienteVoz(valor);
@@ -2118,6 +2363,28 @@ function interpretarVoz(texto) {
 
                 case "identificacionCliente":
                     valor = normalizarIdentificacionClienteVoz(valor);
+                    break;
+
+                case "identificacionRepresentanteLegal":
+                    valor = normalizarIdentificacionRepresentanteVoz(valor);
+                    break;
+
+                case "telefonoPrincipal":
+                case "telefonoAlternativo":
+                    valor = normalizarTelefonoVoz(valor);
+                    break;
+
+                case "correoElectronico":
+                    valor = normalizarCorreoVoz(valor);
+                    break;
+
+                case "registroMinisterioAgricultura":
+                case "numeroRegistroTributario":
+                    valor = normalizarRegistroAlfanumericoVoz(valor);
+                    break;
+
+                case "fechaVencimientoRegistro":
+                    valor = normalizarFechaVisitaVoz(valor);
                     break;
 
                 case "fechaVisita":
@@ -2148,6 +2415,8 @@ function interpretarVoz(texto) {
                     break;
 
                 case "cliente":
+                case "representanteLegal":
+                case "direccionHabitacion":
                 case "municipio":
                 case "departamento":
                 case "estadoFitosanitario":
@@ -2235,7 +2504,7 @@ function interpretarVoz(texto) {
                 case "subsector":
                 case "tipoSubsector":
                 case "sectorProduccion":
-                    valor = normalizarCampoTecnico(patron.entidad, valor);
+                    valor = normalizarCampoTecnico(entidadDestino, valor);
                     break;
 
                 default:
@@ -2244,12 +2513,12 @@ function interpretarVoz(texto) {
             }
 
             const registro = registrarDato(
-                patron.entidad,
+                entidadDestino,
                 valor,
                 (
-                    patron.entidad === "superficieTotal" ||
-                    patron.entidad === "superficieAprovechable" ||
-                    patron.entidad === "superficieCultivada"
+                    entidadDestino === "superficieTotal" ||
+                    entidadDestino === "superficieAprovechable" ||
+                    entidadDestino === "superficieCultivada"
                 )
                     ? unidadSuperficieDetectada
                     : null
@@ -2261,26 +2530,26 @@ function interpretarVoz(texto) {
 
             console.log(
                 "Dato registrado:",
-                patron.entidad,
+                entidadDestino,
                 valor
             );
 
             entidadesDetectadas.push({
-                entidad: patron.entidad,
-                destino: patron.entidad,
+                entidad: entidadDestino,
+                destino: entidadDestino,
                 valor: valor,
                 fecha: new Date().toISOString()
             });
 
-            if (patron.entidad === "rubroPrincipal") {
+            if (entidadDestino === "rubroPrincipal") {
                 sincronizarRubroPrincipal(valor, patron);
 
-            } else if (patron.entidad === "rubroSecundario") {
+            } else if (entidadDestino === "rubroSecundario") {
                 sincronizarRubroSecundario(valor, patron);
 
             } else {
                 sincronizarControl(
-                    patron.entidad,
+                    entidadDestino,
                     valor,
                     unidadSuperficieDetectada
                 );
@@ -2305,6 +2574,24 @@ function interpretarVoz(texto) {
         /(?:^|\s)(?:el\s+)?tipo\s+(?:de\s+)?visita/i,
         /(?:^|\s)motivo\s+(?:de\s+)?(?:la\s+)?inspecci[oó]n/i,
         /(?:^|\s)motivo/i,
+        /(?:^|\s)representante\s+legal/i,
+        /(?:^|\s)nombre\s+del\s+representante\s+legal/i,
+        /(?:^|\s)c[eé]dula\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal\s+del\s+representante\s+legal/i,
+        /(?:^|\s)c[eé]dula\s+(?:de\s+identidad\s+)?del\s+representante\s+legal/i,
+        /(?:^|\s)c[eé]dula\s+del\s+representante\s+legal/i,
+        /(?:^|\s)(?:rif|r\.?i\.?f\.?)\s+del\s+representante\s+legal/i,
+        /(?:^|\s)identificaci[oó]n\s+del\s+representante\s+legal/i,
+        /(?:^|\s)tel[eé]fono\s+principal/i,
+        /(?:^|\s)tel[eé]fono\s+alternativo/i,
+        /(?:^|\s)correo\s+electr[oó]nico/i,
+        /(?:^|\s)(?:email|e\s*mail)/i,
+        /(?:^|\s)direcci[oó]n\s+(?:de\s+)?habitaci[oó]n/i,
+        /(?:^|\s)n[uú]mero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura/i,
+        /(?:^|\s)registro\s+(?:del\s+)?ministerio\s+de\s+agricultura/i,
+        /(?:^|\s)fecha\s+de\s+vencimiento\s+del\s+registro/i,
+        /(?:^|\s)vencimiento\s+del\s+registro/i,
+        /(?:^|\s)n[uú]mero\s+de\s+registro\s+tributario/i,
+        /(?:^|\s)registro\s+tributario/i,
         /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
         /(?:^|\s)c[eé]dula\s+de\s+identidad\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal/i,
         /(?:^|\s)c[eé]dula\s+o\s+(?:rif|r\.?i\.?f\.?)\b/i,
