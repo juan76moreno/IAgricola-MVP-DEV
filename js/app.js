@@ -1142,7 +1142,8 @@ function interpretarVoz(texto) {
             expresiones: [
                 /^c[oó]digo(?:\s+(?:de|del))?\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
                 /^cliente\s+n[uú]mero[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
-                /^n[uú]mero\s+de\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i
+                /^n[uú]mero\s+de\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
+                /^cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i
             ]
         },
         {
@@ -1484,6 +1485,26 @@ function interpretarVoz(texto) {
                     fechaHoy.getFullYear()
                 );
             }
+        }
+
+        let coincidenciaFechaCompacta = textoFecha.match(/^(\d{1,2})(\d{2})\s+(\d{4})$/);
+
+        if (coincidenciaFechaCompacta) {
+            return (
+                coincidenciaFechaCompacta[1].padStart(2, "0") + "/" +
+                coincidenciaFechaCompacta[2] + "/" +
+                coincidenciaFechaCompacta[3]
+            );
+        }
+
+        coincidenciaFechaCompacta = textoFecha.match(/^(\d{2})(\d{2})(\d{4})$/);
+
+        if (coincidenciaFechaCompacta) {
+            return (
+                coincidenciaFechaCompacta[1] + "/" +
+                coincidenciaFechaCompacta[2] + "/" +
+                coincidenciaFechaCompacta[3]
+            );
         }
 
         let coincidenciaFecha = textoFecha.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
