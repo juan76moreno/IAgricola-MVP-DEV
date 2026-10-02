@@ -775,7 +775,7 @@ function interpretarVoz(texto) {
 
     texto = normalizarTextoVoz(texto);
 
-if (superficiePendienteUnidad) {
+    if (superficiePendienteUnidad) {
 
         const unidadRespuesta = texto
             .normalize("NFD")
@@ -827,34 +827,36 @@ if (superficiePendienteUnidad) {
                 indicadoresUnidad[pendiente.entidad]
             );
 
-            
+            const registroUnidad = registrarDato(
+                pendiente.entidad,
+                pendiente.valor,
+                unidadConfirmada
+            );
 
-          const registroUnidad = registrarDato(
-    pendiente.entidad,
-    pendiente.valor,
-    unidadConfirmada
-);
+            if (registroUnidad === null) {
+                console.warn(
+                    "La unidad se mantiene pendiente de habilitación BCAC:",
+                    unidadConfirmada
+                );
 
-if (registroUnidad === null) {
-    console.warn(
-        "La unidad se mantiene pendiente de habilitación BCAC:",
-        unidadConfirmada
-    );
-alert(
-    "La unidad " +
-    unidadConfirmada +
-    " fue reconocida, pero aún no está habilitada para su registro estructurado. " +
-    "El dato se mantiene pendiente."
-);
-    return;
-}
-if (campoPendiente) {
+                alert(
+                    "La unidad " +
+                    unidadConfirmada +
+                    " fue reconocida, pero aún no está habilitada para su registro estructurado. " +
+                    "El dato se mantiene pendiente."
+                );
+
+                return;
+            }
+
+            if (campoPendiente) {
                 campoPendiente.value = pendiente.valor;
             }
 
             if (indicadorUnidad) {
                 indicadorUnidad.textContent = unidadConfirmada;
             }
+
             superficiePendienteUnidad = null;
 
             console.info(
@@ -866,595 +868,753 @@ if (campoPendiente) {
         }
 
         notificarFalloVoz(
-    { entidad: superficiePendienteUnidad.entidad },
-    "Detecté la superficie, pero no pude identificar la unidad indicada"
-);
+            { entidad: superficiePendienteUnidad.entidad },
+            "Detecté la superficie, pero no pude identificar la unidad indicada"
+        );
 
-return;
+        return;
     }
+
     const entidadesDetectadas = [];
 
+    const numerosVoz = {
+        uno: "1",
+        dos: "2",
+        tres: "3",
+        cuatro: "4",
+        cinco: "5",
+        seis: "6",
+        siete: "7",
+        ocho: "8",
+        nueve: "9",
+        diez: "10"
+    };
+
     const patrones = [
+        {
+            entidad: "cliente",
+            expresiones: [
+                /^cliente[:\s]+(.+)$/i,
+                /^nombre\s+del\s+cliente[:\s]+(.+)$/i,
+                /^productor[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "finca",
+            expresiones: [
+                /^finca[:\s]+(.+)$/i,
+                /^nombre\s+de\s+la\s+finca[:\s]+(.+)$/i,
+                /^unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i,
+                /^parcela[:\s]+(.+)$/i,
+                /^hato[:\s]+(.+)$/i,
+                /^hacienda[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "codigoCliente",
+            expresiones: [
+                /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i,
+                /^cliente\s+n[uú]mero[:\s]+([0-9\s]+)$/i
+            ]
+        },
+        {
+            entidad: "cantidadRubrosExplotados",
+            expresiones: [
+                /^cantidad\s+de\s+rubros(?:\s+explotados)?(?:\s*:\s*|\s+)(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
+                /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?(?:\s*:\s*|\s+)(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
+                /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+rubros(?:\s+explotados)?$/i,
+                /^cantidad\s+de\s+actividades\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
+                /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+actividades$/i
+            ]
+        },
+        {
+            entidad: "rubroSecundario",
+            indiceRubro: 0,
+            expresiones: [
+                /^rubro\s+secundario[:\s]+(.+)$/i,
+                /^rubro\s+(?:2|dos|segundo)[:\s]+(.+)$/i,
+                /^segundo\s+rubro[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "rubroSecundario",
+            indiceRubro: 1,
+            expresiones: [
+                /^rubro\s+(?:3|tres|tercero)[:\s]+(.+)$/i,
+                /^tercer\s+rubro[:\s]+(.+)$/i,
+                /^tercero\s+rubro[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "rubroSecundario",
+            indiceRubro: 2,
+            expresiones: [
+                /^rubro\s+(?:4|cuatro|cuarto)[:\s]+(.+)$/i,
+                /^cuarto\s+rubro[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "rubroSecundario",
+            indiceRubro: 3,
+            expresiones: [
+                /^rubro\s+(?:5|cinco|quinto)[:\s]+(.+)$/i,
+                /^quinto\s+rubro[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "rubroPrincipal",
+            expresiones: [
+                /^rubro\s+principal[:\s]+(.+)$/i,
+                /^rubro(?!\s+secundario\b)[:\s]+(.+)$/i,
+                /^cultivo[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "subsector",
+            expresiones: [
+                /^sub\s*sector[:\s]+(.+)$/i,
+                /^subsector[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "tipoSubsector",
+            expresiones: [
+                /^tipo\s+de\s+sub\s*sector[:\s]+(.+)$/i,
+                /^tipo\s+de\s+subsector[:\s]+(.+)$/i,
+                /^tipo\s+sub\s*sector[:\s]+(.+)$/i,
+                /^tipo\s+subsector[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "sectorProduccion",
+            expresiones: [
+                /^sector\s+de\s+la\s+producci[oó]n[:\s]+(.+)$/i,
+                /^sector\s+producci[oó]n[:\s]+(.+)$/i,
+                /^sector[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "superficieTotal",
+            expresiones: [
+                /^superficie\s+total[:\s]+(.+)$/i,
+                /^superficie[:\s]+(?!aprovechable\b|cultivada\b)(.+)$/i,
+                /^tiene\s+sembradas[:\s]+(.+)$/i,
+                /^tiene\s+(.+)\s+hect[aá]reas$/i
+            ]
+        },
+        {
+            entidad: "superficieAprovechable",
+            expresiones: [
+                /^superficie\s+aprovechable[:\s]+(.+)$/i,
+                /^área\s+aprovechable[:\s]+(.+)$/i,
+                /^area\s+aprovechable[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "superficieCultivada",
+            expresiones: [
+                /^superficie\s+cultivada[:\s]+(.+)$/i,
+                /^área\s+cultivada[:\s]+(.+)$/i,
+                /^area\s+cultivada[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "estadoFitosanitario",
+            expresiones: [
+                /^estado\s+fitosanitario[:\s]+(.+)$/i,
+                /^condici[oó]n\s+fitosanitaria[:\s]+(.+)$/i
+            ]
+        }
+    ];
 
-    {
-        entidad: "cliente",
-        expresiones: [
-            /^cliente[:\s]+(.+)$/i,
-            /^nombre\s+del\s+cliente[:\s]+(.+)$/i,
-            /^productor[:\s]+(.+)$/i
-        ]
-    },
-{
-    entidad: "finca",
-    expresiones: [
-        /^finca[:\s]+(.+)$/i,
-        /^nombre\s+de\s+la\s+finca[:\s]+(.+)$/i,
-        /^unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i,
-        /^parcela[:\s]+(.+)$/i,
-        /^hato[:\s]+(.+)$/i,
-        /^hacienda[:\s]+(.+)$/i
-    ]
-},
-    {
-        entidad: "codigoCliente",
-        expresiones: [
-            /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i,
-            /^cliente\s+n[uú]mero[:\s]+([0-9\s]+)$/i
-        ]
-    },
-    {
-    entidad: "cantidadRubrosExplotados",
-    expresiones: [
-        /^cantidad\s+de\s+rubros(?:\s+explotados)?(?:\s*:\s*|\s+)(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
-        /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?(?:\s*:\s*|\s+)(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
-        /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+rubros(?:\s+explotados)?$/i,
-        /^cantidad\s+de\s+actividades\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
-        /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+actividades$/i
-    ]
-},
-    {
-    entidad: "rubroSecundario",
-    indiceRubro: 0,
-    expresiones: [
-        /^rubro\s+secundario[:\s]+(.+)$/i,
-        /^rubro\s+(?:2|dos|segundo)[:\s]+(.+)$/i,
-        /^segundo\s+rubro[:\s]+(.+)$/i
-    ]
-},
-{
-    entidad: "rubroSecundario",
-    indiceRubro: 1,
-    expresiones: [
-        /^rubro\s+(?:3|tres|tercero)[:\s]+(.+)$/i,
-        /^tercer\s+rubro[:\s]+(.+)$/i,
-        /^tercero\s+rubro[:\s]+(.+)$/i
-    ]
-},
-{
-    entidad: "rubroSecundario",
-    indiceRubro: 2,
-    expresiones: [
-        /^rubro\s+(?:4|cuatro|cuarto)[:\s]+(.+)$/i,
-        /^cuarto\s+rubro[:\s]+(.+)$/i
-    ]
-},
-{
-    entidad: "rubroSecundario",
-    indiceRubro: 3,
-    expresiones: [
-        /^rubro\s+(?:5|cinco|quinto)[:\s]+(.+)$/i,
-        /^quinto\s+rubro[:\s]+(.+)$/i
-    ]
-},
-
-{
-    entidad: "rubroPrincipal",
-    expresiones: [
-        /^rubro\s+principal[:\s]+(.+)$/i,
-/^rubro(?!\s+secundario\b)[:\s]+(.+)$/i,
-/^cultivo[:\s]+(.+)$/i
-    ]
-},
-
-{
-    entidad: "superficieTotal",
-    expresiones: [
-        /^superficie\s+total[:\s]+(.+)$/i,
-        /^superficie[:\s]+(?!aprovechable\b|cultivada\b)(.+)$/i,
-        /^tiene\s+sembradas[:\s]+(.+)$/i,
-        /^tiene\s+(.+)\s+hect[aá]reas$/i
-    ]
-},
-{
-    entidad: "superficieAprovechable",
-    expresiones: [
-        /^superficie\s+aprovechable[:\s]+(.+)$/i,
-        /^área\s+aprovechable[:\s]+(.+)$/i,
-        /^area\s+aprovechable[:\s]+(.+)$/i
-    ]
-},
-
-{
-    entidad: "superficieCultivada",
-    expresiones: [
-        /^superficie\s+cultivada[:\s]+(.+)$/i,
-        /^área\s+cultivada[:\s]+(.+)$/i,
-        /^area\s+cultivada[:\s]+(.+)$/i
-    ]
-},
-{
-    entidad: "estadoFitosanitario",
-    expresiones: [
-        /^estado\s+fitosanitario[:\s]+(.+)$/i,
-        /^condici[oó]n\s+fitosanitaria[:\s]+(.+)$/i
-    ]
-}
-];
-function procesarTextoVoz(textoProcesar) {
-    for (const patron of patrones) {
-
-        let coincidencia = null;
-
-for (const expresion of patron.expresiones) {
-
-    coincidencia = textoProcesar.match(expresion);
-
-    if (coincidencia) {
-        break;
+    function normalizarClave(textoClave) {
+        return String(textoClave ?? "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
     }
 
-}
+    function capitalizarTexto(textoValor) {
+        return String(textoValor ?? "")
+            .trim()
+            .toLowerCase()
+            .replace(/(^|\s)\S/g, function(letra) {
+                return letra.toUpperCase();
+            });
+    }
 
-if (!coincidencia) {
-    continue;
-}
+    function normalizarCampoTecnico(entidad, valorOriginal) {
+        const clave = normalizarClave(valorOriginal);
 
-        let valor = coincidencia[1].trim();
+        if (entidad === "subsector") {
+            const mapaSubsector = {
+                vegetal: "Vegetal",
+                agricola: "Vegetal",
+                agrícola: "Vegetal",
+                pecuario: "Pecuario",
+                animal: "Pecuario",
+                agroindustrial: "Agroindustrial",
+                agroindustria: "Agroindustrial",
+                comercializador: "Comercialización",
+                comercializacion: "Comercialización",
+                comercialización: "Comercialización",
+                pesquero: "Pesquero",
+                acuicola: "Pesquero",
+                acuícola: "Pesquero",
+                forestal: "Forestal"
+            };
 
-const numerosVoz = {
-    uno: "1",
-    dos: "2",
-    tres: "3",
-    cuatro: "4",
-    cinco: "5",
-    seis: "6",
-    siete: "7",
-    ocho: "8",
-    nueve: "9",
-    diez: "10"
-};
+            return mapaSubsector[clave] || capitalizarTexto(valorOriginal);
+        }
 
-valor = numerosVoz[valor.toLowerCase()] ?? valor;
-let unidadSuperficieDetectada = null;
-let rubroCoincidente = null;
-switch (patron.entidad) {
+        if (entidad === "tipoSubsector") {
+            const mapaTipoSubsector = {
+                cereal: "Cereales",
+                cereales: "Cereales",
+                semilla: "Semillas",
+                semillas: "Semillas",
+                leguminosa: "Leguminosas",
+                leguminosas: "Leguminosas",
+                hortaliza: "Hortalizas",
+                hortalizas: "Hortalizas",
+                tuberculo: "Tubérculos",
+                tuberculos: "Tubérculos",
+                tubérculo: "Tubérculos",
+                tubérculos: "Tubérculos",
+                frutal: "Frutales",
+                frutales: "Frutales",
+                cana: "Caña",
+                caña: "Caña",
+                cafe: "Café",
+                café: "Café",
+                bovino: "Bovino",
+                bovinos: "Bovino",
+                bufalino: "Bufalino",
+                bufalinos: "Bufalino",
+                avicola: "Avícola",
+                avícola: "Avícola",
+                porcino: "Porcino",
+                porcinos: "Porcino",
+                piscicola: "Piscícola",
+                piscícola: "Piscícola",
+                ovino: "Ovino",
+                ovinos: "Ovino",
+                caprino: "Caprino",
+                caprinos: "Caprino"
+            };
 
-    case "codigoCliente":
+            return mapaTipoSubsector[clave] || capitalizarTexto(valorOriginal);
+        }
 
-        valor = valor.replace(/\s+/g, "");
-         valor = valor.padStart(8, "0");
+        if (entidad === "sectorProduccion") {
+            const mapaSector = {
+                primario: "Producción primaria",
+                "produccion primaria": "Producción primaria",
+                "producción primaria": "Producción primaria",
+                "productor primario": "Producción primaria",
+                agroindustrial: "Agroindustrial",
+                agroindustria: "Agroindustrial",
+                comercializador: "Comercialización",
+                comercializacion: "Comercialización",
+                "produccion agroindustrial": "Agroindustrial",
+                "producción agroindustrial": "Agroindustrial"
+            };
 
-        break;
+            return mapaSector[clave] || capitalizarTexto(valorOriginal);
+        }
 
-    case "cliente":
+        return valorOriginal;
+    }
 
-        valor = valor.replace(/\s{2,}/g, " ");
-        
+    function sincronizarControl(entidad, valor, unidadSuperficieDetectada = null) {
+        const campo = document.getElementById(entidad);
 
-        break;
- case "superficieTotal":
-case "superficieAprovechable":
-case "superficieCultivada": {
+        if (!campo) {
+            console.debug({
+                control: entidad,
+                actualizado: false,
+                valor: valor
+            });
+            return false;
+        }
 
-    const superficieDetectada = coincidencia[1].match(
-    /(\d+(?:[.,]\d+)?)\s*(hectareas?|hectáreas?|ha|metros?\s*cuadrados?|m2|m²|acres?|leguas?)?/i
-);
+        campo.value = valor;
 
-    if (superficieDetectada) {
+        if (campo.id === "cantidadRubrosExplotados") {
+            campo.dispatchEvent(new Event("input", { bubbles: true }));
+        }
 
-        valor = superficieDetectada[1].replace(",", ".");
+        if (unidadSuperficieDetectada) {
+            const indicadoresUnidad = {
+                superficieTotal: "unidadSuperficieTotal",
+                superficieAprovechable: "unidadSuperficieAprovechable",
+                superficieCultivada: "unidadSuperficieCultivada"
+            };
 
-        const unidadDictada = superficieDetectada[2];
- if (!unidadDictada) {
-                superficiePendienteUnidad = {
-                    entidad: patron.entidad,
-                    valor: valor
-                };
+            const idIndicadorUnidad = indicadoresUnidad[entidad];
 
-                console.warn(
-                    "Unidad de superficie pendiente para",
-                    patron.entidad,
-                    "valor:",
-                    valor
-                );
-alert(
-                    "Se reconoció una superficie de " +
-                    formatearNumeroVE(valor) +
-                    ". Indique la unidad: hectáreas, metros cuadrados, acres o leguas."
-                );
-                return;
-            }
-        if (unidadDictada) {
+            if (idIndicadorUnidad) {
+                const indicadorUnidad = document.getElementById(idIndicadorUnidad);
 
-            const unidadNormalizada = unidadDictada
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase()
-                .replace(/\s+/g, " ")
-                .trim();
-
-            if (
-                unidadNormalizada === "ha" ||
-                unidadNormalizada.startsWith("hectarea")
-            ) {
-                unidadSuperficieDetectada = "ha";
-
-            } else if (
-                unidadNormalizada === "m2" ||
-                unidadNormalizada === "m²" ||
-                /^metros?\s+cuadrados?$/.test(unidadNormalizada)
-            ) {
-                unidadSuperficieDetectada = "m²";
-
-            } else if (
-                unidadNormalizada.startsWith("acre")
-            ) {
-                unidadSuperficieDetectada = "acre";
-
-            } else if (
-                unidadNormalizada.startsWith("legua")
-            ) {
-                unidadSuperficieDetectada = "legua";
+                if (indicadorUnidad) {
+                    indicadorUnidad.textContent = unidadSuperficieDetectada;
+                }
             }
         }
+
+        if (campo.tagName === "SELECT") {
+            campo.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+
+        console.debug({
+            control: entidad,
+            actualizado: true,
+            valor: valor
+        });
+
+        return true;
     }
 
-    break;
-}
-case "rubroSecundario":
-    case "rubroPrincipal":
+    function sincronizarRubroPrincipal(valor, patron) {
+        const selectorRubro = document.getElementById("rubroPrincipal");
 
-    valor = valor
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase();
+        if (!selectorRubro) {
+            return false;
+        }
 
-    const rubrosDisponibles = window.obtenerRubrosMultirrubro();
-
-rubroCoincidente = rubrosDisponibles.find(function (rubro) {
-    return rubro
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase() === valor;
-});
-
-valor = rubroCoincidente || valor;
-       if (
-    !rubroCoincidente &&
-    (
-        patron.entidad === "rubroPrincipal" ||
-        patron.entidad === "rubroSecundario"
-    )
-) {
-    const resultadoCasuistica = window.resolverCasuisticaVoz(valor);
-
-    if (resultadoCasuistica.estado === "UNICA") {
-        const registro = resultadoCasuistica.coincidencias[0];
-
-        valor = registro.rubro;
-
-        console.log(
-            "Casuística reconocida por voz:",
-            registro.varianteCasuistica ||
-            registro.rubroCasuisticaOrigen ||
-            registro.rubro
-        );
-
-        console.log(
-            "Rubro asociado a casuística:",
-            registro.rubro
-        );
-    }
-
-    if (resultadoCasuistica.estado === "AMBIGUA") {
-    notificarFalloVoz(
-        patron,
-        "El rubro indicado es ambiguo y puede corresponder a más de una opción"
-    );
-
-    return;
-}
-}
-}
-if (
-    rubroCoincidente &&
-    patron.entidad === "rubroPrincipal"
-) {
-    const selectorRubro = document.getElementById("rubroPrincipal");
-
-    if (selectorRubro) {
-        const normalizarRubro = texto =>
-            String(texto ?? "")
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase()
-                .trim();
-
-        const rubroNormalizado = normalizarRubro(rubroCoincidente);
+        const valorNormalizado = normalizarClave(valor);
 
         const opcionRubro = Array.from(selectorRubro.options).find(
             opcion =>
-                normalizarRubro(opcion.value) === rubroNormalizado ||
-                normalizarRubro(opcion.textContent) === rubroNormalizado
+                normalizarClave(opcion.value) === valorNormalizado ||
+                normalizarClave(opcion.textContent) === valorNormalizado
         );
 
-        if (opcionRubro) {
-            selectorRubro.value = opcionRubro.value;
-
-            selectorRubro.dispatchEvent(
-                new Event("change", { bubbles: true })
-            );
-
-            console.log(
-                "Rubro principal sincronizado por voz:",
-                opcionRubro.value
-            );
-        } else {
+        if (!opcionRubro) {
             notificarFalloVoz(
-    patron,
-    "Reconocí el rubro '" + rubroCoincidente + "', pero no lo encontré en la lista disponible"
-);
+                patron,
+                "Reconocí el rubro '" + valor + "', pero no lo encontré en la lista disponible"
+            );
+
+            return false;
         }
+
+        selectorRubro.value = opcionRubro.value;
+
+        selectorRubro.dispatchEvent(
+            new Event("change", { bubbles: true })
+        );
+
+        console.log(
+            "Rubro principal sincronizado por voz:",
+            opcionRubro.value
+        );
+
+        return true;
     }
-}
-    
 
+    function sincronizarRubroSecundario(valor, patron) {
+        const selectores = Array.from(
+            document.querySelectorAll(
+                'select[data-rubro-explotado="true"]'
+            )
+        );
 
+        const selectorDisponible =
+            Number.isInteger(patron.indiceRubro)
+                ? selectores[patron.indiceRubro]
+                : selectores.find(function (select) {
+                    return !select.value;
+                });
 
-       registrarDato(
-    patron.entidad,
-    valor,
-    (
-        patron.entidad === "superficieTotal" ||
-        patron.entidad === "superficieAprovechable" ||
-        patron.entidad === "superficieCultivada"
-    )
-        ? unidadSuperficieDetectada
-        : null
-);
-console.log(
-    "Dato registrado:",
-    patron.entidad,
-    valor
-);
-entidadesDetectadas.push({
+        if (!selectorDisponible) {
+            notificarFalloVoz(
+                patron,
+                "No encontré el campo disponible en pantalla"
+            );
 
-    entidad: patron.entidad,
+            return false;
+        }
 
-    destino: patron.entidad,
-
-    valor: valor,
-
-    fecha: new Date().toISOString()
-
-});
-if (patron.entidad === "rubroSecundario") {
-    const selectores = Array.from(
-        document.querySelectorAll(
-            'select[data-rubro-explotado="true"]'
-        )
-    );
-
-    const selectorDisponible =
-        Number.isInteger(patron.indiceRubro)
-            ? selectores[patron.indiceRubro]
-            : selectores.find(function (select) {
-                return !select.value;
-            });
-
-    if (selectorDisponible) {
-        const normalizarRubro = texto =>
-            String(texto ?? "")
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase()
-                .trim();
-
-        const valorNormalizado = normalizarRubro(valor);
+        const valorNormalizado = normalizarClave(valor);
 
         const opcionRubro = Array.from(selectorDisponible.options).find(
             opcion =>
-                normalizarRubro(opcion.value) === valorNormalizado ||
-                normalizarRubro(opcion.textContent) === valorNormalizado
+                normalizarClave(opcion.value) === valorNormalizado ||
+                normalizarClave(opcion.textContent) === valorNormalizado
         );
 
-        if (opcionRubro) {
-            selectorDisponible.value = opcionRubro.value;
-
-            selectorDisponible.dispatchEvent(
-                new Event("change", { bubbles: true })
-            );
-
-            console.log(
-                "Rubro secundario sincronizado por voz:",
-                patron.indiceRubro !== undefined
-                    ? "Rubro " + (patron.indiceRubro + 2)
-                    : "Primer disponible",
-                opcionRubro.value
-            );
-        } else {
+        if (!opcionRubro) {
             notificarFalloVoz(
-    patron,
-    "Reconocí el rubro '" + valor + "', pero no lo encontré en la lista disponible"
-);
+                patron,
+                "Reconocí el rubro '" + valor + "', pero no lo encontré en la lista disponible"
+            );
+
+            return false;
         }
-    } else {
-    notificarFalloVoz(
-        patron,
-        "No encontré el campo disponible en pantalla"
-    );
-}
-}
-const numerosPorVoz = {
-    uno: "1",
-    dos: "2",
-    tres: "3",
-    cuatro: "4",
-    cinco: "5",
-    seis: "6",
-    siete: "7",
-    ocho: "8",
-    nueve: "9",
-    diez: "10"
-};
 
-if (numerosPorVoz[valor]) {
-    valor = numerosPorVoz[valor];
-}
-const campo = document.getElementById(patron.entidad);
+        selectorDisponible.value = opcionRubro.value;
 
-if (campo) {
+        selectorDisponible.dispatchEvent(
+            new Event("change", { bubbles: true })
+        );
 
-    campo.value = valor;
-if (campo.id === "cantidadRubrosExplotados") {
-    campo.dispatchEvent(new Event("input", { bubbles: true }));
-}
-    if (unidadSuperficieDetectada) {
+        console.log(
+            "Rubro secundario sincronizado por voz:",
+            patron.indiceRubro !== undefined
+                ? "Rubro " + (patron.indiceRubro + 2)
+                : "Primer disponible",
+            opcionRubro.value
+        );
 
-        const indicadoresUnidad = {
-            superficieTotal: "unidadSuperficieTotal",
-            superficieAprovechable: "unidadSuperficieAprovechable",
-            superficieCultivada: "unidadSuperficieCultivada"
-        };
+        return true;
+    }
 
-        const idIndicadorUnidad = indicadoresUnidad[patron.entidad];
+    function resolverRubro(valor, patron) {
+        let valorRubro = normalizarClave(valor);
+        let rubroCoincidente = null;
 
-        if (idIndicadorUnidad) {
+        const rubrosDisponibles =
+            typeof window.obtenerRubrosMultirrubro === "function"
+                ? window.obtenerRubrosMultirrubro()
+                : [];
 
-            const indicadorUnidad = document.getElementById(idIndicadorUnidad);
+        rubroCoincidente = rubrosDisponibles.find(function (rubro) {
+            return normalizarClave(rubro) === valorRubro;
+        });
 
-            if (indicadorUnidad) {
-                indicadorUnidad.textContent = unidadSuperficieDetectada;
+        if (rubroCoincidente) {
+            return rubroCoincidente;
+        }
+
+        if (typeof window.resolverCasuisticaVoz === "function") {
+            const resultadoCasuistica = window.resolverCasuisticaVoz(valorRubro);
+
+            if (resultadoCasuistica.estado === "UNICA") {
+                const registro = resultadoCasuistica.coincidencias[0];
+
+                console.log(
+                    "Casuística reconocida por voz:",
+                    registro.varianteCasuistica ||
+                    registro.rubroCasuisticaOrigen ||
+                    registro.rubro
+                );
+
+                console.log(
+                    "Rubro asociado a casuística:",
+                    registro.rubro
+                );
+
+                return registro.rubro;
+            }
+
+            if (resultadoCasuistica.estado === "AMBIGUA") {
+                notificarFalloVoz(
+                    patron,
+                    "El rubro indicado es ambiguo y puede corresponder a más de una opción"
+                );
+
+                return null;
             }
         }
+
+        return valorRubro;
     }
 
-    if (campo.tagName === "SELECT") {
+    function procesarTextoVoz(textoProcesar) {
+        for (const patron of patrones) {
 
-        campo.dispatchEvent(new Event("change"));
+            let coincidencia = null;
 
+            for (const expresion of patron.expresiones) {
+
+                coincidencia = textoProcesar.match(expresion);
+
+                if (coincidencia) {
+                    break;
+                }
+            }
+
+            if (!coincidencia) {
+                continue;
+            }
+
+            let valor = coincidencia[1].trim();
+
+            valor = numerosVoz[valor.toLowerCase()] ?? valor;
+
+            const textoNormalizado = normalizarClave(valor);
+
+            if (
+                textoNormalizado.includes("sin informacion") ||
+                textoNormalizado.includes("sin dato") ||
+                textoNormalizado.includes("sin datos")
+            ) {
+                valor = "sin información";
+            }
+
+            let unidadSuperficieDetectada = null;
+
+            switch (patron.entidad) {
+
+                case "codigoCliente":
+                    valor = valor.replace(/\s+/g, "");
+                    valor = valor.padStart(8, "0");
+                    break;
+
+                case "cliente":
+                case "tecnicoResponsable":
+                case "finca":
+                case "municipio":
+                case "departamento":
+                    valor = valor.replace(/\s{2,}/g, " ").trim();
+                    break;
+
+                case "superficieTotal":
+                case "superficieAprovechable":
+                case "superficieCultivada": {
+
+                    const superficieDetectada = coincidencia[1].match(
+                        /(\d+(?:[.,]\d+)?)\s*(hectareas?|hectáreas?|ha|metros?\s*cuadrados?|m2|m²|acres?|leguas?)?/i
+                    );
+
+                    if (superficieDetectada) {
+
+                        valor = superficieDetectada[1].replace(",", ".");
+
+                        const unidadDictada = superficieDetectada[2];
+
+                        if (!unidadDictada) {
+                            superficiePendienteUnidad = {
+                                entidad: patron.entidad,
+                                valor: valor
+                            };
+
+                            console.warn(
+                                "Unidad de superficie pendiente para",
+                                patron.entidad,
+                                "valor:",
+                                valor
+                            );
+
+                            alert(
+                                "Se reconoció una superficie de " +
+                                formatearNumeroVE(valor) +
+                                ". Indique la unidad: hectáreas, metros cuadrados, acres o leguas."
+                            );
+
+                            return true;
+                        }
+
+                        const unidadNormalizada = normalizarClave(unidadDictada);
+
+                        if (
+                            unidadNormalizada === "ha" ||
+                            unidadNormalizada.startsWith("hectarea")
+                        ) {
+                            unidadSuperficieDetectada = "ha";
+
+                        } else if (
+                            unidadNormalizada === "m2" ||
+                            unidadNormalizada === "m²" ||
+                            /^metros?\s+cuadrados?$/.test(unidadNormalizada)
+                        ) {
+                            unidadSuperficieDetectada = "m²";
+
+                        } else if (
+                            unidadNormalizada.startsWith("acre")
+                        ) {
+                            unidadSuperficieDetectada = "acre";
+
+                        } else if (
+                            unidadNormalizada.startsWith("legua")
+                        ) {
+                            unidadSuperficieDetectada = "legua";
+                        }
+                    }
+
+                    break;
+                }
+
+                case "rubroSecundario":
+                case "rubroPrincipal": {
+                    const rubroResuelto = resolverRubro(valor, patron);
+
+                    if (!rubroResuelto) {
+                        return true;
+                    }
+
+                    valor = rubroResuelto;
+                    break;
+                }
+
+                case "subsector":
+                case "tipoSubsector":
+                case "sectorProduccion":
+                    valor = normalizarCampoTecnico(patron.entidad, valor);
+                    break;
+
+                default:
+                    valor = valor.trim();
+                    break;
+            }
+
+            const registro = registrarDato(
+                patron.entidad,
+                valor,
+                (
+                    patron.entidad === "superficieTotal" ||
+                    patron.entidad === "superficieAprovechable" ||
+                    patron.entidad === "superficieCultivada"
+                )
+                    ? unidadSuperficieDetectada
+                    : null
+            );
+
+            if (registro === null) {
+                return true;
+            }
+
+            console.log(
+                "Dato registrado:",
+                patron.entidad,
+                valor
+            );
+
+            entidadesDetectadas.push({
+                entidad: patron.entidad,
+                destino: patron.entidad,
+                valor: valor,
+                fecha: new Date().toISOString()
+            });
+
+            if (patron.entidad === "rubroPrincipal") {
+                sincronizarRubroPrincipal(valor, patron);
+
+            } else if (patron.entidad === "rubroSecundario") {
+                sincronizarRubroSecundario(valor, patron);
+
+            } else {
+                sincronizarControl(
+                    patron.entidad,
+                    valor,
+                    unidadSuperficieDetectada
+                );
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
-}
-
-       console.debug({
-
-    control: patron.entidad,
-
-    actualizado: campo !== null,
-
-    valor: valor
-
-});
-break;
-    }
-    }
     const iniciosEntidad = [
-    /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
-    /(?<!c[oó]digo\s)(?<!c[oó]digo\sde\s)(?<!c[oó]digo\sdel\s)cliente/i,
-    /superficie\s+total/i,
-    /superficie\s+aprovechable/i,
-    /superficie\s+cultivada/i,
-    /rubro\s+principal/i,
-    /rubro\s+secundario/i,
-    /rubro\s+(?:2|dos|segundo)/i,
-    /segundo\s+rubro/i,
-    /rubro\s+(?:3|tres|tercero)/i,
-    /tercer\s+rubro/i,
-    /tercero\s+rubro/i,
-    /rubro\s+(?:4|cuatro|cuarto)/i,
-    /cuarto\s+rubro/i,
-    /rubro\s+(?:5|cinco|quinto)/i,
-    /quinto\s+rubro/i
-];
+        /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
+        /(?<!c[oó]digo\s)(?<!c[oó]digo\sde\s)(?<!c[oó]digo\sdel\s)cliente/i,
+        /superficie\s+total/i,
+        /superficie\s+aprovechable/i,
+        /superficie\s+cultivada/i,
+        /rubro\s+principal/i,
+        /rubro\s+secundario/i,
+        /rubro\s+(?:2|dos|segundo)/i,
+        /segundo\s+rubro/i,
+        /rubro\s+(?:3|tres|tercero)/i,
+        /tercer\s+rubro/i,
+        /tercero\s+rubro/i,
+        /rubro\s+(?:4|cuatro|cuarto)/i,
+        /cuarto\s+rubro/i,
+        /rubro\s+(?:5|cinco|quinto)/i,
+        /quinto\s+rubro/i,
+        /sub\s*sector/i,
+        /subsector/i,
+        /tipo\s+de\s+sub\s*sector/i,
+        /tipo\s+de\s+subsector/i,
+        /tipo\s+sub\s*sector/i,
+        /tipo\s+subsector/i,
+        /(?:^|\s)sector\s+de\s+la\s+producci[oó]n/i,
+        /(?:^|\s)sector\s+producci[oó]n/i
+    ];
 
-const posiciones = [];
+    const posiciones = [];
 
-for (const inicio of iniciosEntidad) {
-    const coincidenciaInicio = inicio.exec(texto);
+    for (const inicio of iniciosEntidad) {
+        const coincidenciaInicio = inicio.exec(texto);
 
-    if (coincidenciaInicio) {
-        posiciones.push(coincidenciaInicio.index);
+        if (coincidenciaInicio) {
+            posiciones.push(coincidenciaInicio.index);
+        }
     }
-}
 
-const posicionesUnicas = [...new Set(posiciones)].sort((a, b) => a - b);
+    const posicionesUnicas = [...new Set(posiciones)].sort((a, b) => a - b);
 
-if (posicionesUnicas.length > 1) {
+    if (posicionesUnicas.length > 1) {
 
-    const segmentos = posicionesUnicas
-        .map((inicio, indice) => {
-            const fin = posicionesUnicas[indice + 1] ?? texto.length;
-            return texto.slice(inicio, fin).trim();
+        const segmentos = posicionesUnicas
+            .map((inicio, indice) => {
+                const fin = posicionesUnicas[indice + 1] ?? texto.length;
+                return texto.slice(inicio, fin).trim();
+            })
+            .filter(Boolean);
+
+        console.log("Dictado multientidad:", segmentos);
+
+        for (const segmento of segmentos) {
+            procesarTextoVoz(segmento);
+        }
+
+    } else {
+
+        procesarTextoVoz(texto);
+    }
+
+    const entidadesUnicas = [...new Map(
+
+        entidadesDetectadas.map(function(item){
+
+            return [
+                item.entidad + "_" + item.valor,
+                item
+            ];
+
         })
-        .filter(Boolean);
 
-    console.log("Dictado multientidad:", segmentos);
+    ).values()];
 
-    for (const segmento of segmentos) {
-        procesarTextoVoz(segmento);
-    }
-
-} else {
-
-    procesarTextoVoz(texto);
-}
-   
-const entidadesUnicas = [...new Map(
-
-    entidadesDetectadas.map(function(item){
-
-        return [
-            item.entidad + "_" + item.valor,
-            item
-        ];
-
-    })
-
-).values()];
     if (entidadesUnicas.length > 0) {
 
-    console.table(entidadesUnicas);
-    console.table(
-        expedienteInteligente.capturas
-    );
-    console.info(
-        "Entidades reconocidas:",
-        entidadesUnicas.length
-    );
-    console.log(
-        "Motor de Voz finalizado correctamente."
-    );
-    return;
+        console.table(entidadesUnicas);
+        console.table(
+            expedienteInteligente.capturas
+        );
+        console.info(
+            "Entidades reconocidas:",
+            entidadesUnicas.length
+        );
+        console.log(
+            "Motor de Voz finalizado correctamente."
+        );
 
+        return;
+    }
+
+    notificarFalloVoz(
+        null,
+        "No pude identificar el campo ni el valor indicado"
+    );
 }
 
-notificarFalloVoz(
-    null,
-    "No pude identificar el campo ni el valor indicado"
-);
-
-}
 
 
 
 
-    
 
 
 
 
-    
+
+
 
 function inicializarVoz() {
 
