@@ -1527,12 +1527,12 @@ function interpretarVoz(texto) {
         /cuarto\s+rubro/i,
         /rubro\s+(?:5|cinco|quinto)/i,
         /quinto\s+rubro/i,
-        /sub\s*sector/i,
-        /subsector/i,
         /tipo\s+de\s+sub\s*sector/i,
         /tipo\s+de\s+subsector/i,
         /tipo\s+sub\s*sector/i,
         /tipo\s+subsector/i,
+        /(?<!tipo de )sub\s*sector/i,
+        /(?<!tipo de )subsector/i,
         /(?:^|\s)sector\s+de\s+la\s+producci[oó]n/i,
         /(?:^|\s)sector\s+producci[oó]n/i
     ];
