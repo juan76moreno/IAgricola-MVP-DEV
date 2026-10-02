@@ -682,6 +682,10 @@ function obtenerNombreCampoVoz(patron) {
     }
 
     const nombres = {
+        fechaVisita: "la fecha de visita",
+        horaInicio: "la hora de inicio",
+        tecnico: "el técnico responsable",
+        tipoVisita: "el tipo de visita",
         cliente: "el nombre del cliente",
         codigoCliente: "el código de cliente",
         finca: "la finca",
@@ -713,6 +717,10 @@ function obtenerEjemploVoz(patron) {
     }
 
     const ejemplos = {
+        fechaVisita: "Fecha de visita 02/10/2026",
+        horaInicio: "Hora de inicio 08:30",
+        tecnico: "Técnico responsable Juan Moreno",
+        tipoVisita: "Tipo de visita programada",
         cliente: "Cliente Juan Moreno",
         codigoCliente: "Código de cliente 00000001",
         finca: "Finca La Esperanza",
@@ -765,6 +773,10 @@ function normalizarTextoVoz(texto) {
         .replace(/\bcultivao\b/gi, "cultivada")
         .replace(/\bfitosanitareo\b/gi, "fitosanitario")
         .replace(/\bfitosanitaria\b/gi, "fitosanitario")
+        .replace(/\bte\s+invito\s+responsable\b/gi, "técnico responsable")
+        .replace(/\btecnico\s+responsable\b/gi, "técnico responsable")
+        .replace(/\bt[eé]cnico\s+responsable\b/gi, "técnico responsable")
+        .replace(/\bt[eé]cnico\s+responsable\s+responsable\b/gi, "técnico responsable")
         .replace(/\s+/g, " ")
         .trim();
 }
@@ -891,6 +903,39 @@ function interpretarVoz(texto) {
     };
 
     const patrones = [
+        {
+            entidad: "fechaVisita",
+            expresiones: [
+                /^fecha\s+(?:de\s+)?visita[:\s]+(.+)$/i,
+                /^fecha\s+(?:de\s+)?inspecci[oó]n[:\s]+(.+)$/i,
+                /^visita\s+fecha[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "horaInicio",
+            expresiones: [
+                /^hora\s+(?:de\s+)?inicio[:\s]+(.+)$/i,
+                /^hora\s+(?:de\s+)?la\s+visita[:\s]+(.+)$/i,
+                /^inicio\s+(?:de\s+)?visita[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "tecnico",
+            expresiones: [
+                /^t[eé]cnico[:\s]+(.+)$/i,
+                /^t[eé]cnico\s+responsable[:\s]+(.+)$/i,
+                /^nombre\s+del\s+t[eé]cnico[:\s]+(.+)$/i,
+                /^responsable\s+t[eé]cnico[:\s]+(.+)$/i,
+                /^especialista\s+agr[ií]cola[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "tipoVisita",
+            expresiones: [
+                /^tipo\s+(?:de\s+)?visita[:\s]+(.+)$/i,
+                /^visita\s+(programada|planificada|ordinaria|seguimiento|extraordinaria|no\s+programada|imprevista)$/i
+            ]
+        },
         {
             entidad: "cliente",
             expresiones: [
@@ -1043,6 +1088,129 @@ function interpretarVoz(texto) {
             .replace(/(^|\s)\S/g, function(letra) {
                 return letra.toUpperCase();
             });
+    }
+
+    function normalizarFechaVisitaVoz(valorOriginal) {
+        const textoFecha = normalizarClave(valorOriginal);
+
+        if (textoFecha === "hoy") {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        const meses = {
+            enero: "01",
+            febrero: "02",
+            marzo: "03",
+            abril: "04",
+            mayo: "05",
+            junio: "06",
+            julio: "07",
+            agosto: "08",
+            septiembre: "09",
+            setiembre: "09",
+            octubre: "10",
+            noviembre: "11",
+            diciembre: "12"
+        };
+
+        let coincidenciaFecha = textoFecha.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+
+        if (coincidenciaFecha) {
+            return (
+                coincidenciaFecha[3] + "-" +
+                coincidenciaFecha[2].padStart(2, "0") + "-" +
+                coincidenciaFecha[1].padStart(2, "0")
+            );
+        }
+
+        coincidenciaFecha = textoFecha.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+
+        if (coincidenciaFecha) {
+            return (
+                coincidenciaFecha[1] + "-" +
+                coincidenciaFecha[2].padStart(2, "0") + "-" +
+                coincidenciaFecha[3].padStart(2, "0")
+            );
+        }
+
+        coincidenciaFecha = textoFecha.match(/^(\d{1,2})\s+de\s+([a-zñ]+)(?:\s+de)?\s+(\d{4})$/i);
+
+        if (coincidenciaFecha && meses[coincidenciaFecha[2]]) {
+            return (
+                coincidenciaFecha[3] + "-" +
+                meses[coincidenciaFecha[2]] + "-" +
+                coincidenciaFecha[1].padStart(2, "0")
+            );
+        }
+
+        return String(valorOriginal ?? "").trim();
+    }
+
+    function normalizarHoraInicioVoz(valorOriginal) {
+        const textoHora = normalizarClave(valorOriginal)
+            .replace(/\./g, "")
+            .replace(/\s+horas?$/, "")
+            .trim();
+
+        let coincidenciaHora = textoHora.match(/^(\d{1,2})(?::| y | con )(\d{1,2})\s*(am|pm)?$/i);
+
+        if (coincidenciaHora) {
+            let hora = Number(coincidenciaHora[1]);
+            const minutos = coincidenciaHora[2].padStart(2, "0");
+            const meridiano = coincidenciaHora[3];
+
+            if (meridiano === "pm" && hora < 12) {
+                hora += 12;
+            }
+
+            if (meridiano === "am" && hora === 12) {
+                hora = 0;
+            }
+
+            return String(hora).padStart(2, "0") + ":" + minutos;
+        }
+
+        coincidenciaHora = textoHora.match(/^(\d{1,2})\s*(am|pm)$/i);
+
+        if (coincidenciaHora) {
+            let hora = Number(coincidenciaHora[1]);
+            const meridiano = coincidenciaHora[2];
+
+            if (meridiano === "pm" && hora < 12) {
+                hora += 12;
+            }
+
+            if (meridiano === "am" && hora === 12) {
+                hora = 0;
+            }
+
+            return String(hora).padStart(2, "0") + ":00";
+        }
+
+        coincidenciaHora = textoHora.match(/^(\d{1,2})$/);
+
+        if (coincidenciaHora) {
+            return coincidenciaHora[1].padStart(2, "0") + ":00";
+        }
+
+        return String(valorOriginal ?? "").trim();
+    }
+
+    function normalizarTipoVisitaVoz(valorOriginal) {
+        const clave = normalizarClave(valorOriginal);
+
+        const mapaTipoVisita = {
+            programada: "Programada",
+            planificada: "Programada",
+            ordinaria: "Programada",
+            seguimiento: "Seguimiento",
+            "de seguimiento": "Seguimiento",
+            extraordinaria: "Extraordinaria",
+            "no programada": "No programada",
+            imprevista: "No programada"
+        };
+
+        return mapaTipoVisita[clave] || capitalizarTexto(valorOriginal);
     }
 
     function normalizarCampoTecnico(entidad, valorOriginal) {
@@ -1365,8 +1533,20 @@ function interpretarVoz(texto) {
                     valor = valor.padStart(8, "0");
                     break;
 
+                case "fechaVisita":
+                    valor = normalizarFechaVisitaVoz(valor);
+                    break;
+
+                case "horaInicio":
+                    valor = normalizarHoraInicioVoz(valor);
+                    break;
+
+                case "tipoVisita":
+                    valor = normalizarTipoVisitaVoz(valor);
+                    break;
+
                 case "cliente":
-                case "tecnicoResponsable":
+                case "tecnico":
                 case "finca":
                 case "municipio":
                 case "departamento":
@@ -1512,6 +1692,16 @@ function interpretarVoz(texto) {
     }
 
     const iniciosEntidad = [
+        /fecha\s+(?:de\s+)?visita/i,
+        /fecha\s+(?:de\s+)?inspecci[oó]n/i,
+        /hora\s+(?:de\s+)?inicio/i,
+        /hora\s+(?:de\s+)?la\s+visita/i,
+        /t[eé]cnico\s+responsable/i,
+        /nombre\s+del\s+t[eé]cnico/i,
+        /responsable\s+t[eé]cnico/i,
+        /especialista\s+agr[ií]cola/i,
+        /(?<!responsable\s)t[eé]cnico/i,
+        /tipo\s+(?:de\s+)?visita/i,
         /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
         /(?<!c[oó]digo\s)(?<!c[oó]digo\sde\s)(?<!c[oó]digo\sdel\s)cliente/i,
         /superficie\s+total/i,
