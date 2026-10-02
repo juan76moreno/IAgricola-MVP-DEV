@@ -1110,6 +1110,7 @@ function interpretarVoz(texto) {
 
         if (entidad === "sectorProduccion") {
             const mapaSector = {
+                primaria: "Producción primaria",
                 primario: "Producción primaria",
                 "produccion primaria": "Producción primaria",
                 "producción primaria": "Producción primaria",
