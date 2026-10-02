@@ -465,6 +465,58 @@ function registrarDatosMinimos(){
     ]);
 
 }
+
+function actualizarEtiquetaParroquiaInicioVisita(){
+
+    const campoParroquia = document.getElementById("departamento");
+
+    if(!campoParroquia){
+
+        return;
+
+    }
+
+    campoParroquia.placeholder = "Parroquia";
+
+    const etiquetaFor = document.querySelector('label[for="departamento"]');
+
+    if(etiquetaFor){
+
+        etiquetaFor.textContent = "Parroquia";
+
+    }
+
+    const contenedor = campoParroquia.parentElement;
+
+    if(contenedor){
+
+        contenedor
+            .querySelectorAll("label, .label, .field-label, .form-label")
+            .forEach(function(etiqueta){
+
+                if(etiqueta.textContent.trim().toLowerCase() === "departamento"){
+
+                    etiqueta.textContent = "Parroquia";
+
+                }
+
+            });
+
+    }
+
+    const elementoAnterior = campoParroquia.previousElementSibling;
+
+    if(
+        elementoAnterior &&
+        elementoAnterior.textContent &&
+        elementoAnterior.textContent.trim().toLowerCase() === "departamento"
+    ){
+
+        elementoAnterior.textContent = "Parroquia";
+
+    }
+
+}
 function registrarDatosCliente(){
 
     registrarFormulario([
@@ -638,6 +690,7 @@ estadoVisita.estado = "EN_VISITA";
     cambiarModulo("visita");
     establecerObjetoActivo("Inicio de Visita");
     sincronizarOpcionesTipoVisita();
+    actualizarEtiquetaParroquiaInicioVisita();
     inicializarVoz();
     
     registrarDatosCliente();
@@ -773,7 +826,8 @@ function obtenerNombreCampoVoz(patron) {
         superficieTotal: "la superficie total",
         superficieAprovechable: "la superficie aprovechable",
         superficieCultivada: "la superficie cultivada",
-        estadoFitosanitario: "el estado fitosanitario"
+        estadoFitosanitario: "el estado fitosanitario",
+        departamento: "la parroquia"
     };
 
     return nombres[patron.entidad] || patron.entidad;
@@ -1056,6 +1110,7 @@ function interpretarVoz(texto) {
         {
             entidad: "departamento",
             expresiones: [
+                /^parroquia[:\s]+(.+)$/i,
                 /^departamento[:\s]+(.+)$/i,
                 /^estado[:\s]+(.+)$/i,
                 /^entidad\s+federal[:\s]+(.+)$/i
@@ -1255,12 +1310,6 @@ function interpretarVoz(texto) {
 
 
     function normalizarFechaVisitaVoz(valorOriginal) {
-        const textoFecha = normalizarClave(valorOriginal);
-
-        if (textoFecha === "hoy") {
-            return new Date().toISOString().slice(0, 10);
-        }
-
         const meses = {
             enero: "01",
             febrero: "02",
@@ -1276,6 +1325,86 @@ function interpretarVoz(texto) {
             noviembre: "11",
             diciembre: "12"
         };
+
+        const numerosDia = {
+            uno: 1,
+            un: 1,
+            una: 1,
+            dos: 2,
+            tres: 3,
+            cuatro: 4,
+            cinco: 5,
+            seis: 6,
+            siete: 7,
+            ocho: 8,
+            nueve: 9,
+            diez: 10,
+            once: 11,
+            doce: 12,
+            trece: 13,
+            catorce: 14,
+            quince: 15,
+            dieciseis: 16,
+            dieciséis: 16,
+            diecisiete: 17,
+            dieciocho: 18,
+            diecinueve: 19,
+            veinte: 20,
+            veintiuno: 21,
+            veintidos: 22,
+            veintidós: 22,
+            veintitres: 23,
+            veintitrés: 23,
+            veinticuatro: 24,
+            veinticinco: 25,
+            veintiseis: 26,
+            veintiséis: 26,
+            veintisiete: 27,
+            veintiocho: 28,
+            veintinueve: 29,
+            treinta: 30,
+            "treinta y uno": 31
+        };
+
+        function convertirDia(valorDia) {
+            const claveDia = normalizarClave(valorDia);
+            if (/^\d{1,2}$/.test(claveDia)) {
+                return Number(claveDia);
+            }
+            return numerosDia[claveDia] ?? null;
+        }
+
+        function normalizarAnio(valorAnio) {
+            const textoAnio = normalizarClave(valorAnio);
+
+            if (/^\d{4}$/.test(textoAnio)) {
+                return textoAnio;
+            }
+
+            if (textoAnio === "dos mil veintiseis" || textoAnio === "dos mil veintiséis") {
+                return "2026";
+            }
+
+            if (textoAnio === "dos mil veinticinco") {
+                return "2025";
+            }
+
+            if (textoAnio === "dos mil veintisiete") {
+                return "2027";
+            }
+
+            return textoAnio.replace(/\D/g, "");
+        }
+
+        const textoFecha = normalizarClave(valorOriginal)
+            .replace(/\./g, "")
+            .replace(/,/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        if (textoFecha === "hoy") {
+            return new Date().toISOString().slice(0, 10);
+        }
 
         let coincidenciaFecha = textoFecha.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
 
@@ -1297,64 +1426,164 @@ function interpretarVoz(texto) {
             );
         }
 
-        coincidenciaFecha = textoFecha.match(/^(\d{1,2})\s+de\s+([a-zñ]+)(?:\s+de)?\s+(\d{4})$/i);
+        coincidenciaFecha = textoFecha.match(/^(\d{1,2})\s+(\d{1,2})\s+(\d{4})$/);
 
-        if (coincidenciaFecha && meses[coincidenciaFecha[2]]) {
+        if (coincidenciaFecha) {
             return (
                 coincidenciaFecha[3] + "-" +
-                meses[coincidenciaFecha[2]] + "-" +
+                coincidenciaFecha[2].padStart(2, "0") + "-" +
                 coincidenciaFecha[1].padStart(2, "0")
             );
+        }
+
+        coincidenciaFecha = textoFecha.match(/^(.+?)\s+de\s+([a-zñ]+)(?:\s+de)?\s+(.+)$/i);
+
+        if (coincidenciaFecha && meses[coincidenciaFecha[2]]) {
+            const dia = convertirDia(coincidenciaFecha[1]);
+            const anio = normalizarAnio(coincidenciaFecha[3]);
+
+            if (dia && /^\d{4}$/.test(anio)) {
+                return (
+                    anio + "-" +
+                    meses[coincidenciaFecha[2]] + "-" +
+                    String(dia).padStart(2, "0")
+                );
+            }
+        }
+
+        coincidenciaFecha = textoFecha.match(/^(.+?)\s+([a-zñ]+)\s+(.+)$/i);
+
+        if (coincidenciaFecha && meses[coincidenciaFecha[2]]) {
+            const dia = convertirDia(coincidenciaFecha[1]);
+            const anio = normalizarAnio(coincidenciaFecha[3]);
+
+            if (dia && /^\d{4}$/.test(anio)) {
+                return (
+                    anio + "-" +
+                    meses[coincidenciaFecha[2]] + "-" +
+                    String(dia).padStart(2, "0")
+                );
+            }
         }
 
         return String(valorOriginal ?? "").trim();
     }
 
     function normalizarHoraInicioVoz(valorOriginal) {
-        const textoHora = normalizarClave(valorOriginal)
+        let textoHora = normalizarClave(valorOriginal)
             .replace(/\./g, "")
+            .replace(/,/g, " ")
             .replace(/\s+horas?$/, "")
+            .replace(/\ba\s*m\b/g, "am")
+            .replace(/\bp\s*m\b/g, "pm")
+            .replace(/\bde\s+la\s+mañana\b/g, "am")
+            .replace(/\bde\s+la\s+manana\b/g, "am")
+            .replace(/\bde\s+la\s+tarde\b/g, "pm")
+            .replace(/\bde\s+la\s+noche\b/g, "pm")
+            .replace(/\ben\s+la\s+mañana\b/g, "am")
+            .replace(/\ben\s+la\s+manana\b/g, "am")
+            .replace(/\ben\s+la\s+tarde\b/g, "pm")
+            .replace(/\ben\s+la\s+noche\b/g, "pm")
+            .replace(/\s+/g, " ")
             .trim();
 
-        let coincidenciaHora = textoHora.match(/^(\d{1,2})(?::| y | con )(\d{1,2})\s*(am|pm)?$/i);
+        const numerosHora = {
+            una: 1,
+            uno: 1,
+            un: 1,
+            dos: 2,
+            tres: 3,
+            cuatro: 4,
+            cinco: 5,
+            seis: 6,
+            siete: 7,
+            ocho: 8,
+            nueve: 9,
+            diez: 10,
+            once: 11,
+            doce: 12
+        };
 
-        if (coincidenciaHora) {
-            let hora = Number(coincidenciaHora[1]);
-            const minutos = coincidenciaHora[2].padStart(2, "0");
-            const meridiano = coincidenciaHora[3];
+        function convertirHora(valorHora) {
+            const claveHora = normalizarClave(valorHora);
+            if (/^\d{1,2}$/.test(claveHora)) {
+                return Number(claveHora);
+            }
+            return numerosHora[claveHora] ?? null;
+        }
 
+        function aplicarMeridiano(hora, meridiano) {
             if (meridiano === "pm" && hora < 12) {
-                hora += 12;
+                return hora + 12;
             }
 
             if (meridiano === "am" && hora === 12) {
-                hora = 0;
+                return 0;
             }
 
-            return String(hora).padStart(2, "0") + ":" + minutos;
+            return hora;
         }
 
-        coincidenciaHora = textoHora.match(/^(\d{1,2})\s*(am|pm)$/i);
-
-        if (coincidenciaHora) {
-            let hora = Number(coincidenciaHora[1]);
-            const meridiano = coincidenciaHora[2];
-
-            if (meridiano === "pm" && hora < 12) {
-                hora += 12;
+        function formatearHora(hora, minutos, meridiano = null) {
+            if (!Number.isFinite(hora) || hora < 0 || hora > 23) {
+                return String(valorOriginal ?? "").trim();
             }
 
-            if (meridiano === "am" && hora === 12) {
-                hora = 0;
+            const minutoNumero = Number(minutos);
+
+            if (!Number.isFinite(minutoNumero) || minutoNumero < 0 || minutoNumero > 59) {
+                return String(valorOriginal ?? "").trim();
             }
 
-            return String(hora).padStart(2, "0") + ":00";
+            const horaNormalizada = meridiano
+                ? aplicarMeridiano(hora, meridiano)
+                : hora;
+
+            return (
+                String(horaNormalizada).padStart(2, "0") +
+                ":" +
+                String(minutoNumero).padStart(2, "0")
+            );
         }
 
-        coincidenciaHora = textoHora.match(/^(\d{1,2})$/);
+        let coincidenciaHora = textoHora.match(/^(\d{1,2})[:](\d{1,2})\s*(am|pm)?$/i);
 
         if (coincidenciaHora) {
-            return coincidenciaHora[1].padStart(2, "0") + ":00";
+            return formatearHora(
+                Number(coincidenciaHora[1]),
+                coincidenciaHora[2],
+                coincidenciaHora[3] ?? null
+            );
+        }
+
+        coincidenciaHora = textoHora.match(/^(\d{1,2})\s+(?:y|con)\s+(\d{1,2})\s*(am|pm)?$/i);
+
+        if (coincidenciaHora) {
+            return formatearHora(
+                Number(coincidenciaHora[1]),
+                coincidenciaHora[2],
+                coincidenciaHora[3] ?? null
+            );
+        }
+
+        coincidenciaHora = textoHora.match(/^([a-zñ]+|\d{1,2})\s*(am|pm)$/i);
+
+        if (coincidenciaHora) {
+            const hora = convertirHora(coincidenciaHora[1]);
+
+            if (hora !== null) {
+                return formatearHora(hora, "00", coincidenciaHora[2]);
+            }
+        }
+
+        coincidenciaHora = textoHora.match(/^([a-zñ]+|\d{1,2})$/i);
+
+        if (coincidenciaHora) {
+            const hora = convertirHora(coincidenciaHora[1]);
+
+            if (hora !== null) {
+                return formatearHora(hora, "00", null);
+            }
         }
 
         return String(valorOriginal ?? "").trim();
@@ -1989,6 +2218,7 @@ function interpretarVoz(texto) {
         /unidad\s+de\s+producci[oó]n/i,
         /(?:^|\s)(?:la\s+)?finca/i,
         /(?:^|\s)(?:el\s+)?municipio/i,
+        /(?:^|\s)(?:la\s+)?parroquia/i,
         /(?:^|\s)(?:el\s+)?departamento/i,
         /(?:^|\s)(?:el\s+)?estado/i,
         /superficie\s+total/i,
