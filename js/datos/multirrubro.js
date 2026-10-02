@@ -274,46 +274,159 @@ function normalizarRegistroMultirrubro(registro, clasificacion = {}) {
     };
 }
 // Recepción de datos de la Base Maestra mediante JSONP
-window.iAgricolaRecibirDatos = function (respuesta) {
+// DEV-FIX: carga robusta con cache-buster, reintentos y diagnóstico.
+// Objetivo: preservar la Base Maestra como fuente única y evitar que
+// una redirección 302/404 deje el catálogo de rubros vacío.
 
-    if (
-        !respuesta ||
-        respuesta.ok !== true ||
-        !Array.isArray(respuesta.datos)
-    ) {
-        console.error("ERROR Base Maestra JSONP:", respuesta);
-        return;
+const BASE_MAESTRA_JSONP_URL =
+    "https://script.google.com/a/macros/bbva.com/s/AKfycbzzXYN3bvfy_7j2vOZC9Dl8kiS4LA-ZH_GU_Owb5t6vEN04PetQsUxikEeO_mHwfU3d/exec";
+
+const BASE_MAESTRA_CALLBACK = "iAgricolaRecibirDatos";
+const BASE_MAESTRA_SCRIPT_ID = "baseMaestraMultirrubroJSONP";
+const BASE_MAESTRA_MAX_INTENTOS = 3;
+
+let baseMaestraIntentos = 0;
+let baseMaestraCargando = false;
+let baseMaestraUltimoError = null;
+
+function construirUrlBaseMaestraJSONP() {
+    const separador = BASE_MAESTRA_JSONP_URL.includes("?") ? "&" : "?";
+
+    return BASE_MAESTRA_JSONP_URL +
+        separador +
+        "callback=" +
+        encodeURIComponent(BASE_MAESTRA_CALLBACK) +
+        "&_ts=" +
+        Date.now();
+}
+
+function limpiarScriptBaseMaestra() {
+    const scriptAnterior = document.getElementById(BASE_MAESTRA_SCRIPT_ID);
+
+    if (scriptAnterior && scriptAnterior.parentNode) {
+        scriptAnterior.parentNode.removeChild(scriptAnterior);
     }
+}
 
+function validarRespuestaBaseMaestra(respuesta) {
+    return (
+        respuesta &&
+        respuesta.ok === true &&
+        Array.isArray(respuesta.datos) &&
+        respuesta.datos.length > 0
+    );
+}
+
+function finalizarCargaBaseMaestraExitosa(respuesta) {
     cargarDatosMultirrubro(
         respuesta.datos,
         {
             fuente: "BASE_MAESTRA_APPS_SCRIPT_JSONP",
-            total: respuesta.datos.length
+            total: respuesta.datos.length,
+            fechaActualizacion: new Date().toISOString()
         }
     );
-cargarSelectorRubrosMultirrubro();
+
+    cargarSelectorRubrosMultirrubro();
+
+    if (typeof window.inicializarRubrosExplotados === "function") {
+        window.inicializarRubrosExplotados();
+    }
+
+    baseMaestraCargando = false;
+    baseMaestraUltimoError = null;
+
     console.log(
         "SUCCESS Base Maestra JSONP:",
         respuesta.datos.length,
         "registros"
     );
+
+    return true;
+}
+
+function reintentarCargaBaseMaestra(motivo) {
+    baseMaestraUltimoError = motivo || "Motivo no especificado";
+
+    if (baseMaestraIntentos >= BASE_MAESTRA_MAX_INTENTOS) {
+        baseMaestraCargando = false;
+
+        console.error(
+            "ERROR Base Maestra JSONP: se agotaron los reintentos.",
+            {
+                intentos: baseMaestraIntentos,
+                ultimoError: baseMaestraUltimoError,
+                estado: estadoMultirrubro
+            }
+        );
+
+        return false;
+    }
+
+    console.warn(
+        "Reintentando carga Base Maestra JSONP:",
+        {
+            intentoSiguiente: baseMaestraIntentos + 1,
+            motivo: baseMaestraUltimoError
+        }
+    );
+
+    setTimeout(function () {
+        cargarBaseMaestraJSONP({ reintento: true });
+    }, 1200);
+
+    return true;
+}
+
+window.iAgricolaRecibirDatos = function (respuesta) {
+
+    if (!validarRespuestaBaseMaestra(respuesta)) {
+        console.error("ERROR Base Maestra JSONP: respuesta inválida o vacía.", respuesta);
+
+        reintentarCargaBaseMaestra("Respuesta inválida o sin datos");
+
+        return;
+    }
+
+    finalizarCargaBaseMaestraExitosa(respuesta);
 };
 
+function cargarBaseMaestraJSONP(opciones = {}) {
+    if (baseMaestraCargando && !opciones.reintento && !opciones.forzar) {
+        console.warn("Carga Base Maestra ya está en curso.");
+        return false;
+    }
 
-// Carga de la Base Maestra
-(function cargarBaseMaestraJSONP() {
+    if (!opciones.reintento) {
+        baseMaestraIntentos = 0;
+    }
+
+    baseMaestraIntentos += 1;
+    baseMaestraCargando = true;
+
+    limpiarScriptBaseMaestra();
 
     const script = document.createElement("script");
 
-    script.src =
-        "https://script.google.com/a/macros/bbva.com/s/AKfycbzzXYN3bvfy_7j2vOZC9Dl8kiS4LA-ZH_GU_Owb5t6vEN04PetQsUxikEeO_mHwfU3d/exec" +
-        "?callback=iAgricolaRecibirDatos";
-
+    script.id = BASE_MAESTRA_SCRIPT_ID;
+    script.src = construirUrlBaseMaestraJSONP();
     script.async = true;
 
     script.onload = function () {
-        console.log("Base Maestra JSONP cargada.");
+        console.log("Base Maestra JSONP solicitada.", {
+            intento: baseMaestraIntentos,
+            registros: estadoMultirrubro.registros.length
+        });
+
+        setTimeout(function () {
+            if (estadoMultirrubro.registros.length === 0) {
+                reintentarCargaBaseMaestra(
+                    "El script cargó, pero no llenó registros"
+                );
+            } else {
+                baseMaestraCargando = false;
+            }
+        }, 1500);
     };
 
     script.onerror = function (error) {
@@ -321,8 +434,43 @@ cargarSelectorRubrosMultirrubro();
             "ERROR cargando Base Maestra JSONP:",
             error
         );
+
+        reintentarCargaBaseMaestra("Error de carga del script JSONP");
     };
 
     document.head.appendChild(script);
 
-})();
+    return true;
+}
+
+window.recargarBaseMaestraMultirrubro = function recargarBaseMaestraMultirrubro() {
+    estadoMultirrubro.registros = [];
+    estadoMultirrubro.version = null;
+    estadoMultirrubro.fechaActualizacion = null;
+    estadoMultirrubro.fuente = null;
+
+    baseMaestraIntentos = 0;
+    baseMaestraUltimoError = null;
+    baseMaestraCargando = false;
+
+    return cargarBaseMaestraJSONP({ forzar: true });
+};
+
+window.diagnosticarMultirrubro = function diagnosticarMultirrubro() {
+    return {
+        registros: estadoMultirrubro.registros.length,
+        rubros: window.obtenerRubrosMultirrubro().length,
+        primerosRubros: window.obtenerRubrosMultirrubro().slice(0, 20),
+        fuente: estadoMultirrubro.fuente,
+        fechaActualizacion: estadoMultirrubro.fechaActualizacion,
+        cargando: baseMaestraCargando,
+        intentos: baseMaestraIntentos,
+        ultimoError: baseMaestraUltimoError,
+        scriptInsertado: Boolean(
+            document.getElementById(BASE_MAESTRA_SCRIPT_ID)
+        ),
+        scriptSrc: document.getElementById(BASE_MAESTRA_SCRIPT_ID)?.src ?? null
+    };
+};
+
+cargarBaseMaestraJSONP();
