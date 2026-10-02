@@ -934,6 +934,8 @@ function normalizarTextoVoz(texto) {
         .replace(/\btecnico\s+responsable\b/gi, "técnico responsable")
         .replace(/\bt[eé]cnico\s+responsable\b/gi, "técnico responsable")
         .replace(/\bt[eé]cnica\s+responsable\b/gi, "técnico responsable")
+        .replace(/\btelefono\b/gi, "teléfono")
+        .replace(/\bcedula\b/gi, "cédula")
         .replace(/\bt[eé]cnico\s+responsable\s+responsable\b/gi, "técnico responsable")
         .replace(/\s+/g, " ")
         .trim();
@@ -1170,7 +1172,7 @@ function interpretarVoz(texto) {
             expresiones: [
                 /^tel[eé]fono\s+principal[:\s]+(.+)$/i,
                 /^n[uú]mero\s+de\s+tel[eé]fono\s+principal[:\s]+(.+)$/i,
-                /^tel[eé]fono[:\s]+(.+)$/i
+                /^tel[eé]fono(?!\s+alternativo\b)[:\s]+(.+)$/i
             ]
         },
         {
@@ -1232,7 +1234,7 @@ function interpretarVoz(texto) {
                 /^c[eé]dula(?:\s+de\s+identidad)?[:\s]+(.+)$/i,
                 /^n[uú]mero\s+de\s+c[eé]dula[:\s]+(.+)$/i,
                 /^registro\s+de\s+informaci[oó]n\s+fiscal[:\s]+(.+)$/i,
-                /^(?:rif|r\.?i\.?f\.?)[:\s]+(.+)$/i,
+                /^(?:rif|r\.?i\.?f\.?)(?!\s+del\s+representante\s+legal)[:\s]+(.+)$/i,
                 /^identificaci[oó]n\s+(?:del\s+cliente|fiscal)[:\s]+(.+)$/i,
                 /^documento\s+de\s+identidad[:\s]+(.+)$/i
             ]
@@ -1677,7 +1679,7 @@ function interpretarVoz(texto) {
             .trim();
 
         textoHora = textoHora
-            .replace(/\s+(?:representante\s+legal|t[eé]cnico\s+responsable|tipo\s+de\s+visita|cliente|finca|municipio|parroquia|departamento|c[eé]dula|c[oó]digo\s+cliente)\b.*$/i, "")
+            .replace(/\s+(?:representante\s+legal|t[eé]cnico\s+responsable|tipo\s+de\s+visita|cliente|finca|municipio|parroquia|departamento|c[eé]dula|c[oó]digo\s+cliente|tel[eé]fono|correo|direcci[oó]n|registro|fecha\s+de\s+vencimiento)\b.*$/i, "")
             .trim();
 
         const numerosHora = {
@@ -1951,6 +1953,50 @@ function interpretarVoz(texto) {
             .toUpperCase();
     }
 
+    function normalizarRegistroTributarioVoz(valorOriginal) {
+        let valor = String(valorOriginal ?? "")
+            .trim()
+            .replace(/\b(r\s*\.?\s*i\s*\.?\s*f\.?)\b/gi, "")
+            .replace(/\s*-\s*/g, "-")
+            .replace(/\s{2,}/g, " ")
+            .toUpperCase();
+
+        const compacto = valor.replace(/[^A-Z0-9]/g, "");
+        const rifCompacto = compacto.match(/^([VEJGP])([0-9]{7,9})$/i);
+
+        if (rifCompacto) {
+            const letra = rifCompacto[1].toUpperCase();
+            const numeros = rifCompacto[2];
+            if (numeros.length >= 2) {
+                return letra + "-" + numeros.slice(0, -1) + "-" + numeros.slice(-1);
+            }
+        }
+
+        const rifSeparado = valor.match(/^([VEJGP])\s*-?\s*([0-9\s]+)\s*-?\s*([0-9])$/i);
+
+        if (rifSeparado) {
+            return (
+                rifSeparado[1].toUpperCase() +
+                "-" +
+                rifSeparado[2].replace(/\s+/g, "") +
+                "-" +
+                rifSeparado[3]
+            );
+        }
+
+        return valor.replace(/\s+/g, "");
+    }
+
+    function normalizarFechaParaInput(valorFecha) {
+        const coincidencia = String(valorFecha ?? "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+        if (!coincidencia) {
+            return valorFecha;
+        }
+
+        return coincidencia[3] + "-" + coincidencia[2] + "-" + coincidencia[1];
+    }
+
     function normalizarIdentificacionRepresentanteVoz(valorOriginal) {
         return normalizarIdentificacionClienteVoz(
             String(valorOriginal ?? "")
@@ -2058,7 +2104,7 @@ function interpretarVoz(texto) {
 
     const ETIQUETAS_CONTROL_VOZ = {
         representanteLegal: ["representante legal"],
-        identificacionRepresentanteLegal: ["identificación del representante legal", "identificacion del representante legal", "registro de información fiscal del representante legal", "registro de informacion fiscal del representante legal"],
+        identificacionRepresentanteLegal: ["identificación del representante legal", "identificacion del representante legal", "cédula o registro de información fiscal del representante legal", "cedula o registro de informacion fiscal del representante legal", "registro de información fiscal del representante legal", "registro de informacion fiscal del representante legal"],
         telefonoPrincipal: ["teléfono principal", "telefono principal"],
         telefonoAlternativo: ["teléfono alternativo", "telefono alternativo"],
         correoElectronico: ["correo electrónico", "correo electronico"],
@@ -2129,7 +2175,14 @@ function interpretarVoz(texto) {
             return false;
         }
 
-        campo.value = valor;
+        const valorControl = (
+            campo.type === "date" &&
+            /^\d{2}\/\d{2}\/\d{4}$/.test(String(valor ?? ""))
+        )
+            ? normalizarFechaParaInput(valor)
+            : valor;
+
+        campo.value = valorControl;
 
         if (campo.id === "cantidadRubrosExplotados") {
             campo.dispatchEvent(new Event("input", { bubbles: true }));
@@ -2339,6 +2392,40 @@ function interpretarVoz(texto) {
             const textoNormalizado = normalizarClave(valor);
 
             if (
+                entidadDestino === "identificacionCliente" &&
+                /^(?:del\s+)?representante\s+legal\b/.test(textoNormalizado)
+            ) {
+                entidadDestino = "identificacionRepresentanteLegal";
+                valor = valor
+                    .replace(/^del\s+representante\s+legal\s*/i, "")
+                    .replace(/^representante\s+legal\s*/i, "")
+                    .trim();
+            }
+
+            if (
+                entidadDestino === "identificacionCliente" &&
+                /^(?:rif\s+)?del$/.test(textoNormalizado)
+            ) {
+                console.warn("Se ignora residuo de identificación sin valor útil:", valor);
+                return true;
+            }
+
+            if (
+                entidadDestino === "representanteLegal" &&
+                /^[0-9\s]+$/.test(textoNormalizado)
+            ) {
+                entidadDestino = "identificacionRepresentanteLegal";
+            }
+
+            if (
+                entidadDestino === "telefonoPrincipal" &&
+                /^alternativo\b/.test(textoNormalizado)
+            ) {
+                entidadDestino = "telefonoAlternativo";
+                valor = valor.replace(/^alternativo\s*/i, "").trim();
+            }
+
+            if (
                 entidadDestino === "cliente" &&
                 /^([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*$/.test(textoNormalizado)
             ) {
@@ -2379,8 +2466,11 @@ function interpretarVoz(texto) {
                     break;
 
                 case "registroMinisterioAgricultura":
-                case "numeroRegistroTributario":
                     valor = normalizarRegistroAlfanumericoVoz(valor);
+                    break;
+
+                case "numeroRegistroTributario":
+                    valor = normalizarRegistroTributarioVoz(valor);
                     break;
 
                 case "fechaVencimientoRegistro":
@@ -2634,17 +2724,59 @@ function interpretarVoz(texto) {
         /(?:^|\s)sector\s+producci[oó]n/i
     ];
 
-    const posiciones = [];
+    const coincidenciasInicioEntidad = [];
 
     for (const inicio of iniciosEntidad) {
-        const coincidenciaInicio = inicio.exec(texto);
+        const banderas = inicio.flags.includes("g")
+            ? inicio.flags
+            : inicio.flags + "g";
+        const expresionGlobal = new RegExp(inicio.source, banderas);
+        let coincidenciaInicio = null;
 
-        if (coincidenciaInicio) {
-            posiciones.push(coincidenciaInicio.index);
+        while ((coincidenciaInicio = expresionGlobal.exec(texto)) !== null) {
+            coincidenciasInicioEntidad.push({
+                inicio: coincidenciaInicio.index,
+                fin: coincidenciaInicio.index + coincidenciaInicio[0].length
+            });
+
+            if (coincidenciaInicio[0].length === 0) {
+                expresionGlobal.lastIndex += 1;
+            }
         }
     }
 
-    const posicionesUnicas = [...new Set(posiciones)].sort((a, b) => a - b);
+    const coincidenciasOrdenadas = coincidenciasInicioEntidad
+        .sort(function(a, b) {
+            if (a.inicio !== b.inicio) {
+                return a.inicio - b.inicio;
+            }
+
+            return b.fin - a.fin;
+        });
+
+    const coincidenciasFiltradas = [];
+
+    for (const coincidencia of coincidenciasOrdenadas) {
+        const mismaPosicion = coincidenciasFiltradas.find(function(item) {
+            return item.inicio === coincidencia.inicio;
+        });
+
+        if (mismaPosicion) {
+            continue;
+        }
+
+        const contenida = coincidenciasFiltradas.some(function(item) {
+            return coincidencia.inicio > item.inicio && coincidencia.inicio < item.fin;
+        });
+
+        if (!contenida) {
+            coincidenciasFiltradas.push(coincidencia);
+        }
+    }
+
+    const posicionesUnicas = coincidenciasFiltradas
+        .map(function(item) { return item.inicio; })
+        .sort((a, b) => a - b);
 
     if (posicionesUnicas.length > 1) {
 
