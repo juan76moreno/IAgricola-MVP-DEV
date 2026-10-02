@@ -1119,6 +1119,15 @@ function interpretarVoz(texto) {
             .replace(/\bS\.\s*A\.?\b/gi, "S.A.")
             .replace(/\bS\.\s*R\.\s*L\.?\b/gi, "S.R.L.");
     }
+    function normalizarTextoLibreVoz(valorOriginal) {
+        return capitalizarTexto(valorOriginal)
+            .replace(/\bC\.\s*A\.?\b/gi, "C.A.")
+            .replace(/\bS\.\s*A\.?\b/gi, "S.A.")
+            .replace(/\bS\.\s*R\.\s*L\.?\b/gi, "S.R.L.")
+            .replace(/\bRif\b/g, "RIF")
+            .replace(/\bGps\b/g, "GPS");
+    }
+
 
     function normalizarFechaVisitaVoz(valorOriginal) {
         const textoFecha = normalizarClave(valorOriginal);
@@ -1582,6 +1591,7 @@ function interpretarVoz(texto) {
                         .replace(/^especialista\s+agr[ií]cola\s+/i, "")
                         .replace(/\s{2,}/g, " ")
                         .trim();
+                    valor = normalizarTextoLibreVoz(valor);
                     break;
 
                 case "finca":
@@ -1591,7 +1601,8 @@ function interpretarVoz(texto) {
                 case "cliente":
                 case "municipio":
                 case "departamento":
-                    valor = valor.replace(/\s{2,}/g, " ").trim();
+                case "estadoFitosanitario":
+                    valor = normalizarTextoLibreVoz(valor.replace(/\s{2,}/g, " ").trim());
                     break;
 
                 case "superficieTotal":
