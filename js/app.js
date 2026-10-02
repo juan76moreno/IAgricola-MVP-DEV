@@ -682,6 +682,26 @@ registrarDatosMinimos();
 
 }
 
+
+function configurarCamposFechaHoraInicioVisita(){
+
+    const campoFecha = document.getElementById("fechaVisita");
+
+    if(campoFecha){
+        campoFecha.type = "text";
+        campoFecha.placeholder = "dd/mm/aaaa";
+        campoFecha.inputMode = "numeric";
+    }
+
+    const campoHora = document.getElementById("horaInicio");
+
+    if(campoHora){
+        campoHora.type = "text";
+        campoHora.placeholder = "HH:mm";
+        campoHora.inputMode = "numeric";
+    }
+}
+
 function iniciarVisita(){
 
     document.getElementById("ready").style.display="none";
@@ -691,6 +711,7 @@ estadoVisita.estado = "EN_VISITA";
     establecerObjetoActivo("Inicio de Visita");
     sincronizarOpcionesTipoVisita();
     actualizarEtiquetaParroquiaInicioVisita();
+    configurarCamposFechaHoraInicioVisita();
     inicializarVoz();
     
     registrarDatosCliente();
@@ -1119,8 +1140,9 @@ function interpretarVoz(texto) {
         {
             entidad: "codigoCliente",
             expresiones: [
-                /^c[oó]digo(?:\s+de)?\s+cliente[:\s]+([0-9\s]+)$/i,
-                /^cliente\s+n[uú]mero[:\s]+([0-9\s]+)$/i
+                /^c[oó]digo(?:\s+(?:de|del))?\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
+                /^cliente\s+n[uú]mero[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
+                /^n[uú]mero\s+de\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i
             ]
         },
         {
@@ -1308,6 +1330,53 @@ function interpretarVoz(texto) {
         return valor.toUpperCase();
     }
 
+    function normalizarCodigoClienteVoz(valorOriginal) {
+        const mapaNumeros = {
+            cero: "0",
+            uno: "1",
+            un: "1",
+            una: "1",
+            dos: "2",
+            tres: "3",
+            cuatro: "4",
+            cinco: "5",
+            seis: "6",
+            siete: "7",
+            ocho: "8",
+            nueve: "9"
+        };
+
+        let valor = normalizarClave(valorOriginal)
+            .replace(/\./g, " ")
+            .replace(/,/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        if (!valor) {
+            return "";
+        }
+
+        const partes = valor.split(" ");
+        const digitos = partes
+            .map(function(parte) {
+                if (/^\d+$/.test(parte)) {
+                    return parte;
+                }
+
+                return mapaNumeros[parte] ?? "";
+            })
+            .join("");
+
+        if (digitos) {
+            return digitos.padStart(8, "0");
+        }
+
+        return String(valorOriginal ?? "")
+            .replace(/\s+/g, "")
+            .padStart(8, "0");
+    }
+
+
 
     function normalizarFechaVisitaVoz(valorOriginal) {
         const meses = {
@@ -1397,22 +1466,33 @@ function interpretarVoz(texto) {
         }
 
         const textoFecha = normalizarClave(valorOriginal)
+            .replace(/^fecha\s+(?:de\s+)?(?:visita|inspeccion|inspección)\s+/i, "")
+            .replace(/^visita\s+fecha\s+/i, "")
             .replace(/\./g, "")
             .replace(/,/g, " ")
+            .replace(/\s*\/\s*/g, "/")
+            .replace(/\s*-\s*/g, "-")
             .replace(/\s+/g, " ")
             .trim();
 
         if (textoFecha === "hoy") {
-            return new Date().toISOString().slice(0, 10);
+            {
+                const fechaHoy = new Date();
+                return (
+                    String(fechaHoy.getDate()).padStart(2, "0") + "/" +
+                    String(fechaHoy.getMonth() + 1).padStart(2, "0") + "/" +
+                    fechaHoy.getFullYear()
+                );
+            }
         }
 
         let coincidenciaFecha = textoFecha.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
 
         if (coincidenciaFecha) {
             return (
-                coincidenciaFecha[3] + "-" +
-                coincidenciaFecha[2].padStart(2, "0") + "-" +
-                coincidenciaFecha[1].padStart(2, "0")
+                coincidenciaFecha[1].padStart(2, "0") + "/" +
+                coincidenciaFecha[2].padStart(2, "0") + "/" +
+                coincidenciaFecha[3]
             );
         }
 
@@ -1420,9 +1500,9 @@ function interpretarVoz(texto) {
 
         if (coincidenciaFecha) {
             return (
-                coincidenciaFecha[1] + "-" +
-                coincidenciaFecha[2].padStart(2, "0") + "-" +
-                coincidenciaFecha[3].padStart(2, "0")
+                coincidenciaFecha[3].padStart(2, "0") + "/" +
+                coincidenciaFecha[2].padStart(2, "0") + "/" +
+                coincidenciaFecha[1]
             );
         }
 
@@ -1430,9 +1510,9 @@ function interpretarVoz(texto) {
 
         if (coincidenciaFecha) {
             return (
-                coincidenciaFecha[3] + "-" +
-                coincidenciaFecha[2].padStart(2, "0") + "-" +
-                coincidenciaFecha[1].padStart(2, "0")
+                coincidenciaFecha[1].padStart(2, "0") + "/" +
+                coincidenciaFecha[2].padStart(2, "0") + "/" +
+                coincidenciaFecha[3]
             );
         }
 
@@ -1444,9 +1524,9 @@ function interpretarVoz(texto) {
 
             if (dia && /^\d{4}$/.test(anio)) {
                 return (
-                    anio + "-" +
-                    meses[coincidenciaFecha[2]] + "-" +
-                    String(dia).padStart(2, "0")
+                    String(dia).padStart(2, "0") + "/" +
+                    meses[coincidenciaFecha[2]] + "/" +
+                    anio
                 );
             }
         }
@@ -1459,9 +1539,9 @@ function interpretarVoz(texto) {
 
             if (dia && /^\d{4}$/.test(anio)) {
                 return (
-                    anio + "-" +
-                    meses[coincidenciaFecha[2]] + "-" +
-                    String(dia).padStart(2, "0")
+                    String(dia).padStart(2, "0") + "/" +
+                    meses[coincidenciaFecha[2]] + "/" +
+                    anio
                 );
             }
         }
@@ -1471,6 +1551,8 @@ function interpretarVoz(texto) {
 
     function normalizarHoraInicioVoz(valorOriginal) {
         let textoHora = normalizarClave(valorOriginal)
+            .replace(/^hora\s+(?:de\s+)?(?:inicio|la\s+visita)\s+/i, "")
+            .replace(/^inicio\s+(?:de\s+)?visita\s+/i, "")
             .replace(/\./g, "")
             .replace(/,/g, " ")
             .replace(/\s+horas?$/, "")
@@ -2010,8 +2092,7 @@ function interpretarVoz(texto) {
             switch (patron.entidad) {
 
                 case "codigoCliente":
-                    valor = valor.replace(/\s+/g, "");
-                    valor = valor.padStart(8, "0");
+                    valor = normalizarCodigoClienteVoz(valor);
                     break;
 
                 case "identificacionCliente":
