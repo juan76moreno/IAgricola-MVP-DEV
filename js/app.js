@@ -1140,12 +1140,31 @@ function interpretarVoz(texto) {
             ]
         },
         {
+            entidad: "identificacionCliente",
+            expresiones: [
+                /^c[eé]dula\s+(?:de\s+identidad\s+)?(?:del\s+)?cliente[:\s]+(.+)$/i,
+                /^c[eé]dula\s+(?:de\s+identidad\s+)?(?:de\s+)?cliente[:\s]+(.+)$/i,
+                /^(?:rif|r\.?i\.?f\.?)\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
+                /^identificaci[oó]n\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
+                /^documento\s+(?:del\s+)?cliente[:\s]+(.+)$/i
+            ]
+        },
+        {
             entidad: "codigoCliente",
             expresiones: [
                 /^c[oó]digo(?:\s+(?:de|del))?\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
                 /^cliente\s+n[uú]mero[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
                 /^n[uú]mero\s+de\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
                 /^cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i
+            ]
+        },
+        {
+            entidad: "identificacionRepresentanteLegal",
+            expresiones: [
+                /^representante\s+legal\s+(?:venezolan[oa]|v|e|extranjero|extranjera)[:\s]+([0-9\s]+)$/i,
+                /^identificaci[oó]n\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i,
+                /^documento\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i,
+                /^n[uú]mero\s+de\s+c[eé]dula\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i
             ]
         },
         {
@@ -1213,7 +1232,11 @@ function interpretarVoz(texto) {
             entidad: "fechaVencimientoRegistro",
             expresiones: [
                 /^fecha\s+de\s+vencimiento\s+del\s+registro[:\s]+(.+)$/i,
+                /^fecha\s+de\s+vencimiento\s+de\s+registro[:\s]+(.+)$/i,
                 /^vencimiento\s+del\s+registro[:\s]+(.+)$/i,
+                /^vencimiento\s+de\s+registro[:\s]+(.+)$/i,
+                /^fecha\s+vencimiento\s+del\s+registro[:\s]+(.+)$/i,
+                /^fecha\s+vencimiento\s+de\s+registro[:\s]+(.+)$/i,
                 /^fecha\s+vencimiento\s+registro[:\s]+(.+)$/i
             ]
         },
@@ -1389,6 +1412,8 @@ function interpretarVoz(texto) {
 
         valor = valor
             .replace(/\b(r\s*\.?\s*i\s*\.?\s*f\.?)\b/gi, "RIF")
+            .replace(/\bvenezolan[oa]\b/gi, "V")
+            .replace(/\bextranjera?\b/gi, "E")
             .replace(/\s*-\s*/g, "-")
             .trim();
 
@@ -1945,8 +1970,18 @@ function interpretarVoz(texto) {
             .trim();
     }
 
-    function normalizarRegistroAlfanumericoVoz(valorOriginal) {
+    function cortarValorInicioVisita(valorOriginal) {
         return String(valorOriginal ?? "")
+            .replace(/\s+(?=fecha\s+(?:de\s+)?vencimiento\s+(?:del\s+|de\s+)?registro\b)/i, "\n")
+            .replace(/\s+(?=vencimiento\s+(?:del\s+|de\s+)?registro\b)/i, "\n")
+            .replace(/\s+(?=n[uú]mero\s+de\s+registro\s+tributario\b)/i, "\n")
+            .replace(/\s+(?=registro\s+tributario\b)/i, "\n")
+            .split("\n")[0]
+            .trim();
+    }
+
+    function normalizarRegistroAlfanumericoVoz(valorOriginal) {
+        return cortarValorInicioVisita(valorOriginal)
             .trim()
             .replace(/\s*-\s*/g, "-")
             .replace(/\s{2,}/g, " ")
@@ -2000,8 +2035,14 @@ function interpretarVoz(texto) {
     function normalizarIdentificacionRepresentanteVoz(valorOriginal) {
         return normalizarIdentificacionClienteVoz(
             String(valorOriginal ?? "")
+                .replace(/^c[eé]dula\s+(?:de\s+identidad\s+)?(?:del\s+)?representante\s+legal\s+/i, "")
+                .replace(/^(?:rif|r\.?i\.?f\.?)\s+(?:del\s+)?representante\s+legal\s+/i, "")
+                .replace(/^identificaci[oó]n\s+(?:del\s+)?representante\s+legal\s+/i, "")
+                .replace(/^documento\s+(?:del\s+)?representante\s+legal\s+/i, "")
                 .replace(/^del\s+representante\s+legal\s+/i, "")
                 .replace(/^representante\s+legal\s+/i, "")
+                .replace(/^venezolan[oa]\s+/i, "V ")
+                .replace(/^extranjera?\s+/i, "E ")
                 .trim()
         );
     }
@@ -2390,6 +2431,17 @@ function interpretarVoz(texto) {
             let entidadDestino = patron.entidad;
 
             const textoNormalizado = normalizarClave(valor);
+            const digitosValor = String(valor ?? "").replace(/\D/g, "");
+
+            if (
+                entidadDestino === "representanteLegal" &&
+                (
+                    /\b(?:c[eé]dula|cedula|rif|r\.?i\.?f\.?|identificaci[oó]n|documento|venezolan[oa]|extranjera?|v|e)\b/i.test(valor) &&
+                    digitosValor.length >= 5
+                )
+            ) {
+                entidadDestino = "identificacionRepresentanteLegal";
+            }
 
             if (
                 entidadDestino === "identificacionCliente" &&
@@ -2664,8 +2716,15 @@ function interpretarVoz(texto) {
         /(?:^|\s)(?:el\s+)?tipo\s+(?:de\s+)?visita/i,
         /(?:^|\s)motivo\s+(?:de\s+)?(?:la\s+)?inspecci[oó]n/i,
         /(?:^|\s)motivo/i,
-        /(?:^|\s)representante\s+legal/i,
+        /(?:^|\s)c[eé]dula\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal\s+del\s+representante\s+legal/i,
+        /(?:^|\s)c[eé]dula\s+(?:de\s+identidad\s+)?del\s+representante\s+legal/i,
+        /(?:^|\s)c[eé]dula\s+del\s+representante\s+legal/i,
+        /(?:^|\s)(?:rif|r\.?i\.?f\.?)\s+del\s+representante\s+legal/i,
+        /(?:^|\s)identificaci[oó]n\s+del\s+representante\s+legal/i,
+        /(?:^|\s)documento\s+del\s+representante\s+legal/i,
+        /(?:^|\s)representante\s+legal\s+(?:venezolan[oa]|v|e|extranjera?)/i,
         /(?:^|\s)nombre\s+del\s+representante\s+legal/i,
+        /(?:^|\s)representante\s+legal/i,
         /(?:^|\s)c[eé]dula\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal\s+del\s+representante\s+legal/i,
         /(?:^|\s)c[eé]dula\s+(?:de\s+identidad\s+)?del\s+representante\s+legal/i,
         /(?:^|\s)c[eé]dula\s+del\s+representante\s+legal/i,
@@ -2678,12 +2737,17 @@ function interpretarVoz(texto) {
         /(?:^|\s)direcci[oó]n\s+(?:de\s+)?habitaci[oó]n/i,
         /(?:^|\s)n[uú]mero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura/i,
         /(?:^|\s)registro\s+(?:del\s+)?ministerio\s+de\s+agricultura/i,
-        /(?:^|\s)fecha\s+de\s+vencimiento\s+del\s+registro/i,
-        /(?:^|\s)vencimiento\s+del\s+registro/i,
+        /(?:^|\s)fecha\s+de\s+vencimiento\s+(?:del\s+|de\s+)?registro/i,
+        /(?:^|\s)fecha\s+vencimiento\s+(?:del\s+|de\s+)?registro/i,
+        /(?:^|\s)vencimiento\s+(?:del\s+|de\s+)?registro/i,
         /(?:^|\s)n[uú]mero\s+de\s+registro\s+tributario/i,
         /(?:^|\s)registro\s+tributario/i,
-        /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
+        /(?:^|\s)c[eé]dula\s+(?:de\s+identidad\s+)?(?:del\s+)?cliente/i,
+        /(?:^|\s)(?:rif|r\.?i\.?f\.?)\s+(?:del\s+)?cliente/i,
+        /(?:^|\s)identificaci[oó]n\s+(?:del\s+)?cliente/i,
+        /(?:^|\s)documento\s+(?:del\s+)?cliente/i,
         /(?:^|\s)c[eé]dula\s+de\s+identidad\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal/i,
+        /c[oó]digo(?:\s+(?:de|del))?\s+cliente/i,
         /(?:^|\s)c[eé]dula\s+o\s+(?:rif|r\.?i\.?f\.?)\b/i,
         /(?:^|\s)c[eé]dula(?:\s+de\s+identidad)?/i,
         /(?:^|\s)n[uú]mero\s+de\s+c[eé]dula/i,
