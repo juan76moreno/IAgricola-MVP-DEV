@@ -1,4 +1,24 @@
-console.log("Core expediente:", listarActivos());
+// Helper global para el motor de voz.
+// Debe estar disponible desde cualquier manejador de eventos,
+// incluido window.reconocimiento.onresult.
+function normalizarClave(textoClave) {
+    return String(textoClave ?? "")
+        .normalize("NFD")
+        .replace(/[\\u0300-\\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\\s+/g, " ")
+        .trim();
+}
+
+// Exponer explícitamente el helper para cualquier manejador/evento global.
+window.normalizarClave = normalizarClave;
+
+// Diagnóstico opcional: no debe impedir que la aplicación cargue si el módulo
+// de expediente todavía no fue registrado por otro script.
+console.log(
+    "Core expediente:",
+    typeof window.listarActivos === "function" ? window.listarActivos() : []
+);
 const estadoVisita = {
 
     modulo: "agenda",
