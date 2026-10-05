@@ -918,6 +918,8 @@ function normalizarTextoVoz(texto) {
         .replace(/\ba\s+roba\b/gi, "arroba")
         .replace(/\bpunto\s+con\b/gi, "punto com")
         .replace(/\bcom\s+ve\b/gi, "com punto ve")
+        .replace(/\bbe\b/gi, "V")
+        .replace(/\bregistro\s+mat\b/gi, "registro MAT")
         .replace(/\bvene\s*zolan[oa]\b/gi, "venezolano")
         .replace(/\bruro\b/gi, "rubro")
         .replace(/\bruvo\b/gi, "rubro")
@@ -1173,7 +1175,7 @@ function interpretarVoz(texto) {
         {
             entidad: "identificacionRepresentanteLegal",
             expresiones: [
-                /^representante\s+legal\s+(?:venezolan[oa]|v|e|extranjero|extranjera)[:\s]+([0-9\s]+)$/i,
+                /^representante\s+legal\s+(?:venezolan[oa]|v|ve|e|extranjero|extranjera)\s*(?:es)?[:\s]+([0-9\s]+)$/i,
                 /^identificaci[oó]n\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i,
                 /^documento\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i,
                 /^n[uú]mero\s+de\s+c[eé]dula\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i
@@ -1235,22 +1237,19 @@ function interpretarVoz(texto) {
         {
             entidad: "registroMinisterioAgricultura",
             expresiones: [
-                /^n[uú]mero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura[:\s]+(.+)$/i,
-                /^registro\s+del\s+ministerio\s+de\s+agricultura[:\s]+(.+)$/i,
-                /^registro\s+ministerio\s+agricultura[:\s]+(.+)$/i,
-                /^registro\s+agr[ií]cola[:\s]+(.+)$/i
+                /(?:^|\s)n[uú]mero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:(?:la\s+)?fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
+                /(?:^|\s)registro\s+(?:del\s+)?ministerio\s+de\s+agricultura\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:(?:la\s+)?fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
+                /(?:^|\s)registro\s+agr[ií]cola\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:(?:la\s+)?fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
+                /(?:^|\s)registro\s+mat\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:(?:la\s+)?fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i
             ]
         },
         {
             entidad: "fechaVencimientoRegistro",
             expresiones: [
-                /^fecha\s+de\s+vencimiento\s+del\s+registro[:\s]+(.+)$/i,
-                /^fecha\s+de\s+vencimiento\s+de\s+registro[:\s]+(.+)$/i,
-                /^vencimiento\s+del\s+registro[:\s]+(.+)$/i,
-                /^vencimiento\s+de\s+registro[:\s]+(.+)$/i,
-                /^fecha\s+vencimiento\s+del\s+registro[:\s]+(.+)$/i,
-                /^fecha\s+vencimiento\s+de\s+registro[:\s]+(.+)$/i,
-                /^fecha\s+vencimiento\s+registro[:\s]+(.+)$/i
+                /(?:^|\s)(?:la\s+)?fecha\s+de\s+vencimiento\s+del\s+registro\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:n[uú]mero\s+de\s+registro\s+del\s+ministerio|registro\s+(?:del\s+)?ministerio|registro\s+mat|registro\s+agr[ií]cola|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
+                /(?:^|\s)(?:la\s+)?fecha\s+de\s+vencimiento\s+de\s+registro\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:n[uú]mero\s+de\s+registro\s+del\s+ministerio|registro\s+(?:del\s+)?ministerio|registro\s+mat|registro\s+agr[ií]cola|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
+                /(?:^|\s)vencimiento\s+(?:del\s+|de\s+)?registro\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:n[uú]mero\s+de\s+registro\s+del\s+ministerio|registro\s+(?:del\s+)?ministerio|registro\s+mat|registro\s+agr[ií]cola|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
+                /(?:^|\s)fecha\s+vencimiento\s+(?:del\s+|de\s+)?registro\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:n[uú]mero\s+de\s+registro\s+del\s+ministerio|registro\s+(?:del\s+)?ministerio|registro\s+mat|registro\s+agr[ií]cola|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i
             ]
         },
         {
@@ -1426,6 +1425,7 @@ function interpretarVoz(texto) {
         valor = valor
             .replace(/\b(r\s*\.?\s*i\s*\.?\s*f\.?)\b/gi, "RIF")
             .replace(/\bvenezolan[oa]\b/gi, "V")
+            .replace(/\bve\b/gi, "V")
             .replace(/\bextranjera?\b/gi, "E")
             .replace(/\s*-\s*/g, "-")
             .trim();
@@ -2016,8 +2016,10 @@ function interpretarVoz(texto) {
 
     function cortarValorInicioVisita(valorOriginal) {
         return String(valorOriginal ?? "")
-            .replace(/\s+(?=fecha\s+(?:de\s+)?vencimiento\s+(?:del\s+|de\s+)?registro\b)/i, "\n")
+            .replace(/\s+(?=(?:la\s+)?fecha\s+(?:de\s+)?vencimiento\s+(?:del\s+|de\s+)?registro\b)/i, "\n")
+            .replace(/\s+(?=fecha\s+vencimiento\s+(?:del\s+|de\s+)?registro\b)/i, "\n")
             .replace(/\s+(?=vencimiento\s+(?:del\s+|de\s+)?registro\b)/i, "\n")
+            .replace(/\s+(?=registro\s+mat\b)/i, "\n")
             .replace(/\s+(?=n[uú]mero\s+de\s+registro\s+tributario\b)/i, "\n")
             .replace(/\s+(?=registro\s+tributario\b)/i, "\n")
             .split("\n")[0]
@@ -2867,7 +2869,10 @@ function interpretarVoz(texto) {
         /(?:^|\s)direcci[oó]n\s+(?:de\s+)?habitaci[oó]n/i,
         /(?:^|\s)n[uú]mero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura/i,
         /(?:^|\s)registro\s+(?:del\s+)?ministerio\s+de\s+agricultura/i,
+        /(?:^|\s)registro\s+mat\b/i,
+        /(?:^|\s)mat\s+(?:n[uú]mero\s+)?/i,
         /(?:^|\s)fecha\s+de\s+vencimiento\s+(?:del\s+|de\s+)?registro/i,
+        /(?:^|\s)(?:la\s+)?fecha\s+de\s+vencimiento\s+(?:del\s+|de\s+)?registro/i,
         /(?:^|\s)fecha\s+vencimiento\s+(?:del\s+|de\s+)?registro/i,
         /(?:^|\s)vencimiento\s+(?:del\s+|de\s+)?registro/i,
         /(?:^|\s)n[uú]mero\s+de\s+registro\s+tributario/i,
