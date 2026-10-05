@@ -2033,18 +2033,81 @@ function interpretarVoz(texto) {
     }
 
     function normalizarIdentificacionRepresentanteVoz(valorOriginal) {
-        return normalizarIdentificacionClienteVoz(
-            String(valorOriginal ?? "")
-                .replace(/^c[eé]dula\s+(?:de\s+identidad\s+)?(?:del\s+)?representante\s+legal\s+/i, "")
-                .replace(/^(?:rif|r\.?i\.?f\.?)\s+(?:del\s+)?representante\s+legal\s+/i, "")
-                .replace(/^identificaci[oó]n\s+(?:del\s+)?representante\s+legal\s+/i, "")
-                .replace(/^documento\s+(?:del\s+)?representante\s+legal\s+/i, "")
-                .replace(/^del\s+representante\s+legal\s+/i, "")
-                .replace(/^representante\s+legal\s+/i, "")
-                .replace(/^venezolan[oa]\s+/i, "V ")
-                .replace(/^extranjera?\s+/i, "E ")
-                .trim()
-        );
+        const valorDepurado = String(valorOriginal ?? "")
+            .replace(/^c[eé]dula\s+(?:de\s+identidad\s+)?(?:del\s+)?representante\s+legal\s+/i, "")
+            .replace(/^(?:rif|r\.?i\.?f\.?)\s+(?:del\s+)?representante\s+legal\s+/i, "")
+            .replace(/^identificaci[oó]n\s+(?:del\s+)?representante\s+legal\s+/i, "")
+            .replace(/^documento\s+(?:del\s+)?representante\s+legal\s+/i, "")
+            .replace(/^del\s+representante\s+legal\s+/i, "")
+            .replace(/^representante\s+legal\s+/i, "")
+            .replace(/\bvenezolan[oa]\b/gi, "V")
+            .replace(/\bextranjera?\b/gi, "E")
+            .trim();
+
+        const valorNormalizado = normalizarIdentificacionClienteVoz(valorDepurado);
+
+        if (/^\d{5,9}$/.test(valorNormalizado)) {
+            return "V-" + valorNormalizado;
+        }
+
+        return valorNormalizado;
+    }
+
+    function esValorResidualInicioVisita(entidad, valorOriginal) {
+        const valorTexto = String(valorOriginal ?? "").trim();
+        const clave = normalizarClave(valorTexto);
+
+        if (!clave) {
+            return true;
+        }
+
+        const residuosGenericos = [
+            "de",
+            "del",
+            "de la",
+            "de el",
+            "el",
+            "la",
+            "los",
+            "las",
+            "cliente",
+            "del cliente",
+            "representante",
+            "representante legal",
+            "del representante legal",
+            "rif",
+            "rif del",
+            "r i f",
+            "cedula",
+            "cédula",
+            "identificacion",
+            "identificación"
+        ];
+
+        if (residuosGenericos.includes(clave)) {
+            return true;
+        }
+
+        if (entidad === "correoElectronico") {
+            const correoNormalizado = normalizarCorreoVoz(valorTexto);
+            return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoNormalizado);
+        }
+
+        if (
+            entidad === "direccionHabitacion" &&
+            /^(?:de|del|de la|cliente|del cliente)$/i.test(clave)
+        ) {
+            return true;
+        }
+
+        if (
+            entidad === "registroMinisterioAgricultura" &&
+            /^(?:fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro)/i.test(clave)
+        ) {
+            return true;
+        }
+
+        return false;
     }
 
     function normalizarCampoTecnico(entidad, valorOriginal) {
@@ -2133,13 +2196,13 @@ function interpretarVoz(texto) {
 
     const ALIASES_CONTROL_VOZ = {
         representanteLegal: ["representanteLegal", "representante", "nombreRepresentanteLegal"],
-        identificacionRepresentanteLegal: ["identificacionRepresentanteLegal", "rifRepresentanteLegal", "cedulaRepresentanteLegal", "identificacionFiscalRepresentanteLegal"],
+        identificacionRepresentanteLegal: ["identificacionRepresentanteLegal", "identificacionRepresentante", "rifRepresentanteLegal", "cedulaRepresentanteLegal", "identificacionFiscalRepresentanteLegal"],
         telefonoPrincipal: ["telefonoPrincipal", "telefono", "numeroTelefonoPrincipal"],
         telefonoAlternativo: ["telefonoAlternativo", "telefonoSecundario", "numeroTelefonoAlternativo"],
-        correoElectronico: ["correoElectronico", "correo", "email"],
+        correoElectronico: ["correoElectronico", "correoCliente", "correo", "email"],
         direccionHabitacion: ["direccionHabitacion", "direccion", "direccionCliente"],
         registroMinisterioAgricultura: ["registroMinisterioAgricultura", "numeroRegistroMinisterioAgricultura", "registroAgricola", "numeroRegistroAgricultura"],
-        fechaVencimientoRegistro: ["fechaVencimientoRegistro", "vencimientoRegistro", "fechaVencimientoMinisterioAgricultura"],
+        fechaVencimientoRegistro: ["fechaVencimientoRegistro", "vigenciaRegistroMinisterio", "vencimientoRegistro", "fechaVencimientoMinisterioAgricultura"],
         numeroRegistroTributario: ["numeroRegistroTributario", "registroTributario", "nrt"]
     };
 
@@ -2654,6 +2717,15 @@ function interpretarVoz(texto) {
                     break;
             }
 
+            if (esValorResidualInicioVisita(entidadDestino, valor)) {
+                console.warn(
+                    "Se ignora valor residual o incompleto de voz:",
+                    entidadDestino,
+                    valor
+                );
+                return true;
+            }
+
             const registro = registrarDato(
                 entidadDestino,
                 valor,
@@ -2892,9 +2964,9 @@ function interpretarVoz(texto) {
         return;
     }
 
-    notificarFalloVoz(
-        null,
-        "No pude identificar el campo ni el valor indicado"
+    console.warn(
+        "Texto reconocido sin campo suficiente para registrar:",
+        texto
     );
 }
 
