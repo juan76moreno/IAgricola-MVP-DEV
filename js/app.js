@@ -907,6 +907,18 @@ function notificarFalloVoz(patron, detalle = "") {
 }
 function normalizarTextoVoz(texto) {
     return String(texto ?? "")
+        .replace(/\be\s*mail\b/gi, "email")
+        .replace(/\bemail\b/gi, "email")
+        .replace(/\bcorre[oó]\s+electr[oó]nico\b/gi, "correo electrónico")
+        .replace(/\bcorreo\s+electronico\b/gi, "correo electrónico")
+        .replace(/\bcorreo\s+electrónico\b/gi, "correo electrónico")
+        .replace(/\bcorreo\s+eletr[oó]nico\b/gi, "correo electrónico")
+        .replace(/\bcorreo\s+el[eé]ctronico\b/gi, "correo electrónico")
+        .replace(/\barrova\b/gi, "arroba")
+        .replace(/\ba\s+roba\b/gi, "arroba")
+        .replace(/\bpunto\s+con\b/gi, "punto com")
+        .replace(/\bcom\s+ve\b/gi, "com punto ve")
+        .replace(/\bvene\s*zolan[oa]\b/gi, "venezolano")
         .replace(/\bruro\b/gi, "rubro")
         .replace(/\bruvo\b/gi, "rubro")
         .replace(/\brubo\b/gi, "rubro")
@@ -1205,18 +1217,19 @@ function interpretarVoz(texto) {
         {
             entidad: "correoElectronico",
             expresiones: [
-                /^correo\s+electr[oó]nico[:\s]+(.+)$/i,
-                /^email[:\s]+(.+)$/i,
-                /^e\s*mail[:\s]+(.+)$/i
+                /^correo\s+electr[oó]nico(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
+                /^correo(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
+                /^email(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
+                /^e\s*mail(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i
             ]
         },
         {
             entidad: "direccionHabitacion",
             expresiones: [
-                /^direcci[oó]n\s+de\s+habitaci[oó]n[:\s]+(.+)$/i,
-                /^direcci[oó]n\s+habitaci[oó]n[:\s]+(.+)$/i,
-                /^domicilio[:\s]+(.+)$/i,
-                /^direcci[oó]n[:\s]+(.+)$/i
+                /^direcci[oó]n\s+de\s+habitaci[oó]n(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
+                /^direcci[oó]n\s+habitaci[oó]n(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
+                /^domicilio(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
+                /^direcci[oó]n(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i
             ]
         },
         {
@@ -1955,19 +1968,50 @@ function interpretarVoz(texto) {
     }
 
     function normalizarCorreoVoz(valorOriginal) {
-        return normalizarClave(valorOriginal)
+        let correo = normalizarClave(valorOriginal)
+            .replace(/^(?:correo\s+electr[oó]nico|correo|email|e\s*mail)\s+/i, "")
+            .replace(/^(?:del\s+cliente|cliente|del|de)\s+/i, "")
             .replace(/\s+arroba\s+/g, "@")
             .replace(/\s+at\s+/g, "@")
+            .replace(/\s+a\s+la\s+arroba\s+/g, "@")
             .replace(/\s+punto\s+/g, ".")
-            .replace(/\s+guion\s+/g, "-")
-            .replace(/\s+guión\s+/g, "-")
+            .replace(/\s+dot\s+/g, ".")
             .replace(/\s+guion\s+bajo\s+/g, "_")
             .replace(/\s+guión\s+bajo\s+/g, "_")
+            .replace(/\s+guion\s+/g, "-")
+            .replace(/\s+guión\s+/g, "-")
             .replace(/\s+/g, "")
+            .replace(/\.com\.ve$/i, ".com.ve")
             .replace(/gmail\.com$/i, "gmail.com")
             .replace(/hotmail\.com$/i, "hotmail.com")
             .replace(/outlook\.com$/i, "outlook.com")
+            .replace(/yahoo\.com$/i, "yahoo.com")
             .trim();
+
+        correo = correo
+            .replace(/^del/i, "")
+            .replace(/^cliente/i, "")
+            .trim();
+
+        return correo;
+    }
+
+    function esCorreoElectronicoValidoVoz(valorCorreo) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(valorCorreo ?? "").trim());
+    }
+
+    function limpiarControlCorreoInvalido() {
+        const campoCorreo = buscarControlVoz("correoElectronico");
+
+        if (!campoCorreo) {
+            return;
+        }
+
+        const valorActual = normalizarCorreoVoz(campoCorreo.value);
+
+        if (!esCorreoElectronicoValidoVoz(valorActual)) {
+            campoCorreo.value = "";
+        }
     }
 
     function cortarValorInicioVisita(valorOriginal) {
@@ -2090,7 +2134,7 @@ function interpretarVoz(texto) {
 
         if (entidad === "correoElectronico") {
             const correoNormalizado = normalizarCorreoVoz(valorTexto);
-            return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoNormalizado);
+            return !esCorreoElectronicoValidoVoz(correoNormalizado);
         }
 
         if (
@@ -2555,6 +2599,15 @@ function interpretarVoz(texto) {
                 valor = "sin información";
             }
 
+            if (
+                entidadDestino === "correoElectronico" ||
+                entidadDestino === "direccionHabitacion"
+            ) {
+                valor = valor
+                    .replace(/^(?:del\s+cliente|cliente|del|de)\s+/i, "")
+                    .trim();
+            }
+
             let unidadSuperficieDetectada = null;
 
             switch (entidadDestino) {
@@ -2723,6 +2776,11 @@ function interpretarVoz(texto) {
                     entidadDestino,
                     valor
                 );
+
+                if (entidadDestino === "correoElectronico") {
+                    limpiarControlCorreoInvalido();
+                }
+
                 return true;
             }
 
@@ -2804,7 +2862,7 @@ function interpretarVoz(texto) {
         /(?:^|\s)identificaci[oó]n\s+del\s+representante\s+legal/i,
         /(?:^|\s)tel[eé]fono\s+principal/i,
         /(?:^|\s)tel[eé]fono\s+alternativo/i,
-        /(?:^|\s)correo\s+electr[oó]nico/i,
+        /(?:^|\s)correo\s+electr[oó]nico(?:\s+(?:del\s+)?cliente)?/i,
         /(?:^|\s)(?:email|e\s*mail)/i,
         /(?:^|\s)direcci[oó]n\s+(?:de\s+)?habitaci[oó]n/i,
         /(?:^|\s)n[uú]mero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura/i,
@@ -2870,6 +2928,21 @@ function interpretarVoz(texto) {
         let coincidenciaInicio = null;
 
         while ((coincidenciaInicio = expresionGlobal.exec(texto)) !== null) {
+            const textoCoincidenciaInicio = String(coincidenciaInicio[0] ?? "");
+            const textoPrevioInicio = texto
+                .slice(Math.max(0, coincidenciaInicio.index - 16), coincidenciaInicio.index)
+                .toLowerCase();
+
+            if (
+                /cliente/i.test(textoCoincidenciaInicio) &&
+                /\b(?:de|del)\s*$/.test(textoPrevioInicio)
+            ) {
+                if (coincidenciaInicio[0].length === 0) {
+                    expresionGlobal.lastIndex += 1;
+                }
+                continue;
+            }
+
             coincidenciasInicioEntidad.push({
                 inicio: coincidenciaInicio.index,
                 fin: coincidenciaInicio.index + coincidenciaInicio[0].length
@@ -3003,7 +3076,7 @@ window.reconocimiento.continuous = true;
 
 window.reconocimiento.interimResults = false;
 
-window.reconocimiento.maxAlternatives = 1;
+window.reconocimiento.maxAlternatives = 3;
 
 window.reconocimiento.onstart = function () {
 
@@ -3017,7 +3090,17 @@ window.reconocimiento.onresult = function (evento) {
 
 for (let i = evento.resultIndex; i < evento.results.length; i++) {
     if (evento.results[i].isFinal) {
-        texto += evento.results[i][0].transcript + " ";
+        const alternativasVoz = Array.from(evento.results[i])
+            .map(function(alternativa) {
+                return alternativa.transcript;
+            })
+            .filter(Boolean);
+
+        const textoPreferido = alternativasVoz.find(function(alternativa) {
+            return /(?:correo|email|arroba|c[eé]dula|rif|representante|registro|fecha|tel[eé]fono|direcci[oó]n|cliente|finca|municipio|parroquia|c[oó]digo)/i.test(alternativa);
+        }) || alternativasVoz[0] || evento.results[i][0].transcript;
+
+        texto += textoPreferido + " ";
     }
 }
 
