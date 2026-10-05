@@ -517,6 +517,28 @@ function actualizarEtiquetaParroquiaInicioVisita(){
     }
 
 }
+function actualizarEtiquetaSectorCaracterizacion(){
+    const campoSector = document.getElementById("sector") || document.getElementById("parroquia");
+    if(!campoSector){ return; }
+
+    campoSector.placeholder = "Sector o Sin información";
+
+    if(campoSector.id){
+        const etiqueta = document.querySelector('label[for="' + campoSector.id + '"]');
+        if(etiqueta){ etiqueta.textContent = "Sector"; }
+    }
+
+    const contenedor = campoSector.parentElement;
+    if(contenedor){
+        contenedor.querySelectorAll("label, .label, .field-label, .form-label").forEach(function(elemento){
+            const clave = normalizarClave(elemento.textContent || "");
+            if(clave === "parroquia" || clave === "sector"){
+                elemento.textContent = "Sector";
+            }
+        });
+    }
+}
+
 function registrarDatosCliente(){
 
     registrarFormulario([
@@ -540,7 +562,7 @@ function registrarCaracterizacion(){
 
     registrarFormulario([
 
-        "parroquia",
+        "sector",
 
         "direccionUnidadProduccion",
 
@@ -697,7 +719,7 @@ function configurarCamposFechaHoraInicioVisita(){
 
     if(campoHora){
         campoHora.type = "text";
-        campoHora.placeholder = "HH:mm";
+        campoHora.placeholder = "hh:mm AM/PM";
         campoHora.inputMode = "numeric";
     }
 }
@@ -727,6 +749,7 @@ function continuarVisita(){
     document.getElementById("farm").style.display="block";
     cambiarModulo("caracterizacion");
 establecerObjetoActivo("Caracterización");
+actualizarEtiquetaSectorCaracterizacion();
 registrarCaracterizacion();
 mostrarEstadoActual();
 mostrarExpediente();
@@ -848,6 +871,9 @@ function obtenerNombreCampoVoz(patron) {
         superficieAprovechable: "la superficie aprovechable",
         superficieCultivada: "la superficie cultivada",
         estadoFitosanitario: "el estado fitosanitario",
+        sector: "el sector",
+        direccionUnidadProduccion: "la dirección exacta de la unidad de producción",
+        centroMercado: "el centro de mercado",
         departamento: "la parroquia"
     };
 
@@ -905,7 +931,36 @@ function notificarFalloVoz(patron, detalle = "") {
 
     return mensaje;
 }
+function normalizarVocabularioAgendaVoz(texto) {
+    return String(texto ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\bcorreo\s+electronico\s+del\s+cliente\b/gi, "correo electrónico")
+        .replace(/\bemail\s+del\s+cliente\b/gi, "email")
+        .replace(/\bc[eé]dula\s+de\s+identidad\s+del\s+cliente\b/gi, "cédula del cliente")
+        .replace(/\bc[eé]dula\s+del\s+representante\s+legal\b/gi, "cédula del representante legal")
+        .replace(/\bidentificacion\s+del\s+representante\s+legal\b/gi, "identificación del representante legal")
+        .replace(/\bnumero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura\b/gi, "número de registro del ministerio de agricultura")
+        .replace(/\bregistro\s+mat\b/gi, "registro MAT")
+        .replace(/\bfecha\s+vencimiento\s+registro\b/gi, "fecha vencimiento del registro")
+        .replace(/\bvencimiento\s+registro\b/gi, "vencimiento del registro")
+        .replace(/\bcentro\s+mercado\b/gi, "centro de mercado")
+        .replace(/\bmercado\s+principal\b/gi, "centro de mercado")
+        .replace(/\bsector\s+de\s+la\s+unidad\s+productiva\b/gi, "sector de la unidad de producción")
+        .replace(/\bsector\s+de\s+la\s+finca\b/gi, "sector de la finca")
+        .replace(/\bubicacion\s+de\s+la\s+unidad\s+de\s+produccion\b/gi, "ubicación de la unidad de producción")
+        .replace(/\bsin\s+info(?:rmacion)?\b/gi, "sin información")
+        .replace(/\bsin\s+datos?\b/gi, "sin información")
+        .replace(/\bno\s+informado\b/gi, "sin información")
+        .replace(/\bpersona\s+juridica\b/gi, "persona jurídica")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
 function normalizarTextoVoz(texto) {
+    texto = normalizarVocabularioAgendaVoz(texto);
+
     return String(texto ?? "")
         .replace(/\be\s*mail\b/gi, "email")
         .replace(/\bemail\b/gi, "email")
@@ -918,9 +973,13 @@ function normalizarTextoVoz(texto) {
         .replace(/\ba\s+roba\b/gi, "arroba")
         .replace(/\bpunto\s+con\b/gi, "punto com")
         .replace(/\bcom\s+ve\b/gi, "com punto ve")
-        .replace(/\bbe\b/gi, "V")
+        /* "be" no se convierte automáticamente en V para evitar contaminación de la transcripción. */
         .replace(/\bregistro\s+mat\b/gi, "registro MAT")
         .replace(/\bvene\s*zolan[oa]\b/gi, "venezolano")
+        .replace(/\bpersona\s+natural\s+venezolan[oa]\b/gi, "venezolano")
+        .replace(/\bextranjero\s+natural\b/gi, "extranjero")
+        .replace(/\bpersona\s+natural\s+extranjera\b/gi, "extranjera")
+        .replace(/\bsociedad\s+mercantil\b/gi, "persona jurídica")
         .replace(/\bruro\b/gi, "rubro")
         .replace(/\bruvo\b/gi, "rubro")
         .replace(/\brubo\b/gi, "rubro")
@@ -1343,11 +1402,36 @@ function interpretarVoz(texto) {
             ]
         },
         {
+            entidad: "sector",
+            expresiones: [
+                /^sector\s+(?:de\s+la\s+unidad\s+de\s+producci[oó]n|de\s+la\s+finca)[:\s]+(.+)$/i,
+                /^sector(?!\s+(?:de\s+la\s+)?producci[oó]n\b|\s+productivo\b)[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "direccionUnidadProduccion",
+            expresiones: [
+                /^direcci[oó]n\s+(?:exacta\s+)?(?:de\s+la\s+)?unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i,
+                /^direcci[oó]n\s+de\s+la\s+unidad[:\s]+(.+)$/i,
+                /^direcci[oó]n\s+unidad(?:\s+de\s+producci[oó]n)?[:\s]+(.+)$/i,
+                /^ubicaci[oó]n\s+(?:exacta\s+)?(?:de\s+la\s+)?unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "centroMercado",
+            expresiones: [
+                /^centro\s+de\s+mercado[:\s]+(.+)$/i,
+                /^centro\s+mercado[:\s]+(.+)$/i,
+                /^mercado\s+(?:principal|de\s+referencia)[:\s]+(.+)$/i,
+                /^(?:ciudad|poblaci[oó]n)\s+(?:del|de)\s+(?:centro\s+de\s+)?mercado[:\s]+(.+)$/i
+            ]
+        },
+        {
             entidad: "sectorProduccion",
             expresiones: [
                 /^sector\s+de\s+la\s+producci[oó]n[:\s]+(.+)$/i,
                 /^sector\s+producci[oó]n[:\s]+(.+)$/i,
-                /^sector[:\s]+(.+)$/i
+                /^sector\s+productivo[:\s]+(.+)$/i
             ]
         },
         {
@@ -1425,15 +1509,21 @@ function interpretarVoz(texto) {
         valor = valor
             .replace(/\b(r\s*\.?\s*i\s*\.?\s*f\.?)\b/gi, "RIF")
             .replace(/\bvenezolan[oa]\b/gi, "V")
-            .replace(/\bve\b/gi, "V")
             .replace(/\bextranjera?\b/gi, "E")
+            .replace(/\bpersona\s+jur[ií]dica\b/gi, "J")
+            .replace(/\bpersona\s+juridica\b/gi, "J")
+            .replace(/\bjur[ií]dica\b/gi, "J")
+            .replace(/\bempresa\b/gi, "J")
+            .replace(/\bve\b/gi, "V")
             .replace(/\s*-\s*/g, "-")
             .trim();
 
         const soloDigitosSeparados = valor.match(/^[0-9\s]+$/);
 
         if (soloDigitosSeparados) {
-            return valor.replace(/\s+/g, "");
+            // Regla de negocio: persona natural venezolana por defecto.
+            // Solo para campos de identificación (no código cliente).
+            return "V-" + valor.replace(/\s+/g, "");
         }
 
         const rifSeparado = valor.match(/^([VEJGP])\s*-?\s*([0-9\s]+)(?:\s*-?\s*([0-9]))?$/i);
@@ -1768,14 +1858,32 @@ function interpretarVoz(texto) {
                 return String(valorOriginal ?? "").trim();
             }
 
-            const horaNormalizada = meridiano
-                ? aplicarMeridiano(hora, meridiano)
-                : hora;
+            let hora24 = hora;
+
+            if (meridiano) {
+                hora24 = aplicarMeridiano(hora, meridiano);
+            } else if (hora > 12) {
+                meridiano = "pm";
+            } else {
+                meridiano = "am";
+            }
+
+            if (hora24 === 0) {
+                return "12:" + String(minutoNumero).padStart(2, "0") + " AM";
+            }
+
+            if (hora24 === 12) {
+                return "12:" + String(minutoNumero).padStart(2, "0") + " PM";
+            }
+
+            const hora12 = hora24 > 12 ? hora24 - 12 : hora24;
 
             return (
-                String(horaNormalizada).padStart(2, "0") +
+                String(hora12).padStart(2, "0") +
                 ":" +
-                String(minutoNumero).padStart(2, "0")
+                String(minutoNumero).padStart(2, "0") +
+                " " +
+                (meridiano === "pm" ? "PM" : "AM")
             );
         }
 
@@ -2092,10 +2200,7 @@ function interpretarVoz(texto) {
 
         const valorNormalizado = normalizarIdentificacionClienteVoz(valorDepurado);
 
-        if (/^\d{5,9}$/.test(valorNormalizado)) {
-            return "V-" + valorNormalizado;
-        }
-
+        // V/E/J solo se registra cuando fue expresamente indicada.
         return valorNormalizado;
     }
 
@@ -2247,6 +2352,9 @@ function interpretarVoz(texto) {
         telefonoAlternativo: ["telefonoAlternativo", "telefonoSecundario", "numeroTelefonoAlternativo"],
         correoElectronico: ["correoElectronico", "correoCliente", "correo", "email"],
         direccionHabitacion: ["direccionHabitacion", "direccion", "direccionCliente"],
+        sector: ["sector", "parroquia", "sectorUnidadProduccion"],
+        direccionUnidadProduccion: ["direccionUnidadProduccion", "direccionUnidad", "direccionExactaUnidadProduccion"],
+        centroMercado: ["centroMercado", "ciudadCentroMercado", "poblacionCentroMercado"],
         registroMinisterioAgricultura: ["registroMinisterioAgricultura", "numeroRegistroMinisterioAgricultura", "registroAgricola", "numeroRegistroAgricultura"],
         fechaVencimientoRegistro: ["fechaVencimientoRegistro", "vigenciaRegistroMinisterio", "vencimientoRegistro", "fechaVencimientoMinisterioAgricultura"],
         numeroRegistroTributario: ["numeroRegistroTributario", "registroTributario", "nrt"]
@@ -2257,8 +2365,11 @@ function interpretarVoz(texto) {
         identificacionRepresentanteLegal: ["identificación del representante legal", "identificacion del representante legal", "cédula o registro de información fiscal del representante legal", "cedula o registro de informacion fiscal del representante legal", "registro de información fiscal del representante legal", "registro de informacion fiscal del representante legal"],
         telefonoPrincipal: ["teléfono principal", "telefono principal"],
         telefonoAlternativo: ["teléfono alternativo", "telefono alternativo"],
-        correoElectronico: ["correo electrónico", "correo electronico"],
-        direccionHabitacion: ["dirección de habitación", "direccion de habitacion"],
+        correoElectronico: ["correo electrónico", "correo electronico", "email", "e mail"],
+        direccionHabitacion: ["dirección de habitación", "direccion de habitacion", "domicilio"],
+        sector: ["sector", "parroquia", "sector de la unidad de producción"],
+        direccionUnidadProduccion: ["dirección exacta de la unidad de producción", "direccion exacta de la unidad de produccion", "direccion de la unidad de produccion"],
+        centroMercado: ["centro de mercado", "centro mercado", "mercado de referencia"],
         registroMinisterioAgricultura: ["número de registro del ministerio de agricultura", "numero de registro del ministerio de agricultura", "registro del ministerio de agricultura"],
         fechaVencimientoRegistro: ["fecha de vencimiento del registro", "vencimiento del registro"],
         numeroRegistroTributario: ["número de registro tributario", "numero de registro tributario", "registro tributario"]
@@ -2680,7 +2791,23 @@ function interpretarVoz(texto) {
                 case "municipio":
                 case "departamento":
                 case "estadoFitosanitario":
+                case "sector":
+                case "direccionUnidadProduccion":
+                case "centroMercado":
                     valor = normalizarTextoLibreVoz(valor.replace(/\s{2,}/g, " ").trim());
+                    if (entidadDestino === "sector") {
+                        const sectorClave = normalizarClave(valor);
+                        if (
+                            sectorClave === "sin informacion" ||
+                            sectorClave === "sin info" ||
+                            sectorClave === "sin dato" ||
+                            sectorClave === "sin datos" ||
+                            sectorClave === "no informado" ||
+                            sectorClave === "no hay informacion"
+                        ) {
+                            valor = "Sin información";
+                        }
+                    }
                     break;
 
                 case "superficieTotal":
@@ -2891,6 +3018,13 @@ function interpretarVoz(texto) {
         /(?:^|\s)identificaci[oó]n\s+(?:del\s+cliente|fiscal)/i,
         /(?:^|\s)documento\s+de\s+identidad/i,
         /(?<!c[oó]digo\s)(?<!c[oó]digo\sde\s)(?<!c[oó]digo\sdel\s)(?:^|\s)(?:el\s+)?cliente/i,
+        /(?:^|\s)sector\s+(?:de\s+la\s+unidad\s+de\s+producci[oó]n|de\s+la\s+finca)/i,
+        /(?:^|\s)sector(?!\s+(?:de\s+la\s+)?producci[oó]n\b|\s+productivo\b)\b/i,
+        /(?:^|\s)direcci[oó]n\s+(?:exacta\s+)?(?:de\s+la\s+)?unidad\s+de\s+producci[oó]n/i,
+        /(?:^|\s)direcci[oó]n\s+unidad/i,
+        /(?:^|\s)ubicaci[oó]n\s+(?:exacta\s+)?(?:de\s+la\s+)?unidad\s+de\s+producci[oó]n/i,
+        /(?:^|\s)centro\s+(?:de\s+)?mercado/i,
+        /(?:^|\s)mercado\s+(?:principal|de\s+referencia)/i,
         /nombre\s+de\s+la\s+finca/i,
         /nombre\s+(?:de\s+)?finca/i,
         /unidad\s+de\s+producci[oó]n/i,
@@ -3081,7 +3215,7 @@ window.reconocimiento.continuous = true;
 
 window.reconocimiento.interimResults = false;
 
-window.reconocimiento.maxAlternatives = 3;
+window.reconocimiento.maxAlternatives = 5;
 
 window.reconocimiento.onstart = function () {
 
@@ -3101,9 +3235,31 @@ for (let i = evento.resultIndex; i < evento.results.length; i++) {
             })
             .filter(Boolean);
 
-        const textoPreferido = alternativasVoz.find(function(alternativa) {
-            return /(?:correo|email|arroba|c[eé]dula|rif|representante|registro|fecha|tel[eé]fono|direcci[oó]n|cliente|finca|municipio|parroquia|c[oó]digo)/i.test(alternativa);
-        }) || alternativasVoz[0] || evento.results[i][0].transcript;
+        const textoPreferido = alternativasVoz
+            .map(function(alternativa, indice) {
+                const clave = normalizarClave(alternativa);
+                let puntaje = 0;
+
+                [
+                    "fecha", "hora", "tecnico", "técnico", "tipo de visita", "motivo",
+                    "cliente", "codigo", "cédula", "cedula", "rif", "identificación",
+                    "representante", "telefono", "teléfono", "correo", "email",
+                    "direccion", "dirección", "finca", "municipio", "sector",
+                    "centro de mercado", "registro", "vencimiento", "superficie",
+                    "rubro", "subsector", "produccion", "producción", "fitosanitario"
+                ].forEach(function(indicador) {
+                    if (clave.includes(indicador)) { puntaje += 2; }
+                });
+
+                if (/@/.test(alternativa) || /arroba/i.test(alternativa)) { puntaje += 4; }
+                if (/\b(?:am|pm|mañana|manana|tarde|noche)\b/i.test(alternativa)) { puntaje += 3; }
+
+                puntaje += Math.max(0, alternativasVoz.length - indice) * 0.01;
+                return { texto: alternativa, puntaje: puntaje };
+            })
+            .sort(function(a, b) { return b.puntaje - a.puntaje; })[0]?.texto
+            || alternativasVoz[0]
+            || evento.results[i][0].transcript;
 
         texto += textoPreferido + " ";
     }
