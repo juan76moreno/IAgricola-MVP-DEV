@@ -273,43 +273,34 @@ function normalizarRegistroMultirrubro(registro, clasificacion = {}) {
             "PENDIENTE"
     };
 }
-// Recepción de datos de la Base Maestra mediante JSONP
-// DEV-FIX: carga robusta con cache-buster, reintentos y diagnóstico.
-// Objetivo: preservar la Base Maestra como fuente única y evitar que
-// una redirección 302/404 deje el catálogo de rubros vacío.
+/* ============================================================
+   Carga robusta de Base Maestra Multirrubro
+   - Usa JSONP sin depender de CORS.
+   - Recupera último estado válido desde localStorage.
+   - Refresca en segundo plano.
+   - Reintenta con espera creciente y cache-busting.
+   - No borra datos válidos si una actualización de red falla.
+============================================================ */
 
 const BASE_MAESTRA_JSONP_URL =
     "https://script.google.com/a/macros/bbva.com/s/AKfycbzzXYN3bvfy_7j2vOZC9Dl8kiS4LA-ZH_GU_Owb5t6vEN04PetQsUxikEeO_mHwfU3d/exec";
 
 const BASE_MAESTRA_CALLBACK = "iAgricolaRecibirDatos";
-const BASE_MAESTRA_SCRIPT_ID = "baseMaestraMultirrubroJSONP";
-const BASE_MAESTRA_MAX_INTENTOS = 3;
+const BASE_MAESTRA_SCRIPT_ID = "iaAgricolaBaseMaestraJSONP";
+const BASE_MAESTRA_CACHE_KEY = "IA_AGRICOLA_BASE_MAESTRA_CACHE_V1";
+const BASE_MAESTRA_MAX_INTENTOS = 4;
+const BASE_MAESTRA_TIMEOUT_MS = 12000;
+const BASE_MAESTRA_REINTENTO_BASE_MS = 1000;
 
 let baseMaestraIntentos = 0;
 let baseMaestraCargando = false;
 let baseMaestraUltimoError = null;
-
-function construirUrlBaseMaestraJSONP() {
-    const separador = BASE_MAESTRA_JSONP_URL.includes("?") ? "&" : "?";
-
-    return BASE_MAESTRA_JSONP_URL +
-        separador +
-        "callback=" +
-        encodeURIComponent(BASE_MAESTRA_CALLBACK) +
-        "&_ts=" +
-        Date.now();
-}
-
-function limpiarScriptBaseMaestra() {
-    const scriptAnterior = document.getElementById(BASE_MAESTRA_SCRIPT_ID);
-
-    if (scriptAnterior && scriptAnterior.parentNode) {
-        scriptAnterior.parentNode.removeChild(scriptAnterior);
-    }
-}
+let baseMaestraTimeoutId = null;
+let baseMaestraToken = 0;
+let baseMaestraTieneCache = false;
 
 function validarRespuestaBaseMaestra(respuesta) {
-    return (
+    return Boolean(
         respuesta &&
         respuesta.ok === true &&
         Array.isArray(respuesta.datos) &&
@@ -317,7 +308,116 @@ function validarRespuestaBaseMaestra(respuesta) {
     );
 }
 
+function guardarBaseMaestraCache(respuesta) {
+    try {
+        localStorage.setItem(
+            BASE_MAESTRA_CACHE_KEY,
+            JSON.stringify({
+                datos: respuesta.datos,
+                total: respuesta.datos.length,
+                fechaActualizacion: new Date().toISOString()
+            })
+        );
+    } catch (error) {
+        console.warn("No fue posible guardar cache de Base Maestra:", error);
+    }
+}
+
+function cargarBaseMaestraDesdeCache() {
+    try {
+        const raw = localStorage.getItem(BASE_MAESTRA_CACHE_KEY);
+
+        if (!raw) {
+            return false;
+        }
+
+        const cache = JSON.parse(raw);
+
+        if (
+            !cache ||
+            !Array.isArray(cache.datos) ||
+            cache.datos.length === 0
+        ) {
+            localStorage.removeItem(BASE_MAESTRA_CACHE_KEY);
+            return false;
+        }
+
+        const cargada = cargarDatosMultirrubro(
+            cache.datos,
+            {
+                fuente: "BASE_MAESTRA_CACHE_LOCAL",
+                total: cache.datos.length,
+                fechaActualizacion:
+                    cache.fechaActualizacion || null
+            }
+        );
+
+        if (!cargada) {
+            return false;
+        }
+
+        baseMaestraTieneCache = true;
+
+        cargarSelectorRubrosMultirrubro();
+
+        if (typeof window.inicializarRubrosExplotados === "function") {
+            window.inicializarRubrosExplotados();
+        }
+
+        console.info(
+            "Base Maestra restaurada desde cache:",
+            cache.datos.length,
+            "registros"
+        );
+
+        return true;
+
+    } catch (error) {
+        console.warn(
+            "Cache de Base Maestra inválido; se ignorará:",
+            error
+        );
+
+        try {
+            localStorage.removeItem(BASE_MAESTRA_CACHE_KEY);
+        } catch (_) {}
+
+        return false;
+    }
+}
+
+function construirUrlBaseMaestraJSONP() {
+    const separador =
+        BASE_MAESTRA_JSONP_URL.includes("?") ? "&" : "?";
+
+    return (
+        BASE_MAESTRA_JSONP_URL +
+        separador +
+        "callback=" +
+        encodeURIComponent(BASE_MAESTRA_CALLBACK) +
+        "&_ts=" +
+        Date.now() +
+        "&_r=" +
+        Math.random().toString(36).slice(2)
+    );
+}
+
+function limpiarScriptBaseMaestra() {
+    const scriptAnterior =
+        document.getElementById(BASE_MAESTRA_SCRIPT_ID);
+
+    if (scriptAnterior && scriptAnterior.parentNode) {
+        scriptAnterior.parentNode.removeChild(scriptAnterior);
+    }
+
+    if (baseMaestraTimeoutId) {
+        clearTimeout(baseMaestraTimeoutId);
+        baseMaestraTimeoutId = null;
+    }
+}
+
 function finalizarCargaBaseMaestraExitosa(respuesta) {
+
     cargarDatosMultirrubro(
         respuesta.datos,
         {
@@ -327,6 +427,9 @@ function finalizarCargaBaseMaestraExitosa(respuesta) {
         }
     );
 
+    guardarBaseMaestraCache(respuesta);
+    baseMaestraTieneCache = true;
+
     cargarSelectorRubrosMultirrubro();
 
     if (typeof window.inicializarRubrosExplotados === "function") {
@@ -335,6 +438,11 @@ function finalizarCargaBaseMaestraExitosa(respuesta) {
 
     baseMaestraCargando = false;
     baseMaestraUltimoError = null;
+
+    if (baseMaestraTimeoutId) {
+        clearTimeout(baseMaestraTimeoutId);
+        baseMaestraTimeoutId = null;
+    }
 
     console.log(
         "SUCCESS Base Maestra JSONP:",
@@ -346,34 +454,58 @@ function finalizarCargaBaseMaestraExitosa(respuesta) {
 }
 
 function reintentarCargaBaseMaestra(motivo) {
-    baseMaestraUltimoError = motivo || "Motivo no especificado";
 
-    if (baseMaestraIntentos >= BASE_MAESTRA_MAX_INTENTOS) {
+    baseMaestraUltimoError =
+        motivo || "Motivo no especificado";
+
+    if (
+        baseMaestraIntentos >= BASE_MAESTRA_MAX_INTENTOS
+    ) {
         baseMaestraCargando = false;
 
-        console.error(
-            "ERROR Base Maestra JSONP: se agotaron los reintentos.",
-            {
-                intentos: baseMaestraIntentos,
-                ultimoError: baseMaestraUltimoError,
-                estado: estadoMultirrubro
-            }
-        );
+        if (baseMaestraTieneCache) {
+            console.warn(
+                "Base Maestra no pudo actualizarse por red; " +
+                "se conserva el último estado válido en cache.",
+                {
+                    intentos: baseMaestraIntentos,
+                    ultimoError: baseMaestraUltimoError,
+                    registros:
+                        estadoMultirrubro.registros.length
+                }
+            );
+
+        } else {
+            console.error(
+                "ERROR Base Maestra JSONP: se agotaron los reintentos.",
+                {
+                    intentos: baseMaestraIntentos,
+                    ultimoError: baseMaestraUltimoError,
+                    estado: estadoMultirrubro
+                }
+            );
+        }
 
         return false;
     }
 
+    const espera =
+        BASE_MAESTRA_REINTENTO_BASE_MS *
+        Math.pow(2, baseMaestraIntentos - 1);
+
     console.warn(
         "Reintentando carga Base Maestra JSONP:",
         {
-            intentoSiguiente: baseMaestraIntentos + 1,
+            intentoSiguiente:
+                baseMaestraIntentos + 1,
+            esperaMs: espera,
             motivo: baseMaestraUltimoError
         }
     );
 
     setTimeout(function () {
         cargarBaseMaestraJSONP({ reintento: true });
-    }, 1200);
+    }, espera);
 
     return true;
 }
@@ -381,9 +513,14 @@ function reintentarCargaBaseMaestra(motivo) {
 window.iAgricolaRecibirDatos = function (respuesta) {
 
     if (!validarRespuestaBaseMaestra(respuesta)) {
-        console.error("ERROR Base Maestra JSONP: respuesta inválida o vacía.", respuesta);
 
-        reintentarCargaBaseMaestra("Respuesta inválida o sin datos");
+        console.warn(
+            "Base Maestra JSONP devolvió una respuesta inválida o vacía."
+        );
+
+        reintentarCargaBaseMaestra(
+            "Respuesta inválida o sin datos"
+        );
 
         return;
     }
@@ -392,7 +529,12 @@ window.iAgricolaRecibirDatos = function (respuesta) {
 };
 
 function cargarBaseMaestraJSONP(opciones = {}) {
-    if (baseMaestraCargando && !opciones.reintento && !opciones.forzar) {
+
+    if (
+        baseMaestraCargando &&
+        !opciones.reintento &&
+        !opciones.forzar
+    ) {
         console.warn("Carga Base Maestra ya está en curso.");
         return false;
     }
@@ -404,6 +546,8 @@ function cargarBaseMaestraJSONP(opciones = {}) {
     baseMaestraIntentos += 1;
     baseMaestraCargando = true;
 
+    const tokenActual = ++baseMaestraToken;
+
     limpiarScriptBaseMaestra();
 
     const script = document.createElement("script");
@@ -413,64 +557,113 @@ function cargarBaseMaestraJSONP(opciones = {}) {
     script.async = true;
 
     script.onload = function () {
-        console.log("Base Maestra JSONP solicitada.", {
-            intento: baseMaestraIntentos,
-            registros: estadoMultirrubro.registros.length
-        });
 
-        setTimeout(function () {
-            if (estadoMultirrubro.registros.length === 0) {
+        if (tokenActual !== baseMaestraToken) {
+            return;
+        }
+
+        console.log(
+            "Base Maestra JSONP solicitada.",
+            {
+                intento: baseMaestraIntentos,
+                registros:
+                    estadoMultirrubro.registros.length
+            }
+        );
+
+        baseMaestraTimeoutId = setTimeout(function () {
+
+            if (
+                estadoMultirrubro.registros.length === 0
+            ) {
                 reintentarCargaBaseMaestra(
                     "El script cargó, pero no llenó registros"
                 );
             } else {
                 baseMaestraCargando = false;
+                baseMaestraUltimoError = null;
             }
-        }, 1500);
+
+        }, BASE_MAESTRA_TIMEOUT_MS);
     };
 
-    script.onerror = function (error) {
-        console.error(
-            "ERROR cargando Base Maestra JSONP:",
-            error
-        );
+    script.onerror = function () {
 
-        reintentarCargaBaseMaestra("Error de carga del script JSONP");
+        if (tokenActual !== baseMaestraToken) {
+            return;
+        }
+
+        reintentarCargaBaseMaestra(
+            "Error de carga del script JSONP"
+        );
     };
 
     document.head.appendChild(script);
 
     return true;
-}
-
-window.recargarBaseMaestraMultirrubro = function recargarBaseMaestraMultirrubro() {
-    estadoMultirrubro.registros = [];
-    estadoMultirrubro.version = null;
-    estadoMultirrubro.fechaActualizacion = null;
-    estadoMultirrubro.fuente = null;
-
-    baseMaestraIntentos = 0;
-    baseMaestraUltimoError = null;
-    baseMaestraCargando = false;
-
-    return cargarBaseMaestraJSONP({ forzar: true });
 };
 
-window.diagnosticarMultirrubro = function diagnosticarMultirrubro() {
-    return {
-        registros: estadoMultirrubro.registros.length,
-        rubros: window.obtenerRubrosMultirrubro().length,
-        primerosRubros: window.obtenerRubrosMultirrubro().slice(0, 20),
-        fuente: estadoMultirrubro.fuente,
-        fechaActualizacion: estadoMultirrubro.fechaActualizacion,
-        cargando: baseMaestraCargando,
-        intentos: baseMaestraIntentos,
-        ultimoError: baseMaestraUltimoError,
-        scriptInsertado: Boolean(
-            document.getElementById(BASE_MAESTRA_SCRIPT_ID)
-        ),
-        scriptSrc: document.getElementById(BASE_MAESTRA_SCRIPT_ID)?.src ?? null
+window.recargarBaseMaestraMultirrubro =
+    function recargarBaseMaestraMultirrubro() {
+
+        baseMaestraIntentos = 0;
+        baseMaestraUltimoError = null;
+        baseMaestraCargando = false;
+
+        // No se borra el estado actual antes de confirmar
+        // una nueva carga válida.
+        return cargarBaseMaestraJSONP({
+            forzar: true
+        });
     };
-};
 
+window.diagnosticarMultirrubro =
+    function diagnosticarMultirrubro() {
+
+        return {
+            registros:
+                estadoMultirrubro.registros.length,
+
+            rubros:
+                window.obtenerRubrosMultirrubro().length,
+
+            primerosRubros:
+                window.obtenerRubrosMultirrubro().slice(0, 20),
+
+            fuente:
+                estadoMultirrubro.fuente,
+
+            fechaActualizacion:
+                estadoMultirrubro.fechaActualizacion,
+
+            cargando:
+                baseMaestraCargando,
+
+            intentos:
+                baseMaestraIntentos,
+
+            ultimoError:
+                baseMaestraUltimoError,
+
+            cacheDisponible:
+                baseMaestraTieneCache,
+
+            scriptInsertado:
+                Boolean(
+                    document.getElementById(
+                        BASE_MAESTRA_SCRIPT_ID
+                    )
+                ),
+
+            scriptSrc:
+                document.getElementById(
+                    BASE_MAESTRA_SCRIPT_ID
+                )?.src ?? null
+        };
+    };
+
+// Restaurar inmediatamente el último estado válido.
+// Después se intenta actualizar desde la fuente oficial.
+cargarBaseMaestraDesdeCache();
 cargarBaseMaestraJSONP();
+
