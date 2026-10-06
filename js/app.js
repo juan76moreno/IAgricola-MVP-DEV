@@ -628,8 +628,35 @@ const CONFIG_REPOSITORIO_HISTORICO = Object.freeze({
     timeoutMs:12000
 });
 
+
+const PRIORIDAD_TIPO_INFORME=Object.freeze({"Seguimiento":3,"Avalúo":2,"Avaluo":2,"Solicitud":1});
+function fechaHistoricaValida(valor){const ms=Date.parse(String(valor||""));return Number.isFinite(ms)?ms:null;}
+function consolidarDocumentosHistoricos(documentos,codigoCliente){
+ const docs=(Array.isArray(documentos)?documentos:[]).filter(d=>d&&typeof d==="object").map((doc,index)=>({
+  id:doc.id||("DOC-"+String(index+1).padStart(3,"0")),tipo:doc.tipo||"NO_VERIFICADO",fecha:doc.fecha||null,
+  referencia:doc.referencia||null,datos:(doc.datos&&typeof doc.datos==="object")?doc.datos:{},estadoFuente:doc.estadoFuente||"NO_VERIFICADO"
+ }));
+ const candidatos={};
+ docs.forEach(doc=>{const fechaMs=fechaHistoricaValida(doc.fecha);Object.entries(doc.datos).forEach(([campo,valor])=>{
+  if(valor===null||valor===undefined||String(valor).trim()==="")return;
+  (candidatos[campo] ||= []).push({valor,tipo:doc.tipo,fecha:doc.fecha,fechaMs,referencia:doc.referencia,documentoId:doc.id,estadoFuente:doc.estadoFuente});
+ });});
+ const datos={},trazabilidadCampo={},conflictos=[];
+ Object.entries(candidatos).forEach(([campo,lista])=>{
+  lista.sort((a,b)=>{const fa=a.fechaMs??-Infinity,fb=b.fechaMs??-Infinity;if(fa!==fb)return fb-fa;return (PRIORIDAD_TIPO_INFORME[b.tipo]||0)-(PRIORIDAD_TIPO_INFORME[a.tipo]||0);});
+  const elegido=lista[0];datos[campo]=elegido.valor;
+  trazabilidadCampo[campo]={estado:"HISTORICO_PARA_VALIDAR",valor:elegido.valor,tipoInforme:elegido.tipo,fecha:elegido.fecha,referencia:elegido.referencia,documentoId:elegido.documentoId,
+   alternativas:lista.slice(1).map(x=>({valor:x.valor,tipoInforme:x.tipo,fecha:x.fecha,referencia:x.referencia,documentoId:x.documentoId}))};
+  const distintos=[...new Set(lista.map(x=>String(x.valor).trim()))];
+  if(distintos.length>1)conflictos.push({campo,estado:"PENDIENTE_VALIDACION",seleccionado:elegido.valor,fuentes:lista.map(x=>({valor:x.valor,tipoInforme:x.tipo,fecha:x.fecha,referencia:x.referencia,documentoId:x.documentoId}))});
+ });
+ return {codigoCliente:String(codigoCliente||"").replace(/\D/g,"").padStart(8,"0"),estado:"HISTORICO_PARA_VALIDAR",datos,trazabilidadCampo,conflictos,
+  documentos:docs.map(d=>({id:d.id,tipo:d.tipo,fecha:d.fecha,referencia:d.referencia,estadoFuente:d.estadoFuente}))};
+}
+
 function normalizarAntecedenteRepositorio(payload,codigo){
     if(!payload || typeof payload!=="object"){return null;}
+    const consolidado=Array.isArray(payload.documentos)?consolidarDocumentosHistoricos(payload.documentos,codigo):null;
     return {
         fuente:payload.fuente||"Repositorio histórico consolidado",
         fechaFuente:payload.fechaFuente||null,
@@ -639,8 +666,9 @@ function normalizarAntecedenteRepositorio(payload,codigo){
         documentos:(Array.isArray(payload.documentos)?payload.documentos:[]).map(function(doc){
             return {tipo:doc?.tipo||null,fecha:doc?.fecha||null,referencia:doc?.referencia||null};
         }),
-        datos:(payload.datos&&typeof payload.datos==="object")?payload.datos:{},
-        conflictos:Array.isArray(payload.conflictos)?payload.conflictos:[]
+        datos:consolidado?.datos||((payload.datos&&typeof payload.datos==="object")?payload.datos:{}),
+        trazabilidadCampo:consolidado?.trazabilidadCampo||{},
+        conflictos:consolidado?.conflictos||(Array.isArray(payload.conflictos)?payload.conflictos:[])
     };
 }
 
