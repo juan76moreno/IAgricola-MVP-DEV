@@ -599,6 +599,204 @@ function registrarDatosCliente(){
     ]);
 
 }
+
+/* ============================================================
+   APP_67 - Repositorio histórico simulado + Características UP
+   La fuente productiva futura reemplazará REPOSITORIO_HISTORICO_PRUEBA
+   sin cambiar la lógica de validación de visita.
+============================================================ */
+const REPOSITORIO_HISTORICO_PRUEBA = {
+    "00000438": {
+        fuente: "Informe Técnico histórico",
+        fechaFuente: "2026-06-15",
+        estado: "HISTORICO_PARA_VALIDAR",
+        datos: {
+            finca: "El Plural",
+            sector: "Sin información",
+            municipio: "Turén",
+            departamento: "Villa Bruzual",
+            direccionUnidadProduccion: "Unidad de producción registrada en expediente histórico",
+            superficieTotal: "120",
+            superficieAprovechable: "100",
+            superficieCultivada: "80",
+            tenenciaTierra: "Propia",
+            viasAcceso: "Buena",
+            fuenteAgua: "Pozo",
+            disponibilidadAgua: "Disponible",
+            sistemaRiego: "Sin información",
+            electricidad: "Disponible",
+            conectividad: "Sin información",
+            infraestructuraProductiva: "Sin información",
+            maquinariaEquipos: "Sin información",
+            condicionGeneralFinca: "Pendiente de validar en visita"
+        }
+    }
+};
+
+const CAMPOS_CARACTERISTICAS_FINCA = [
+    ["fuenteAgua","Fuente de agua"],
+    ["disponibilidadAgua","Disponibilidad de agua"],
+    ["sistemaRiego","Sistema de riego"],
+    ["electricidad","Electricidad"],
+    ["conectividad","Telefonía / conectividad"],
+    ["infraestructuraProductiva","Infraestructura productiva"],
+    ["maquinariaEquipos","Maquinaria / equipos"],
+    ["condicionGeneralFinca","Condición general observada"]
+];
+
+function obtenerAntecedenteHistoricoCliente(codigoCliente){
+    const codigo = String(codigoCliente || "").replace(/\D/g,"").padStart(8,"0");
+    return REPOSITORIO_HISTORICO_PRUEBA[codigo] || null;
+}
+
+function asegurarTrazabilidadHistorica(){
+    if(!expedienteInteligente.trazabilidadHistorica){
+        expedienteInteligente.trazabilidadHistorica = [];
+    }
+    if(!expedienteInteligente.antecedentesHistoricos){
+        expedienteInteligente.antecedentesHistoricos = {};
+    }
+}
+
+function registrarTrazabilidadHistorica(campo, valorAnterior, valorActual, accion, antecedente){
+    asegurarTrazabilidadHistorica();
+    expedienteInteligente.trazabilidadHistorica.push({
+        campo,
+        valorAnterior: valorAnterior ?? null,
+        valorActual: valorActual ?? null,
+        accion,
+        fuenteAnterior: antecedente?.fuente ?? null,
+        fechaFuenteAnterior: antecedente?.fechaFuente ?? null,
+        fechaValidacion: new Date().toISOString(),
+        origenValidacion: "VISITA_ACTUAL"
+    });
+}
+
+function aplicarAntecedenteHistoricoCliente(){
+    const codigo = document.getElementById("codigoCliente")?.value || "";
+    const antecedente = obtenerAntecedenteHistoricoCliente(codigo);
+    if(!antecedente){ return false; }
+
+    asegurarTrazabilidadHistorica();
+    expedienteInteligente.antecedentesHistoricos[codigo] = JSON.parse(JSON.stringify(antecedente));
+
+    Object.entries(antecedente.datos).forEach(function([campo, valor]){
+        const control = document.getElementById(campo);
+        if(control && !String(control.value || "").trim()){
+            control.value = valor;
+            control.dataset.valorHistorico = String(valor);
+            control.dataset.fuenteHistorica = antecedente.fuente;
+            control.dataset.fechaFuenteHistorica = antecedente.fechaFuente;
+            control.dataset.estadoHistorico = "PENDIENTE_VALIDACION";
+        }
+    });
+
+    const aviso = document.getElementById("avisoHistoricoFinca");
+    if(aviso){
+        aviso.textContent = "Antecedente recuperado: " + antecedente.fuente +
+            " (" + antecedente.fechaFuente + "). Valide o modifique durante la visita.";
+        aviso.style.display = "block";
+    }
+    return true;
+}
+
+function crearCampoCaracteristicaFinca(id, etiqueta){
+    if(document.getElementById(id)){ return; }
+    const contenedor = document.getElementById("caracteristicasFincaHistoricas");
+    if(!contenedor){ return; }
+
+    const grupo = document.createElement("div");
+    grupo.style.marginBottom = "10px";
+
+    const label = document.createElement("label");
+    label.setAttribute("for", id);
+    label.textContent = etiqueta;
+    label.style.display = "block";
+    label.style.fontWeight = "600";
+    label.style.marginBottom = "4px";
+
+    const input = document.createElement("input");
+    input.id = id;
+    input.type = "text";
+    input.placeholder = etiqueta;
+    input.style.width = "100%";
+    input.style.boxSizing = "border-box";
+    input.style.padding = "10px";
+    input.style.border = "1px solid #d9e2ec";
+    input.style.borderRadius = "8px";
+
+    grupo.appendChild(label);
+    grupo.appendChild(input);
+    contenedor.appendChild(grupo);
+}
+
+function prepararCaracteristicasFinca(){
+    const farm = document.getElementById("farm");
+    if(!farm){ return false; }
+
+    let bloque = document.getElementById("caracteristicasFincaHistoricas");
+    if(!bloque){
+        bloque = document.createElement("section");
+        bloque.id = "caracteristicasFincaHistoricas";
+        bloque.style.margin = "16px 0";
+        bloque.style.padding = "14px";
+        bloque.style.border = "1px solid #d9e2ec";
+        bloque.style.borderRadius = "12px";
+        bloque.style.background = "#f8fafc";
+
+        const titulo = document.createElement("h3");
+        titulo.textContent = "Características de la finca / Unidad de Producción";
+        titulo.style.marginTop = "0";
+
+        const aviso = document.createElement("div");
+        aviso.id = "avisoHistoricoFinca";
+        aviso.style.display = "none";
+        aviso.style.padding = "10px";
+        aviso.style.marginBottom = "12px";
+        aviso.style.background = "#eef6ff";
+        aviso.style.borderRadius = "8px";
+
+        bloque.appendChild(titulo);
+        bloque.appendChild(aviso);
+        farm.appendChild(bloque);
+    }
+
+    CAMPOS_CARACTERISTICAS_FINCA.forEach(function(item){
+        crearCampoCaracteristicaFinca(item[0], item[1]);
+    });
+
+    aplicarAntecedenteHistoricoCliente();
+    return true;
+}
+
+function registrarCaracteristicasFinca(){
+    const antecedente = obtenerAntecedenteHistoricoCliente(
+        document.getElementById("codigoCliente")?.value || ""
+    );
+
+    CAMPOS_CARACTERISTICAS_FINCA.forEach(function(item){
+        const campo = item[0];
+        const control = document.getElementById(campo);
+        if(!control){ return; }
+        const valorActual = String(control.value || "").trim();
+        if(!valorActual){ return; }
+
+        const valorAnterior = control.dataset.valorHistorico ??
+            antecedente?.datos?.[campo] ?? null;
+        const accion = valorAnterior === null
+            ? "INCORPORADO"
+            : (normalizarClave(valorAnterior) === normalizarClave(valorActual)
+                ? "VALIDADO_SIN_CAMBIO"
+                : "MODIFICADO_EN_VISITA");
+
+        registrarDato(campo, valorActual);
+        registrarTrazabilidadHistorica(
+            campo, valorAnterior, valorActual, accion, antecedente
+        );
+        control.dataset.estadoHistorico = accion;
+    });
+}
+
 function registrarCaracterizacion(){
 
     registrarFormulario([
@@ -621,9 +819,18 @@ function registrarCaracterizacion(){
 
         "superficieAprovechable",
 
-        "superficieCultivada"
+        "superficieCultivada",
+        "fuenteAgua",
+        "disponibilidadAgua",
+        "sistemaRiego",
+        "electricidad",
+        "conectividad",
+        "infraestructuraProductiva",
+        "maquinariaEquipos",
+        "condicionGeneralFinca"
 
     ]);
+    registrarCaracteristicasFinca();
 
 }
 function registrarPerfilRubro(){
@@ -791,6 +998,7 @@ function continuarVisita(){
     cambiarModulo("caracterizacion");
 establecerObjetoActivo("Caracterización");
 actualizarEtiquetaSectorCaracterizacion();
+prepararCaracteristicasFinca();
 registrarCaracterizacion();
 mostrarEstadoActual();
 mostrarExpediente();
@@ -915,7 +1123,15 @@ function obtenerNombreCampoVoz(patron) {
         sector: "el sector",
         direccionUnidadProduccion: "la dirección exacta de la unidad de producción",
         centroMercado: "el centro de mercado",
-        departamento: "la parroquia"
+        departamento: "la parroquia",
+        fuenteAgua: "la fuente de agua",
+        disponibilidadAgua: "la disponibilidad de agua",
+        sistemaRiego: "el sistema de riego",
+        electricidad: "la disponibilidad de electricidad",
+        conectividad: "la telefonía o conectividad",
+        infraestructuraProductiva: "la infraestructura productiva",
+        maquinariaEquipos: "la maquinaria o equipos",
+        condicionGeneralFinca: "la condición general de la finca"
     };
 
     return nombres[patron.entidad] || patron.entidad;
@@ -950,7 +1166,15 @@ function obtenerEjemploVoz(patron) {
         superficieTotal: "Superficie total 12 hectáreas",
         superficieAprovechable: "Superficie aprovechable 10 hectáreas",
         superficieCultivada: "Superficie cultivada 8 hectáreas",
-        estadoFitosanitario: "Estado fitosanitario bueno"
+        estadoFitosanitario: "Estado fitosanitario bueno",
+        fuenteAgua: "Fuente de agua pozo profundo",
+        disponibilidadAgua: "Disponibilidad de agua permanente",
+        sistemaRiego: "Sistema de riego pivote",
+        electricidad: "Electricidad disponible",
+        conectividad: "Conectividad móvil disponible",
+        infraestructuraProductiva: "Infraestructura productiva dos galpones y depósito",
+        maquinariaEquipos: "Maquinaria equipos tractor y rastra",
+        condicionGeneralFinca: "Condición general de la finca buena"
     };
 
     return ejemplos[patron.entidad] || "Código de cliente 00000001";
@@ -995,6 +1219,7 @@ function normalizarVocabularioAgendaVoz(texto) {
         .replace(/\bsin\s+datos?\b/gi, "sin información")
         .replace(/\bno\s+informado\b/gi, "sin información")
         .replace(/\bpersona\s+juridica\b/gi, "persona jurídica")
+        .replace(/\bjota\b/gi, "J")
         .replace(/\s+/g, " ")
         .trim();
 }
@@ -1506,6 +1731,61 @@ function interpretarVoz(texto) {
             ]
         },
         {
+            entidad: "fuenteAgua",
+            expresiones: [
+                /^fuente\s+de\s+agua[:\s]+(.+)$/i,
+                /^agua\s+(?:proviene|procede)\s+de[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "disponibilidadAgua",
+            expresiones: [
+                /^disponibilidad\s+de\s+agua[:\s]+(.+)$/i,
+                /^agua\s+disponible[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "sistemaRiego",
+            expresiones: [
+                /^sistema\s+de\s+riego[:\s]+(.+)$/i,
+                /^riego[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "electricidad",
+            expresiones: [
+                /^electricidad[:\s]+(.+)$/i,
+                /^servicio\s+el[eé]ctrico[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "conectividad",
+            expresiones: [
+                /^(?:telefon[ií]a|conectividad|internet)[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "infraestructuraProductiva",
+            expresiones: [
+                /^infraestructura\s+productiva[:\s]+(.+)$/i,
+                /^infraestructura[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "maquinariaEquipos",
+            expresiones: [
+                /^maquinaria(?:\s+y\s+equipos)?[:\s]+(.+)$/i,
+                /^equipos[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "condicionGeneralFinca",
+            expresiones: [
+                /^condici[oó]n\s+general\s+(?:de\s+la\s+)?finca[:\s]+(.+)$/i,
+                /^estado\s+general\s+(?:de\s+la\s+)?finca[:\s]+(.+)$/i
+            ]
+        },
+        {
             entidad: "estadoFitosanitario",
             expresiones: [
                 /^estado\s+fitosanitario[:\s]+(.+)$/i,
@@ -1560,6 +1840,7 @@ function interpretarVoz(texto) {
             .replace(/\bpersona\s+juridica\b/gi, "J")
             .replace(/\bjur[ií]dica\b/gi, "J")
             .replace(/\bempresa\b/gi, "J")
+            .replace(/\bjota\b/gi, "J")
             .replace(/\bve\b/gi, "V")
             .replace(/\s*-\s*/g, "-")
             .trim();
@@ -2998,6 +3279,14 @@ function interpretarVoz(texto) {
                 case "sector":
                 case "direccionUnidadProduccion":
                 case "centroMercado":
+                case "fuenteAgua":
+                case "disponibilidadAgua":
+                case "sistemaRiego":
+                case "electricidad":
+                case "conectividad":
+                case "infraestructuraProductiva":
+                case "maquinariaEquipos":
+                case "condicionGeneralFinca":
                     valor = normalizarTextoLibreVoz(valor.replace(/\s{2,}/g, " ").trim());
                     if (entidadDestino === "sector") {
                         const sectorClave = normalizarClave(valor);
@@ -3252,6 +3541,15 @@ function interpretarVoz(texto) {
         /superficie\s+total/i,
         /superficie\s+aprovechable/i,
         /superficie\s+cultivada/i,
+        /(?:^|\s)fuente\s+de\s+agua/i,
+        /(?:^|\s)disponibilidad\s+de\s+agua/i,
+        /(?:^|\s)sistema\s+de\s+riego/i,
+        /(?:^|\s)servicio\s+el[eé]ctrico/i,
+        /(?:^|\s)electricidad/i,
+        /(?:^|\s)(?:telefon[ií]a|conectividad|internet)/i,
+        /(?:^|\s)infraestructura\s+productiva/i,
+        /(?:^|\s)maquinaria(?:\s+y\s+equipos)?/i,
+        /(?:^|\s)condici[oó]n\s+general\s+(?:de\s+la\s+)?finca/i,
         /rubro\s+principal/i,
         /rubro\s+secundario/i,
         /rubro\s+(?:2|dos|segundo)/i,
@@ -3937,5 +4235,4 @@ riesgos: [
     }
 ]
 };
-
 
