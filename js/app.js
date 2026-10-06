@@ -1865,15 +1865,6 @@ function interpretarVoz(texto) {
         }
     ];
 
-    function normalizarClave(textoClave) {
-        return String(textoClave ?? "")
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toLowerCase()
-            .replace(/\s+/g, " ")
-            .trim();
-    }
-
     function capitalizarTexto(textoValor) {
         return String(textoValor ?? "")
             .trim()
@@ -3820,19 +3811,31 @@ function interpretarVozPreVisitaCodigo(texto){
         return false;
     }
     const normalizado = normalizarCodigoClientePreVisita(valor);
-    const validacion = validarCampoVoz("codigoCliente", normalizado);
-    if(!validacion.valido){
-        notificarFalloValidacionVoz("codigoCliente", validacion.mensaje);
+    if(!/^\d{8}$/.test(normalizado)){
+        console.warn("PRE_VISITA: Código de cliente inválido; se requieren 8 dígitos normalizados.");
         return true;
     }
     const control = document.getElementById("codigoCliente");
-    if(control){ control.value = validacion.valor; }
-    registrarDato("codigoCliente", validacion.valor);
-    consultarHistoricoAntesVisita();
+    if(!control){
+        console.error("PRE_VISITA: no existe el control Código de cliente.");
+        return true;
+    }
+    control.value = normalizado;
+
+    // PRE_VISITA es deliberadamente autónoma y usa solo dependencias globales.
+    // La consulta histórica registra su propia trazabilidad previa.
+    const consultaEjecutada = consultarHistoricoAntesVisita();
+
     const origen = document.getElementById("estadoConsultaHistorica");
     const destino = document.getElementById("estadoConsultaHistoricaPreparacion");
     if(destino && origen){ destino.textContent = origen.textContent; }
-    console.log("PRE_VISITA: código cliente registrado por voz:", validacion.valor);
+
+    console.log(
+        "PRE_VISITA: código cliente registrado por voz:",
+        normalizado,
+        "consulta:",
+        consultaEjecutada ? "ANTECEDENTE_DISPONIBLE" : "SIN_ANTECEDENTE"
+    );
     return true;
 }
 
@@ -4373,5 +4376,4 @@ riesgos: [
     }
 ]
 };
-
 
