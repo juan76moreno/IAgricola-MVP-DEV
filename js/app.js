@@ -620,6 +620,52 @@ const CAMPOS_CARACTERISTICAS_FINCA = [
     ["condicionGeneralFinca","Condición general observada"]
 ];
 
+
+const CONFIG_REPOSITORIO_HISTORICO = Object.freeze({
+    modo:"ADAPTADOR_SEGURO",
+    endpoint:null,
+    fuentes:["Informe Solicitud","Informe Seguimiento","Informe Avaluo"],
+    timeoutMs:12000
+});
+
+function normalizarAntecedenteRepositorio(payload,codigo){
+    if(!payload || typeof payload!=="object"){return null;}
+    return {
+        fuente:payload.fuente||"Repositorio histórico consolidado",
+        fechaFuente:payload.fechaFuente||null,
+        referenciaFuente:payload.referenciaFuente||null,
+        estado:"HISTORICO_PARA_VALIDAR",
+        codigoCliente:codigo,
+        documentos:(Array.isArray(payload.documentos)?payload.documentos:[]).map(function(doc){
+            return {tipo:doc?.tipo||null,fecha:doc?.fecha||null,referencia:doc?.referencia||null};
+        }),
+        datos:(payload.datos&&typeof payload.datos==="object")?payload.datos:{},
+        conflictos:Array.isArray(payload.conflictos)?payload.conflictos:[]
+    };
+}
+
+async function consultarRepositorioHistoricoCompleto(codigoCliente){
+    const codigo=String(codigoCliente||"").replace(/\D/g,"").padStart(8,"0");
+    if(!/^\d{8}$/.test(codigo)){return {estado:"CODIGO_INVALIDO",antecedente:null};}
+    if(!CONFIG_REPOSITORIO_HISTORICO.endpoint){
+        const local=obtenerAntecedenteHistoricoCliente(codigo);
+        return {estado:local?"ANTECEDENTE_CONTROLADO_LOCAL":"REPOSITORIO_COMPLETO_NO_CONECTADO",antecedente:local,modo:"CONTROLADO_LOCAL"};
+    }
+    const controller=new AbortController();
+    const timer=setTimeout(function(){controller.abort();},CONFIG_REPOSITORIO_HISTORICO.timeoutMs);
+    try{
+        const url=CONFIG_REPOSITORIO_HISTORICO.endpoint+"?codigoCliente="+encodeURIComponent(codigo);
+        const respuesta=await fetch(url,{method:"GET",credentials:"include",headers:{"Accept":"application/json"},signal:controller.signal});
+        if(!respuesta.ok){throw new Error("HTTP "+respuesta.status);}
+        const payload=await respuesta.json();
+        const antecedente=normalizarAntecedenteRepositorio(payload,codigo);
+        return {estado:antecedente?"ANTECEDENTE_REPOSITORIO_COMPLETO":"SIN_ANTECEDENTE_EN_REPOSITORIO_CONSULTADO",antecedente,modo:"REPOSITORIO_COMPLETO"};
+    }catch(error){
+        console.error("Repositorio histórico protegido no disponible:",error?.message||error);
+        return {estado:"ERROR_REPOSITORIO_PROTEGIDO",antecedente:null,modo:"REPOSITORIO_COMPLETO"};
+    }finally{clearTimeout(timer);}
+}
+
 function obtenerAntecedenteHistoricoCliente(codigoCliente){
     const codigo = String(codigoCliente || "").replace(/\D/g,"").padStart(8,"0");
     return REPOSITORIO_HISTORICO_PRUEBA[codigo] || null;
