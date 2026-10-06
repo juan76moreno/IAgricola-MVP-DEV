@@ -4,9 +4,9 @@
 function normalizarClave(textoClave) {
     return String(textoClave ?? "")
         .normalize("NFD")
-        .replace(/[\\u0300-\\u036f]/g, "")
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
 }
 
@@ -538,25 +538,46 @@ function actualizarEtiquetaParroquiaInicioVisita(){
 
 }
 function actualizarEtiquetaSectorCaracterizacion(){
-    const campoSector = document.getElementById("sector") || document.getElementById("parroquia");
+    const campoSector =
+        document.getElementById("sector") ||
+        document.getElementById("parroquia") ||
+        document.getElementById("sectorUnidadProduccion");
+
     if(!campoSector){ return; }
 
     campoSector.placeholder = "Sector o Sin información";
+    campoSector.setAttribute("aria-label", "Sector de la unidad de producción");
 
-    if(campoSector.id){
-        const etiqueta = document.querySelector('label[for="' + campoSector.id + '"]');
-        if(etiqueta){ etiqueta.textContent = "Sector"; }
+    const idCampo = campoSector.id || "";
+    if(idCampo){
+        const etiquetaDirecta = document.querySelector('label[for="' + idCampo + '"]');
+        if(etiquetaDirecta){
+            etiquetaDirecta.textContent = "Sector";
+        }
     }
 
     const contenedor = campoSector.parentElement;
     if(contenedor){
-        contenedor.querySelectorAll("label, .label, .field-label, .form-label").forEach(function(elemento){
+        contenedor.querySelectorAll(
+            "label, .label, .field-label, .form-label, span, div"
+        ).forEach(function(elemento){
             const clave = normalizarClave(elemento.textContent || "");
-            if(clave === "parroquia" || clave === "sector"){
+            if(
+                clave === "parroquia" ||
+                clave === "sector" ||
+                clave === "sector de la unidad de produccion"
+            ){
                 elemento.textContent = "Sector";
             }
         });
     }
+
+    const etiquetasGlobales = document.querySelectorAll(
+        'label[for="sector"], label[for="parroquia"], label[for="sectorUnidadProduccion"]'
+    );
+    etiquetasGlobales.forEach(function(etiqueta){
+        etiqueta.textContent = "Sector";
+    });
 }
 
 function registrarDatosCliente(){
@@ -1239,7 +1260,10 @@ function interpretarVoz(texto) {
                 /^c[eé]dula\s+(?:de\s+identidad\s+)?(?:de\s+)?cliente[:\s]+(.+)$/i,
                 /^(?:rif|r\.?i\.?f\.?)\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
                 /^identificaci[oó]n\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^documento\s+(?:del\s+)?cliente[:\s]+(.+)$/i
+                /^identificaci[oó]n\s+cliente[:\s]+(.+)$/i,
+                /^c[eé]dula\s+de\s+identidad\s+cliente[:\s]+(.+)$/i,
+                /^n[uú]mero\s+de\s+identificaci[oó]n\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
+                /^documento\s+(?:de\s+identidad\s+)?(?:del\s+)?cliente[:\s]+(.+)$/i
             ]
         },
         {
@@ -1425,7 +1449,8 @@ function interpretarVoz(texto) {
             entidad: "sector",
             expresiones: [
                 /^sector\s+(?:de\s+la\s+unidad\s+de\s+producci[oó]n|de\s+la\s+finca)[:\s]+(.+)$/i,
-                /^sector(?!\s+(?:de\s+la\s+)?producci[oó]n\b|\s+productivo\b)[:\s]+(.+)$/i
+                /^sector\s+(?:unidad\s+de\s+producci[oó]n)[:\s]+(.+)$/i,
+                /^sector(?:\s+de\s+unidad)?[:\s]+(.+)$/i
             ]
         },
         {
@@ -1443,7 +1468,8 @@ function interpretarVoz(texto) {
                 /^centro\s+de\s+mercado[:\s]+(.+)$/i,
                 /^centro\s+mercado[:\s]+(.+)$/i,
                 /^mercado\s+(?:principal|de\s+referencia)[:\s]+(.+)$/i,
-                /^(?:ciudad|poblaci[oó]n)\s+(?:del|de)\s+(?:centro\s+de\s+)?mercado[:\s]+(.+)$/i
+                /^(?:ciudad|poblaci[oó]n)\s+(?:del|de)\s+(?:centro\s+de\s+)?mercado[:\s]+(.+)$/i,
+                /^(?:ciudad|poblaci[oó]n)\s+del\s+mercado[:\s]+(.+)$/i
             ]
         },
         {
@@ -2220,8 +2246,166 @@ function interpretarVoz(texto) {
 
         const valorNormalizado = normalizarIdentificacionClienteVoz(valorDepurado);
 
-        // V/E/J solo se registra cuando fue expresamente indicada.
+        // Regla transversal: persona natural venezolana es el caso por defecto.
+        // E/J solo se conservan cuando fueron indicados expresamente.
+        // La validación de longitud se ejecuta antes de registrar el dato.
         return valorNormalizado;
+    }
+
+    /*
+     * Validación transversal de captura por voz.
+     * Solo se aplican restricciones cuyo mínimo/máximo está definido para el campo.
+     * Un campo sin regla explícita no se rechaza por longitud inventada.
+     */
+    const REGLAS_VALIDACION_VOZ = {
+        codigoCliente: {
+            tipo: "digitos",
+            minimo: 1,
+            maximo: 8,
+            longitudExactaNormalizada: 8,
+            mensaje: "El código de cliente debe contener hasta 8 dígitos y se completa con ceros a la izquierda."
+        },
+        identificacionCliente: {
+            tipo: "identificacion",
+            minimoNatural: 6,
+            maximoNatural: 8,
+            longitudJ: 9,
+            minimoExtranjero: 6,
+            maximoExtranjero: 12,
+            mensaje: "La identificación no cumple la longitud mínima o el formato esperado."
+        },
+        identificacionRepresentanteLegal: {
+            tipo: "identificacion",
+            minimoNatural: 6,
+            maximoNatural: 8,
+            longitudJ: 9,
+            minimoExtranjero: 6,
+            maximoExtranjero: 12,
+            mensaje: "La identificación del representante legal no cumple la longitud mínima o el formato esperado."
+        },
+        telefonoPrincipal: {
+            tipo: "telefono",
+            minimo: 10,
+            maximo: 15,
+            mensaje: "El teléfono principal debe contener entre 10 y 15 dígitos."
+        },
+        telefonoAlternativo: {
+            tipo: "telefono",
+            minimo: 10,
+            maximo: 15,
+            mensaje: "El teléfono alternativo debe contener entre 10 y 15 dígitos."
+        }
+    };
+
+    function obtenerDigitosIdentificacion(valorOriginal) {
+        return String(valorOriginal ?? "").replace(/\D/g, "");
+    }
+
+    function validarCampoVoz(entidad, valor) {
+        const regla = REGLAS_VALIDACION_VOZ[entidad];
+        if(!regla){
+            return { valido: true, valor: valor };
+        }
+
+        const texto = String(valor ?? "").trim();
+
+        if(!texto){
+            return {
+                valido: false,
+                valor: valor,
+                mensaje: regla.mensaje
+            };
+        }
+
+        if(regla.tipo === "digitos"){
+            const digitos = obtenerDigitosIdentificacion(texto);
+            if(
+                digitos.length < regla.minimo ||
+                digitos.length > regla.maximo
+            ){
+                return {
+                    valido: false,
+                    valor: valor,
+                    mensaje: regla.mensaje
+                };
+            }
+
+            return {
+                valido: true,
+                valor: digitos.padStart(
+                    regla.longitudExactaNormalizada || regla.maximo,
+                    "0"
+                )
+            };
+        }
+
+        if(regla.tipo === "telefono"){
+            const digitos = obtenerDigitosIdentificacion(texto);
+            if(
+                digitos.length < regla.minimo ||
+                digitos.length > regla.maximo
+            ){
+                return {
+                    valido: false,
+                    valor: valor,
+                    mensaje: regla.mensaje
+                };
+            }
+            return { valido: true, valor: valor };
+        }
+
+        if(regla.tipo === "identificacion"){
+            const compacto = texto.replace(/\s+/g, "");
+            const prefijo = compacto.match(/^([VEJ])\s*-?/i)?.[1]?.toUpperCase() || "V";
+            const digitos = obtenerDigitosIdentificacion(compacto);
+
+            if(prefijo === "J"){
+                if(digitos.length !== regla.longitudJ){
+                    return {
+                        valido: false,
+                        valor: valor,
+                        mensaje: "El RIF de persona jurídica debe contener 9 dígitos además de la letra J."
+                    };
+                }
+                return { valido: true, valor: "J-" + digitos };
+            }
+
+            if(prefijo === "E"){
+                if(
+                    digitos.length < regla.minimoExtranjero ||
+                    digitos.length > regla.maximoExtranjero
+                ){
+                    return {
+                        valido: false,
+                        valor: valor,
+                        mensaje: regla.mensaje
+                    };
+                }
+                return { valido: true, valor: "E-" + digitos };
+            }
+
+            if(
+                digitos.length < regla.minimoNatural ||
+                digitos.length > regla.maximoNatural
+            ){
+                return {
+                    valido: false,
+                    valor: valor,
+                    mensaje: regla.mensaje
+                };
+            }
+
+            return { valido: true, valor: "V-" + digitos };
+        }
+
+        return { valido: true, valor: valor };
+    }
+
+    function notificarFalloValidacionVoz(entidad, mensaje) {
+        console.warn("Dato de voz rechazado por validación:", entidad, mensaje);
+        if(typeof alert === "function"){
+            alert(mensaje);
+        }
     }
 
     function esValorResidualInicioVisita(entidad, valorOriginal) {
@@ -2932,6 +3116,18 @@ function interpretarVoz(texto) {
 
                 return true;
             }
+
+            const validacion = validarCampoVoz(entidadDestino, valor);
+
+            if(!validacion.valido){
+                notificarFalloValidacionVoz(
+                    entidadDestino,
+                    validacion.mensaje
+                );
+                return true;
+            }
+
+            valor = validacion.valor;
 
             const registro = registrarDato(
                 entidadDestino,
@@ -3741,5 +3937,4 @@ riesgos: [
     }
 ]
 };
-
 
