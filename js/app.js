@@ -606,31 +606,7 @@ function registrarDatosCliente(){
    sin cambiar la lógica de validación de visita.
 ============================================================ */
 const REPOSITORIO_HISTORICO_PRUEBA = {
-    "00000438": {
-        fuente: "Informe Técnico histórico",
-        fechaFuente: "2026-06-15",
-        estado: "HISTORICO_PARA_VALIDAR",
-        datos: {
-            finca: "El Plural",
-            sector: "Sin información",
-            municipio: "Turén",
-            departamento: "Villa Bruzual",
-            direccionUnidadProduccion: "Unidad de producción registrada en expediente histórico",
-            superficieTotal: "120",
-            superficieAprovechable: "100",
-            superficieCultivada: "80",
-            tenenciaTierra: "Propia",
-            viasAcceso: "Buena",
-            fuenteAgua: "Pozo",
-            disponibilidadAgua: "Disponible",
-            sistemaRiego: "Sin información",
-            electricidad: "Disponible",
-            conectividad: "Sin información",
-            infraestructuraProductiva: "Sin información",
-            maquinariaEquipos: "Sin información",
-            condicionGeneralFinca: "Pendiente de validar en visita"
-        }
-    }
+ "00000438": {fuente:"Repositorio histórico de Informes Técnicos - prueba controlada",fechaFuente:"2026-09-21",referenciaFuente:"Informe Solicitud / 2026-AGROPECUARIA TAURO C.A / 09-2026 AGROP. TAURO C.A - SOLICITUD.xlsx",estado:"HISTORICO_PARA_VALIDAR",datos:{cliente:"AGROPECUARIA TAURO, C.A.",finca:"AGROPECUARIA TAURO, C.A. (7 lotes de terreno)",superficieTotal:"422"},metadatos:{hectareasUsadasSolicitud:"451.73",especialistaUltimoInforme:"JHOS MARY CHACÓN",fechaUltimoInforme:"2026-09-21"}}
 };
 
 const CAMPOS_CARACTERISTICAS_FINCA = [
@@ -670,6 +646,20 @@ function registrarTrazabilidadHistorica(campo, valorAnterior, valorActual, accio
         fechaValidacion: new Date().toISOString(),
         origenValidacion: "VISITA_ACTUAL"
     });
+}
+
+function prepararConsultaHistoricaPrevia(){
+ const visit=document.getElementById("visit");if(!visit||document.getElementById("consultaHistoricaPrevia"))return Boolean(visit);
+ const b=document.createElement("section");b.id="consultaHistoricaPrevia";b.style.cssText="margin:12px 0;padding:12px;border:1px solid #d9e2ec;border-radius:10px;background:#f8fafc";
+ b.innerHTML="<strong>Consulta previa del expediente histórico</strong><div id='estadoConsultaHistorica' style='margin-top:6px'>Confirme el código de cliente para consultar antecedentes antes de continuar la visita.</div>";
+ const c=document.getElementById("codigoCliente");if(c&&c.parentElement){c.parentElement.insertAdjacentElement("afterend",b);c.addEventListener("change",consultarHistoricoAntesVisita);c.addEventListener("blur",consultarHistoricoAntesVisita);}else visit.insertBefore(b,visit.firstChild);return true;
+}
+function consultarHistoricoAntesVisita(){
+ const c=document.getElementById("codigoCliente"),e=document.getElementById("estadoConsultaHistorica");if(!c)return false;const d=String(c.value||"").replace(/\D/g,"");if(!d)return false;const codigo=d.padStart(8,"0");c.value=codigo;
+ const ant=obtenerAntecedenteHistoricoCliente(codigo);asegurarTrazabilidadHistorica();expedienteInteligente.consultaPrevia={codigoCliente:codigo,fechaConsulta:new Date().toISOString(),encontrado:Boolean(ant),fuente:ant?.fuente??null,fechaFuente:ant?.fechaFuente??null,referenciaFuente:ant?.referenciaFuente??null,estado:ant?"ANTECEDENTE_DISPONIBLE":"SIN_ANTECEDENTE_LOCAL"};
+ if(!ant){if(e)e.textContent="Sin antecedente disponible en la prueba local. Cliente nuevo o pendiente de conexión al repositorio.";return false;}
+ expedienteInteligente.antecedentesHistoricos[codigo]=JSON.parse(JSON.stringify(ant));if(e)e.textContent="Antecedente disponible: "+ant.fuente+" · fecha "+ant.fechaFuente+". Datos preparados para validación durante la visita.";
+ Object.entries(ant.datos||{}).forEach(([campo,valor])=>{const x=document.getElementById(campo);if(x&&!String(x.value||"").trim()){x.value=valor;x.dataset.valorHistorico=String(valor);x.dataset.fuenteHistorica=ant.fuente;x.dataset.fechaFuenteHistorica=ant.fechaFuente;x.dataset.estadoHistorico="PENDIENTE_VALIDACION";}});return true;
 }
 
 function aplicarAntecedenteHistoricoCliente(){
@@ -982,6 +972,8 @@ estadoVisita.estado = "EN_VISITA";
     sincronizarOpcionesTipoVisita();
     actualizarEtiquetaParroquiaInicioVisita();
     configurarCamposFechaHoraInicioVisita();
+    prepararConsultaHistoricaPrevia();
+    consultarHistoricoAntesVisita();
     inicializarVoz();
     
     registrarDatosCliente();
@@ -1690,13 +1682,14 @@ function interpretarVoz(texto) {
         {
             entidad: "centroMercado",
             expresiones: [
-                /^centro\s+de\s+mercado[:\s]+(.+)$/i,
-                /^centro\s+mercado[:\s]+(.+)$/i,
+                /^centro\s+de\s+mercado[:\s]+(.+?)(?=\s+tipo\s+de\s+mercado\b|$)/i,
+                /^centro\s+mercado[:\s]+(.+?)(?=\s+tipo\s+de\s+mercado\b|$)/i,
                 /^mercado\s+(?:principal|de\s+referencia)[:\s]+(.+)$/i,
                 /^(?:ciudad|poblaci[oó]n)\s+(?:del|de)\s+(?:centro\s+de\s+)?mercado[:\s]+(.+)$/i,
                 /^(?:ciudad|poblaci[oó]n)\s+del\s+mercado[:\s]+(.+)$/i
             ]
         },
+        {entidad:"tipoMercado",expresiones:[/(?:^|\s)tipo\s+de\s+mercado[:\s]+(.+)$/i,/(?:^|\s)mercado\s+tipo[:\s]+(.+)$/i]},
         {
             entidad: "sectorProduccion",
             expresiones: [
@@ -2570,6 +2563,7 @@ function interpretarVoz(texto) {
             maximo: 15,
             mensaje: "El teléfono principal debe contener entre 10 y 15 dígitos."
         },
+        finca: {tipo:"nombreFinca",mensaje:"El nombre de la finca no puede ser únicamente numérico."},
         telefonoAlternativo: {
             tipo: "telefono",
             minimo: 10,
@@ -2620,6 +2614,10 @@ function interpretarVoz(texto) {
             };
         }
 
+        if(regla.tipo === "nombreFinca"){
+            if(/^\d+(?:[.,]\d+)?$/.test(texto)) return {valido:false,valor:valor,mensaje:regla.mensaje};
+            return {valido:true,valor:valor};
+        }
         if(regla.tipo === "telefono"){
             const digitos = obtenerDigitosIdentificacion(texto);
             if(
@@ -3279,6 +3277,7 @@ function interpretarVoz(texto) {
                 case "sector":
                 case "direccionUnidadProduccion":
                 case "centroMercado":
+                case "tipoMercado":
                 case "fuenteAgua":
                 case "disponibilidadAgua":
                 case "sistemaRiego":
@@ -3529,6 +3528,7 @@ function interpretarVoz(texto) {
         /(?:^|\s)direcci[oó]n\s+unidad/i,
         /(?:^|\s)ubicaci[oó]n\s+(?:exacta\s+)?(?:de\s+la\s+)?unidad\s+de\s+producci[oó]n/i,
         /(?:^|\s)centro\s+(?:de\s+)?mercado/i,
+        /(?:^|\s)tipo\s+de\s+mercado/i,
         /(?:^|\s)mercado\s+(?:principal|de\s+referencia)/i,
         /nombre\s+de\s+la\s+finca/i,
         /nombre\s+(?:de\s+)?finca/i,
