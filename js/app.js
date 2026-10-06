@@ -654,8 +654,83 @@ function prepararConsultaHistoricaPrevia(){
  b.innerHTML="<strong>Consulta previa del expediente histórico</strong><div id='estadoConsultaHistorica' style='margin-top:6px'>Confirme el código de cliente para consultar antecedentes antes de continuar la visita.</div>";
  const c=document.getElementById("codigoCliente");if(c&&c.parentElement){c.parentElement.insertAdjacentElement("afterend",b);c.addEventListener("change",consultarHistoricoAntesVisita);c.addEventListener("blur",consultarHistoricoAntesVisita);}else visit.insertBefore(b,visit.firstChild);return true;
 }
+
+const CAMPOS_CONTEXTO_CLIENTE = [
+    "cliente","finca","municipio","departamento","codigoCliente",
+    "identificacionCliente","representanteLegal","identificacionRepresentante",
+    "telefonoPrincipal","telefonoAlternativo","correoElectronico","direccionHabitacion",
+    "registroMinisterio","fechaVencimientoRegistro","registroTributario",
+    "sector","direccionUnidadProduccion","centroMercado","tipoMercado",
+    "destinoProduccion","viasAcceso","tenenciaTierra","superficieTotal",
+    "superficieAprovechable","superficieCultivada","usoActualSuelo",
+    "fuenteAgua","disponibilidadAgua","sistemaRiego","electricidad","conectividad",
+    "infraestructuraProductiva","maquinariaEquipos","condicionGeneralFinca"
+];
+
+let codigoContextoClienteActivo = null;
+
+function limpiarMetadatosHistoricosControl(control){
+    if(!control || !control.dataset){ return; }
+    delete control.dataset.valorHistorico;
+    delete control.dataset.fuenteHistorica;
+    delete control.dataset.fechaFuenteHistorica;
+    delete control.dataset.estadoHistorico;
+}
+
+function limpiarContextoClienteAnterior(nuevoCodigo){
+    const anterior = codigoContextoClienteActivo;
+    if(!anterior || anterior === nuevoCodigo){ return false; }
+
+    CAMPOS_CONTEXTO_CLIENTE.forEach(function(campo){
+        if(campo === "codigoCliente"){ return; }
+        const control = document.getElementById(campo);
+        if(!control){ return; }
+
+        // Al cambiar de cliente, ningún dato propio del cliente anterior puede sobrevivir.
+        // Se preservan únicamente los datos generales de la visita, que no están en esta lista.
+        if("value" in control){ control.value = ""; }
+        limpiarMetadatosHistoricosControl(control);
+    });
+
+    expedienteInteligente.cliente = {};
+    expedienteInteligente.unidadProduccion = {};
+    expedienteInteligente.perfilRubro = {};
+    expedienteInteligente.antecedentesHistoricos = {};
+    expedienteInteligente.trazabilidadHistorica = [];
+    expedienteInteligente.consultaPrevia = null;
+
+    if(Array.isArray(expedienteInteligente.capturas)){
+        expedienteInteligente.capturas = expedienteInteligente.capturas.filter(function(captura){
+            return !CAMPOS_CONTEXTO_CLIENTE.includes(captura?.campo);
+        });
+    }
+    if(Array.isArray(expedienteInteligente.historialCapturas)){
+        expedienteInteligente.historialCapturas = expedienteInteligente.historialCapturas.filter(function(captura){
+            return !CAMPOS_CONTEXTO_CLIENTE.includes(captura?.campo);
+        });
+    }
+    expedienteInteligente.totalCapturas = expedienteInteligente.capturas?.length || 0;
+    expedienteInteligente.ultimaCaptura = expedienteInteligente.capturas?.at(-1) || null;
+
+    const aviso = document.getElementById("avisoHistoricoFinca");
+    if(aviso){
+        aviso.textContent = "";
+        aviso.style.display = "none";
+    }
+
+    console.log("Contexto cliente limpiado:", anterior, "->", nuevoCodigo);
+    return true;
+}
+
+function establecerContextoCliente(codigo){
+    const normalizado = String(codigo || "").replace(/\D/g,"").padStart(8,"0");
+    limpiarContextoClienteAnterior(normalizado);
+    codigoContextoClienteActivo = normalizado;
+    return normalizado;
+}
+
 function consultarHistoricoAntesVisita(){
- const c=document.getElementById("codigoCliente"),e=document.getElementById("estadoConsultaHistorica");if(!c)return false;const d=String(c.value||"").replace(/\D/g,"");if(!d)return false;const codigo=d.padStart(8,"0");c.value=codigo;
+ const c=document.getElementById("codigoCliente"),e=document.getElementById("estadoConsultaHistorica");if(!c)return false;const d=String(c.value||"").replace(/\D/g,"");if(!d)return false;const codigo=establecerContextoCliente(d);c.value=codigo;
  const ant=obtenerAntecedenteHistoricoCliente(codigo);asegurarTrazabilidadHistorica();expedienteInteligente.consultaPrevia={codigoCliente:codigo,fechaConsulta:new Date().toISOString(),encontrado:Boolean(ant),fuente:ant?.fuente??null,fechaFuente:ant?.fechaFuente??null,referenciaFuente:ant?.referenciaFuente??null,estado:ant?"ANTECEDENTE_DISPONIBLE":"SIN_ANTECEDENTE_LOCAL"};
  if(!ant){
     expedienteInteligente.consultaPrevia.estado="SIN_ANTECEDENTE_EN_REPOSITORIO_CONSULTADO";
@@ -4376,4 +4451,5 @@ riesgos: [
     }
 ]
 };
+
 
