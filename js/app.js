@@ -657,7 +657,14 @@ function prepararConsultaHistoricaPrevia(){
 function consultarHistoricoAntesVisita(){
  const c=document.getElementById("codigoCliente"),e=document.getElementById("estadoConsultaHistorica");if(!c)return false;const d=String(c.value||"").replace(/\D/g,"");if(!d)return false;const codigo=d.padStart(8,"0");c.value=codigo;
  const ant=obtenerAntecedenteHistoricoCliente(codigo);asegurarTrazabilidadHistorica();expedienteInteligente.consultaPrevia={codigoCliente:codigo,fechaConsulta:new Date().toISOString(),encontrado:Boolean(ant),fuente:ant?.fuente??null,fechaFuente:ant?.fechaFuente??null,referenciaFuente:ant?.referenciaFuente??null,estado:ant?"ANTECEDENTE_DISPONIBLE":"SIN_ANTECEDENTE_LOCAL"};
- if(!ant){if(e)e.textContent="Sin antecedente disponible en la prueba local. Cliente nuevo o pendiente de conexión al repositorio.";return false;}
+ if(!ant){
+    expedienteInteligente.consultaPrevia.estado="SIN_ANTECEDENTE_EN_REPOSITORIO_CONSULTADO";
+    expedienteInteligente.consultaPrevia.flujo="NUEVO_SOLICITANTE_CAPTURA_COMPLETA";
+    if(e)e.textContent="No se encontraron antecedentes en el repositorio consultado. Se tratará como nuevo solicitante y, al iniciar la visita, se habilitará captura completa por texto o voz.";
+    const ePrep=document.getElementById("estadoConsultaHistoricaPreparacion");
+    if(ePrep)ePrep.textContent=e.textContent;
+    return false;
+}
  expedienteInteligente.antecedentesHistoricos[codigo]=JSON.parse(JSON.stringify(ant));if(e)e.textContent="Antecedente disponible: "+ant.fuente+" · fecha "+ant.fechaFuente+". Datos preparados para validación durante la visita.";
  Object.entries(ant.datos||{}).forEach(([campo,valor])=>{const x=document.getElementById(campo);if(x&&!String(x.value||"").trim()){x.value=valor;x.dataset.valorHistorico=String(valor);x.dataset.fuenteHistorica=ant.fuente;x.dataset.fechaFuenteHistorica=ant.fechaFuente;x.dataset.estadoHistorico="PENDIENTE_VALIDACION";}});return true;
 }
@@ -1930,7 +1937,7 @@ function interpretarVoz(texto) {
         return valor.toUpperCase();
     }
 
-    function normalizarCodigoClienteVoz(valorOriginal) {
+    function normalizarCodigoClienteVozInterno(valorOriginal) {
         const mapaNumeros = {
             cero: "0",
             uno: "1",
@@ -3280,7 +3287,7 @@ function interpretarVoz(texto) {
             switch (entidadDestino) {
 
                 case "codigoCliente":
-                    valor = normalizarCodigoClienteVoz(valor);
+                    valor = normalizarCodigoClienteVozInterno(valor);
                     break;
 
                 case "identificacionCliente":
@@ -3779,6 +3786,23 @@ function interpretarVoz(texto) {
 
 
 
+
+function normalizarCodigoClientePreVisita(valorOriginal){
+    const mapaNumeros = {
+        cero:"0", uno:"1", un:"1", una:"1", dos:"2", tres:"3", cuatro:"4",
+        cinco:"5", seis:"6", siete:"7", ocho:"8", nueve:"9"
+    };
+    const valor = normalizarClave(valorOriginal)
+        .replace(/\./g," ").replace(/,/g," ").replace(/\s+/g," ").trim();
+    if(!valor){ return ""; }
+    const digitos = valor.split(" ").map(function(parte){
+        if(/^\d+$/.test(parte)){ return parte; }
+        return mapaNumeros[parte] ?? "";
+    }).join("");
+    const limpio = digitos || String(valorOriginal ?? "").replace(/\D/g,"");
+    return limpio ? limpio.padStart(8,"0") : "";
+}
+
 function interpretarVozPreVisitaCodigo(texto){
     const limpio = String(texto || "").trim();
     const patrones = [
@@ -3795,7 +3819,7 @@ function interpretarVozPreVisitaCodigo(texto){
         console.warn("PRE_VISITA: comando ignorado. Solo se admite Código de cliente.");
         return false;
     }
-    const normalizado = normalizarCodigoClienteVoz(valor);
+    const normalizado = normalizarCodigoClientePreVisita(valor);
     const validacion = validarCampoVoz("codigoCliente", normalizado);
     if(!validacion.valido){
         notificarFalloValidacionVoz("codigoCliente", validacion.mensaje);
