@@ -915,6 +915,74 @@ if(expedienteInteligente.estadoActual){
 
 }
 }
+
+let ubicacionOriginalCodigoCliente = null;
+
+function prepararConsultaHistoricaEnPreparacion(){
+    const ready = document.getElementById("ready");
+    const codigo = document.getElementById("codigoCliente");
+    if(!ready || !codigo){ return false; }
+
+    if(!ubicacionOriginalCodigoCliente){
+        ubicacionOriginalCodigoCliente = {
+            parent: codigo.parentElement,
+            next: codigo.parentElement?.nextSibling || null
+        };
+    }
+
+    let bloque = document.getElementById("consultaHistoricaPreparacion");
+    if(!bloque){
+        bloque = document.createElement("section");
+        bloque.id = "consultaHistoricaPreparacion";
+        bloque.style.cssText = "margin:12px 0;padding:14px;border:1px solid #d9e2ec;border-radius:12px;background:#f8fafc";
+        bloque.innerHTML =
+            "<strong>Consulta previa del cliente</strong>" +
+            "<div style='margin:6px 0'>Confirme el código antes de iniciar la visita.</div>" +
+            "<div id='contenedorCodigoHistorico'></div>" +
+            "<div id='estadoConsultaHistoricaPreparacion' style='margin-top:8px'>Pendiente de consulta.</div>";
+        ready.insertBefore(bloque, ready.firstChild);
+    }
+
+    const destino = document.getElementById("contenedorCodigoHistorico");
+    const grupoCodigo = codigo.parentElement;
+    if(destino && grupoCodigo && grupoCodigo.parentElement !== destino){
+        destino.appendChild(grupoCodigo);
+    }
+
+    const ejecutar = function(){
+        consultarHistoricoAntesVisita();
+        const origen = document.getElementById("estadoConsultaHistorica");
+        const destinoEstado = document.getElementById("estadoConsultaHistoricaPreparacion");
+        if(destinoEstado && origen){ destinoEstado.textContent = origen.textContent; }
+    };
+
+    codigo.addEventListener("input", function(){
+        const digitos = String(codigo.value || "").replace(/\D/g,"");
+        if(digitos.length === 8){ ejecutar(); }
+    });
+    codigo.addEventListener("change", ejecutar);
+    codigo.addEventListener("blur", ejecutar);
+    if(String(codigo.value||"").replace(/\D/g,"").length === 8){ ejecutar(); }
+    return true;
+}
+
+function devolverCodigoClienteAInicioVisita(){
+    const codigo = document.getElementById("codigoCliente");
+    const grupo = codigo?.parentElement;
+    if(!codigo || !grupo || !ubicacionOriginalCodigoCliente?.parent){ return false; }
+
+    const padreOriginal = ubicacionOriginalCodigoCliente.parent.parentElement;
+    if(!padreOriginal){ return false; }
+
+    if(ubicacionOriginalCodigoCliente.next &&
+       ubicacionOriginalCodigoCliente.next.parentElement === padreOriginal){
+        padreOriginal.insertBefore(grupo, ubicacionOriginalCodigoCliente.next);
+    }else{
+        padreOriginal.appendChild(grupo);
+    }
+    return true;
+}
+
 function preparar(){
 
   document.getElementById('card').style.display='none';
@@ -937,6 +1005,8 @@ registrarDatosMinimos();
     document.getElementById('prep').style.display='none';
 
     document.getElementById('ready').style.display='block';
+    prepararConsultaHistoricaPrevia();
+    prepararConsultaHistoricaEnPreparacion();
 
   },2200);
 
@@ -972,7 +1042,7 @@ estadoVisita.estado = "EN_VISITA";
     sincronizarOpcionesTipoVisita();
     actualizarEtiquetaParroquiaInicioVisita();
     configurarCamposFechaHoraInicioVisita();
-    prepararConsultaHistoricaPrevia();
+    devolverCodigoClienteAInicioVisita();
     consultarHistoricoAntesVisita();
     inicializarVoz();
     
