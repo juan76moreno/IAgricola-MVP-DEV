@@ -1007,6 +1007,7 @@ registrarDatosMinimos();
     document.getElementById('ready').style.display='block';
     prepararConsultaHistoricaPrevia();
     prepararConsultaHistoricaEnPreparacion();
+    inicializarVoz();
 
   },2200);
 
@@ -3777,6 +3778,40 @@ function interpretarVoz(texto) {
 
 
 
+
+function interpretarVozPreVisitaCodigo(texto){
+    const limpio = String(texto || "").trim();
+    const patrones = [
+        /c[oó]digo(?:\s+(?:de|del))?\s+cliente[:\s]+(.+)$/i,
+        /cliente\s+n[uú]mero[:\s]+(.+)$/i,
+        /n[uú]mero\s+de\s+cliente[:\s]+(.+)$/i
+    ];
+    let valor = null;
+    for(const patron of patrones){
+        const m = limpio.match(patron);
+        if(m){ valor = m[1]; break; }
+    }
+    if(valor === null){
+        console.warn("PRE_VISITA: comando ignorado. Solo se admite Código de cliente.");
+        return false;
+    }
+    const normalizado = normalizarCodigoClienteVoz(valor);
+    const validacion = validarCampoVoz("codigoCliente", normalizado);
+    if(!validacion.valido){
+        notificarFalloValidacionVoz("codigoCliente", validacion.mensaje);
+        return true;
+    }
+    const control = document.getElementById("codigoCliente");
+    if(control){ control.value = validacion.valor; }
+    registrarDato("codigoCliente", validacion.valor);
+    consultarHistoricoAntesVisita();
+    const origen = document.getElementById("estadoConsultaHistorica");
+    const destino = document.getElementById("estadoConsultaHistoricaPreparacion");
+    if(destino && origen){ destino.textContent = origen.textContent; }
+    console.log("PRE_VISITA: código cliente registrado por voz:", validacion.valor);
+    return true;
+}
+
 function inicializarVoz() {
 
    const ReconocimientoVoz =
@@ -3860,7 +3895,13 @@ if (!texto) {
     registrarDato("voz", texto);
 
     console.warn("Antes de interpretar");
-    interpretarVoz(texto);
+    if(estadoVisita.estado === "EN_VISITA"){
+        interpretarVoz(texto);
+    }else if(estadoVisita.modulo === "preparacion"){
+        interpretarVozPreVisitaCodigo(texto);
+    }else{
+        console.warn("Voz ignorada fuera de visita/preparación.");
+    }
 
     mostrarExpediente();
 
@@ -3887,9 +3928,12 @@ window.reconocimiento.onend = function () {
 }
 
 function iniciarEscucha() {
-if (estadoVisita.estado !== "EN_VISITA") {
-    console.warn("Micrófono bloqueado: la visita aún no ha iniciado.");
+if (estadoVisita.estado !== "EN_VISITA" && estadoVisita.modulo !== "preparacion") {
+    console.warn("Micrófono bloqueado fuera de visita o preparación.");
     return;
+}
+if (estadoVisita.estado !== "EN_VISITA" && estadoVisita.modulo === "preparacion") {
+    console.log("Micrófono PRE_VISITA: solo Código de cliente habilitado.");
 }
     if (!window.reconocimiento) {
 
@@ -4305,4 +4349,5 @@ riesgos: [
     }
 ]
 };
+
 
