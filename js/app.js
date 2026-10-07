@@ -1342,6 +1342,10 @@ function obtenerNombreCampoVoz(patron) {
         sector: "el sector",
         direccionUnidadProduccion: "la dirección exacta de la unidad de producción",
         centroMercado: "el centro de mercado",
+        tipoMercado: "el tipo de mercado",
+        destinoProduccion: "el destino de la producción",
+        viasAcceso: "las vías de acceso",
+        tenenciaTierra: "la tenencia de la tierra",
         departamento: "la parroquia",
         fuenteAgua: "la fuente de agua",
         disponibilidadAgua: "la disponibilidad de agua",
@@ -1916,7 +1920,28 @@ function interpretarVoz(texto) {
                 /^(?:ciudad|poblaci[oó]n)\s+del\s+mercado[:\s]+(.+)$/i
             ]
         },
-        {entidad:"tipoMercado",expresiones:[/(?:^|\s)tipo\s+de\s+mercado[:\s]+(.+)$/i,/(?:^|\s)mercado\s+tipo[:\s]+(.+)$/i]},
+        {entidad:"tipoMercado",expresiones:[/^(?:tipo\s+de\s+mercado|mercado\s+tipo)[:\s]+(.+)$/i]},
+        {
+            entidad:"destinoProduccion",
+            expresiones:[
+                /^destino\s+(?:de\s+la\s+)?producci[oó]n[:\s]+(.+)$/i,
+                /^producci[oó]n\s+destinada\s+a[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad:"viasAcceso",
+            expresiones:[
+                /^v[ií]as?\s+de\s+acceso[:\s]+(.+)$/i,
+                /^acceso\s+(?:a\s+la\s+)?(?:finca|unidad\s+de\s+producci[oó]n)[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad:"tenenciaTierra",
+            expresiones:[
+                /^tenencia\s+(?:de\s+la\s+)?tierra[:\s]+(.+)$/i,
+                /^tenencia[:\s]+(.+)$/i
+            ]
+        },
         {
             entidad: "sectorProduccion",
             expresiones: [
@@ -3496,6 +3521,9 @@ function interpretarVoz(texto) {
                 case "direccionUnidadProduccion":
                 case "centroMercado":
                 case "tipoMercado":
+                case "destinoProduccion":
+                case "viasAcceso":
+                case "tenenciaTierra":
                 case "fuenteAgua":
                 case "disponibilidadAgua":
                 case "sistemaRiego":
@@ -3525,7 +3553,7 @@ function interpretarVoz(texto) {
                 case "superficieCultivada": {
 
                     const superficieDetectada = coincidencia[1].match(
-                        /(\d+(?:[.,]\d+)?)\s*(hectareas?|hectáreas?|ha|metros?\s*cuadrados?|m2|m²|acres?|leguas?)?/i
+                        /(\d+(?:[.,]\d+)?)\s*(hectáreas?|hectareas?|metros?\s*cuadrados?|m²(?!\w)|m2\b|acres?\b|leguas?\b|ha\b)/i
                     );
 
                     if (superficieDetectada) {
