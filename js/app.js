@@ -1503,9 +1503,79 @@ function normalizarTextoVoz(texto) {
         .trim();
 }
 
+
+function normalizarUnidadSuperficieVoz(unidadOriginal){
+    const u=normalizarClave(unidadOriginal).replace(/\s+/g," ").trim();
+    const reglas=[
+        {simbolo:"ha",re:/^(?:ha|hectarea|hectareas)$/},
+        {simbolo:"m²",re:/^(?:m2|m²|metro cuadrado|metros cuadrados)$/},
+        {simbolo:"km²",re:/^(?:km2|km²|kilometro cuadrado|kilometros cuadrados)$/},
+        {simbolo:"cm²",re:/^(?:cm2|cm²|centimetro cuadrado|centimetros cuadrados)$/},
+        {simbolo:"acre",re:/^(?:acre|acres)$/},
+        {simbolo:"ft²",re:/^(?:ft2|ft²|pie cuadrado|pies cuadrados)$/},
+        {simbolo:"yd²",re:/^(?:yd2|yd²|yarda cuadrada|yardas cuadradas)$/},
+        {simbolo:"mi²",re:/^(?:mi2|mi²|milla cuadrada|millas cuadradas)$/},
+        {simbolo:"legua",re:/^(?:legua|leguas|legua cuadrada|leguas cuadradas)$/}
+    ];
+    return reglas.find(r=>r.re.test(u))?.simbolo||null;
+}
+function patronUnidadSuperficieVoz(){
+    return /(hectáreas?|hectareas?|metros?\s+cuadrados?|kil[oó]metros?\s+cuadrados?|cent[ií]metros?\s+cuadrados?|pies?\s+cuadrados?|yardas?\s+cuadradas?|millas?\s+cuadradas?|leguas?(?:\s+cuadradas?)?|acres?|km²|km2|cm²|cm2|ft²|ft2|yd²|yd2|mi²|mi2|m²|m2|ha)\b/i;
+}
+
+
+const MARCADORES_CAMPOS_VOZ=[
+ "fecha de visita","fecha visita","hora de inicio","hora inicio","tecnico responsable","técnico responsable","tipo de visita",
+ "cliente","finca","municipio","parroquia","cedula del cliente","cédula del cliente","codigo de cliente","código de cliente",
+ "representante legal","telefono principal","teléfono principal","telefono alternativo","teléfono alternativo","correo electronico","correo electrónico",
+ "sector","direccion exacta de la unidad de produccion","dirección exacta de la unidad de producción","centro de mercado","tipo de mercado",
+ "destino de la produccion","destino de la producción","vias de acceso","vías de acceso","tenencia de la tierra",
+ "superficie total","superficie aprovechable","superficie cultivada","fuente de agua","disponibilidad de agua","sistema de riego",
+ "electricidad","conectividad","infraestructura productiva","maquinaria y equipos","maquinaria","condicion general de la finca","condición general de la finca"
+];
+function segmentarDictadoVoz(textoOriginal){
+ const texto=String(textoOriginal||"").replace(/\s+/g," ").trim();
+ if(!texto)return [];
+ const normal=normalizarClave(texto);
+ const posiciones=[];
+ MARCADORES_CAMPOS_VOZ.forEach(m=>{
+  const mk=normalizarClave(m);let desde=0,idx;
+  while((idx=normal.indexOf(mk,desde))>=0){
+   const antes=idx===0||/\s|[,;:.]/.test(normal[idx-1]);
+   const despues=idx+mk.length===normal.length||/\s|[,;:.]/.test(normal[idx+mk.length]);
+   if(antes&&despues)posiciones.push({idx,marker:mk});
+   desde=idx+mk.length;
+  }
+ });
+ posiciones.sort((a,b)=>a.idx-b.idx);
+ const unicas=posiciones.filter((x,n,a)=>n===0||x.idx!==a[n-1].idx);
+ if(unicas.length<=1)return [texto];
+ const partes=[];
+ for(let n=0;n<unicas.length;n++){
+  const ini=unicas[n].idx,fin=n+1<unicas.length?unicas[n+1].idx:texto.length;
+  const parte=texto.slice(ini,fin).replace(/^[,;:.\s]+|[,;:.\s]+$/g,"").trim();
+  if(parte)partes.push(parte);
+ }
+ return partes;
+}
+let profundidadSegmentacionVoz=0;
+
 function interpretarVoz(texto) {
 
     console.warn("Interpretando:", texto);
+
+    if(profundidadSegmentacionVoz===0){
+        const segmentos=segmentarDictadoVoz(texto);
+        if(segmentos.length>1){
+            profundidadSegmentacionVoz++;
+            try{
+                segmentos.forEach(function(segmento){ interpretarVoz(segmento); });
+            } finally {
+                profundidadSegmentacionVoz--;
+            }
+            return true;
+        }
+    }
 
     texto = normalizarTextoVoz(texto);
 
@@ -1518,31 +1588,7 @@ function interpretarVoz(texto) {
             .replace(/\s+/g, " ")
             .trim();
 
-        let unidadConfirmada = null;
-
-        if (
-            unidadRespuesta === "ha" ||
-            unidadRespuesta.startsWith("hectarea")
-        ) {
-            unidadConfirmada = "ha";
-
-        } else if (
-            unidadRespuesta === "m2" ||
-            unidadRespuesta === "m²" ||
-            /^metros?\s+cuadrados?$/.test(unidadRespuesta)
-        ) {
-            unidadConfirmada = "m²";
-
-        } else if (
-            unidadRespuesta.startsWith("acre")
-        ) {
-            unidadConfirmada = "acre";
-
-        } else if (
-            unidadRespuesta.startsWith("legua")
-        ) {
-            unidadConfirmada = "legua";
-        }
+        let unidadConfirmada = normalizarUnidadSuperficieVoz(unidadRespuesta);
 
         if (unidadConfirmada) {
 
@@ -2450,6 +2496,12 @@ function interpretarVoz(texto) {
             );
         }
 
+        let coincidenciaCompacta = textoHora.match(/^(\d{3,4})\s*(am|pm)?$/i);
+        if (coincidenciaCompacta) {
+            const digitos = coincidenciaCompacta[1].padStart(4,"0");
+            return formatearHora(Number(digitos.slice(0,2)),digitos.slice(2),coincidenciaCompacta[2] ?? null);
+        }
+
         let coincidenciaHora = textoHora.match(/^(\d{1,2})[:](\d{1,2})\s*(am|pm)?$/i);
 
         if (coincidenciaHora) {
@@ -2460,7 +2512,7 @@ function interpretarVoz(texto) {
             );
         }
 
-        coincidenciaHora = textoHora.match(/^(\d{1,2})\s+(?:y|con)\s+(\d{1,2})\s*(am|pm)?$/i);
+        coincidenciaHora = textoHora.match(/^(\d{1,2})\s+(?:(?:y|con)\s+)?(\d{1,2})\s*(am|pm)?$/i);
 
         if (coincidenciaHora) {
             return formatearHora(
@@ -3431,6 +3483,14 @@ function interpretarVoz(texto) {
             }
 
             if (
+                entidadDestino === "departamento" &&
+                /^(?:tenencia|superficie|centro de mercado|tipo de mercado|destino de la produccion|vias? de acceso|fuente de agua|sistema de riego)\b/.test(textoNormalizado)
+            ) {
+                console.warn("Se bloquea contaminación de Parroquia por otro campo:", valor);
+                return true;
+            }
+
+            if (
                 textoNormalizado.includes("sin informacion") ||
                 textoNormalizado.includes("sin dato") ||
                 textoNormalizado.includes("sin datos")
@@ -3553,7 +3613,7 @@ function interpretarVoz(texto) {
                 case "superficieCultivada": {
 
                     const superficieDetectada = coincidencia[1].match(
-                        /(\d+(?:[.,]\d+)?)\s*(hectáreas?|hectareas?|metros?\s*cuadrados?|m²(?!\w)|m2\b|acres?\b|leguas?\b|ha\b)/i
+                        /(\d+(?:[.,]\d+)?)\s*(hectáreas?|hectareas?|metros?\s+cuadrados?|kil[oó]metros?\s+cuadrados?|cent[ií]metros?\s+cuadrados?|pies?\s+cuadrados?|yardas?\s+cuadradas?|millas?\s+cuadradas?|leguas?(?:\s+cuadradas?)?|acres?|km²|km2|cm²|cm2|ft²|ft2|yd²|yd2|mi²|mi2|m²|m2|ha)\b/i
                     );
 
                     if (superficieDetectada) {
@@ -3584,30 +3644,9 @@ function interpretarVoz(texto) {
                             return true;
                         }
 
-                        const unidadNormalizada = normalizarClave(unidadDictada);
-
-                        if (
-                            unidadNormalizada === "ha" ||
-                            unidadNormalizada.startsWith("hectarea")
-                        ) {
-                            unidadSuperficieDetectada = "ha";
-
-                        } else if (
-                            unidadNormalizada === "m2" ||
-                            unidadNormalizada === "m²" ||
-                            /^metros?\s+cuadrados?$/.test(unidadNormalizada)
-                        ) {
-                            unidadSuperficieDetectada = "m²";
-
-                        } else if (
-                            unidadNormalizada.startsWith("acre")
-                        ) {
-                            unidadSuperficieDetectada = "acre";
-
-                        } else if (
-                            unidadNormalizada.startsWith("legua")
-                        ) {
-                            unidadSuperficieDetectada = "legua";
+                        const unidadNormalizada = normalizarUnidadSuperficieVoz(unidadDictada);
+                        if (unidadNormalizada) {
+                            unidadSuperficieDetectada = unidadNormalizada;
                         }
                     }
 
@@ -4269,7 +4308,14 @@ unidades: [
         unidadCanonicaId: "UNI-000001",
         factorConversion: 10000,
         activo: true
-    }
+    },
+    {id:"UNI-000003",nombre:"Acre",simbolo:"acre",magnitud:"superficie",canonica:false,unidadCanonicaId:"UNI-000001",factorConversion:4046.8564224,activo:true},
+    {id:"UNI-000004",nombre:"Kilómetro cuadrado",simbolo:"km²",magnitud:"superficie",canonica:false,unidadCanonicaId:"UNI-000001",factorConversion:1000000,activo:true},
+    {id:"UNI-000005",nombre:"Centímetro cuadrado",simbolo:"cm²",magnitud:"superficie",canonica:false,unidadCanonicaId:"UNI-000001",factorConversion:0.0001,activo:true},
+    {id:"UNI-000006",nombre:"Pie cuadrado",simbolo:"ft²",magnitud:"superficie",canonica:false,unidadCanonicaId:"UNI-000001",factorConversion:0.09290304,activo:true},
+    {id:"UNI-000007",nombre:"Yarda cuadrada",simbolo:"yd²",magnitud:"superficie",canonica:false,unidadCanonicaId:"UNI-000001",factorConversion:0.83612736,activo:true},
+    {id:"UNI-000008",nombre:"Milla cuadrada",simbolo:"mi²",magnitud:"superficie",canonica:false,unidadCanonicaId:"UNI-000001",factorConversion:2589988.110336,activo:true},
+    {id:"UNI-000009",nombre:"Legua cuadrada",simbolo:"legua",magnitud:"superficie",canonica:false,unidadCanonicaId:"UNI-000001",factorConversion:null,requiereFactorLocal:true,activo:true}
 ],
 monedas: [
     {
@@ -4334,8 +4380,7 @@ reglas: [
         campoId: "CAM-000001",
         tipo: "unidadPermitida",
         unidades: [
-            "UNI-000001",
-            "UNI-000002"
+            "UNI-000001","UNI-000002","UNI-000003","UNI-000004","UNI-000005","UNI-000006","UNI-000007","UNI-000008","UNI-000009"
         ],
         activo: true
     }
@@ -4553,5 +4598,4 @@ riesgos: [
     }
 ]
 };
-
 
