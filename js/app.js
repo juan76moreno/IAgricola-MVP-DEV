@@ -1671,418 +1671,147 @@ function interpretarVoz(texto) {
     };
 
     const patrones = [
-        {
-            entidad: "fechaVisita",
-            expresiones: [
-                /^fecha\s+(?:de\s+)?visita[:\s]+(.+)$/i,
-                /^fecha\s+(?:de\s+)?inspecci[oó]n[:\s]+(.+)$/i,
-                /^visita\s+fecha[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "horaInicio",
-            expresiones: [
-                /^hora\s+(?:de\s+)?inicio[:\s]+(.+)$/i,
-                /^hora\s+(?:de\s+)?la\s+visita[:\s]+(.+)$/i,
-                /^inicio\s+(?:de\s+)?visita[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "tecnico",
-            expresiones: [
-                /^t[eé]cnico\s+responsable[:\s]+(.+)$/i,
-                /^t[eé]cnica\s+responsable[:\s]+(.+)$/i,
-                /^nombre\s+del\s+t[eé]cnico[:\s]+(.+)$/i,
-                /^nombre\s+de\s+la\s+t[eé]cnica[:\s]+(.+)$/i,
-                /^responsable\s+t[eé]cnico[:\s]+(.+)$/i,
-                /^responsable\s+t[eé]cnica[:\s]+(.+)$/i,
-                /^especialista\s+agr[ií]cola[:\s]+(.+)$/i,
-                /^t[eé]cnico[:\s]+(.+)$/i,
-                /^t[eé]cnica[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "tipoVisita",
-            expresiones: [
-                /^tipo\s+(?:de\s+)?visita[:\s]+(.+)$/i,
-                /^motivo\s+(?:de\s+)?(?:la\s+)?inspecci[oó]n[:\s]+(.+)$/i,
-                /^motivo[:\s]+(.+)$/i,
-                /^visita\s+(.+)$/i
-            ]
-        },
-        {
-            entidad: "cliente",
-            expresiones: [
-                /^cliente[:\s]+(.+)$/i,
-                /^nombre\s+del\s+cliente[:\s]+(.+)$/i,
-                /^productor[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "finca",
-            expresiones: [
-                /^finca[:\s]+(.+)$/i,
-                /^nombre\s+de\s+la\s+finca[:\s]+(.+)$/i,
-                /^nombre\s+(?:de\s+)?finca[:\s]+(.+)$/i,
-                /^unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i,
-                /^parcela[:\s]+(.+)$/i,
-                /^hato[:\s]+(.+)$/i,
-                /^hacienda[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "municipio",
-            expresiones: [
-                /^municipio[:\s]+(.+)$/i,
-                /^municipio\s+de[:\s]+(.+)$/i,
-                /^ubicaci[oó]n\s+municipio[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "departamento",
-            expresiones: [
-                /^parroquia[:\s]+(.+)$/i,
-                /^departamento[:\s]+(.+)$/i,
-                /^estado[:\s]+(.+)$/i,
-                /^entidad\s+federal[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "identificacionCliente",
-            expresiones: [
-                /^c[eé]dula\s+(?:de\s+identidad\s+)?(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^c[eé]dula\s+(?:de\s+identidad\s+)?(?:de\s+)?cliente[:\s]+(.+)$/i,
-                /^(?:rif|r\.?i\.?f\.?)\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^identificaci[oó]n\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^identificaci[oó]n\s+cliente[:\s]+(.+)$/i,
-                /^c[eé]dula\s+de\s+identidad\s+cliente[:\s]+(.+)$/i,
-                /^n[uú]mero\s+de\s+identificaci[oó]n\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^documento\s+(?:de\s+identidad\s+)?(?:del\s+)?cliente[:\s]+(.+)$/i
-            ]
-        },
+        // ==========================================
+        // 1. INICIO DE VISITA / DOCUMENTAL
+        // ==========================================
         {
             entidad: "codigoCliente",
-        expresiones: [
-            /^c[oó]digo\s+(?:del\s+)?cliente[\s:]+(.+)$/i,
-            /^n[uú]mero\s+de\s+cliente[\s:]+(.+)$/i,
-            /^c[oó]digo[\s:]+(.+)$/i
-        ]
-    },
-        {
-            entidad: "identificacionRepresentanteLegal",
             expresiones: [
-                /^representante\s+legal\s+(?:venezolan[oa]|v|ve|e|extranjero|extranjera)\s*(?:es)?[:\s]+([0-9\s]+)$/i,
-                /^identificaci[oó]n\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i,
-                /^documento\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i,
-                /^n[uú]mero\s+de\s+c[eé]dula\s+(?:del\s+)?representante\s+legal[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "representanteLegal",
-            expresiones: [
-                /^representante\s+legal[:\s]+(.+)$/i,
-                /^nombre\s+del\s+representante\s+legal[:\s]+(.+)$/i,
-                /^representante[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "identificacionRepresentanteLegal",
-            expresiones: [
-                /^c[eé]dula\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal\s+del\s+representante\s+legal[:\s]+(.+)$/i,
-                /^c[eé]dula\s+(?:de\s+identidad\s+)?del\s+representante\s+legal[:\s]+(.+)$/i,
-                /^c[eé]dula\s+del\s+representante\s+legal[:\s]+(.+)$/i,
-                /^(?:rif|r\.?i\.?f\.?)\s+del\s+representante\s+legal[:\s]+(.+)$/i,
-                /^identificaci[oó]n\s+del\s+representante\s+legal[:\s]+(.+)$/i,
-                /^documento\s+del\s+representante\s+legal[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "telefonoPrincipal",
-            expresiones: [
-                /^tel[eé]fono\s+principal[:\s]+(.+)$/i,
-                /^n[uú]mero\s+de\s+tel[eé]fono\s+principal[:\s]+(.+)$/i,
-                /^tel[eé]fono(?!\s+alternativo\b)[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "telefonoAlternativo",
-            expresiones: [
-                /^tel[eé]fono\s+alternativo(?:\s+cuando\s+aplique)?[:\s]+(.+)$/i,
-                /^n[uú]mero\s+de\s+tel[eé]fono\s+alternativo[:\s]+(.+)$/i,
-                /^celular\s+alternativo[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "correoElectronico",
-            expresiones: [
-                /^correo\s+electr[oó]nico(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
-                /^correo(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
-                /^email(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
-                /^e\s*mail(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "direccionHabitacion",
-            expresiones: [
-                /^direcci[oó]n\s+de\s+habitaci[oó]n(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
-                /^direcci[oó]n\s+habitaci[oó]n(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
-                /^domicilio(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i,
-                /^direcci[oó]n(?:\s+(?:del\s+)?cliente)?[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "registroMinisterioAgricultura",
-            expresiones: [
-                /(?:^|\s)n[uú]mero\s+de\s+registro\s+del\s+ministerio\s+de\s+agricultura\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:(?:la\s+)?fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
-                /(?:^|\s)registro\s+(?:del\s+)?ministerio\s+de\s+agricultura\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:(?:la\s+)?fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
-                /(?:^|\s)registro\s+agr[ií]cola\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:(?:la\s+)?fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
-                /(?:^|\s)registro\s+mat\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:(?:la\s+)?fecha\s+(?:de\s+)?vencimiento|vencimiento\s+(?:del\s+|de\s+)?registro|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i
-            ]
-        },
-        {
-            entidad: "fechaVencimientoRegistro",
-            expresiones: [
-                /(?:^|\s)(?:la\s+)?fecha\s+de\s+vencimiento\s+del\s+registro\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:n[uú]mero\s+de\s+registro\s+del\s+ministerio|registro\s+(?:del\s+)?ministerio|registro\s+mat|registro\s+agr[ií]cola|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
-                /(?:^|\s)(?:la\s+)?fecha\s+de\s+vencimiento\s+de\s+registro\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:n[uú]mero\s+de\s+registro\s+del\s+ministerio|registro\s+(?:del\s+)?ministerio|registro\s+mat|registro\s+agr[ií]cola|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
-                /(?:^|\s)vencimiento\s+(?:del\s+|de\s+)?registro\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:n[uú]mero\s+de\s+registro\s+del\s+ministerio|registro\s+(?:del\s+)?ministerio|registro\s+mat|registro\s+agr[ií]cola|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i,
-                /(?:^|\s)fecha\s+vencimiento\s+(?:del\s+|de\s+)?registro\s*(?:es\s+|:\s*)?(.+?)(?=\s+(?:n[uú]mero\s+de\s+registro\s+del\s+ministerio|registro\s+(?:del\s+)?ministerio|registro\s+mat|registro\s+agr[ií]cola|n[uú]mero\s+de\s+registro\s+tributario|registro\s+tributario)\b|$)/i
-            ]
-        },
-        {
-            entidad: "numeroRegistroTributario",
-            expresiones: [
-                /^n[uú]mero\s+de\s+registro\s+tributario[:\s]+(.+)$/i,
-                /^registro\s+tributario[:\s]+(.+)$/i,
-                /^nrt[:\s]+(.+)$/i,
-                /^n\.?\s*r\.?\s*t\.?[:\s]+(.+)$/i
+                /^(?:c[oó]digo\s+(?:del\s+)?cliente|n[uú]mero\s+de\s+cliente|c[oó]digo|expediente)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "identificacionCliente",
             expresiones: [
-                /^c[eé]dula\s+de\s+identidad\s+o\s+registro\s+de\s+informaci[oó]n\s+fiscal[:\s]+(.+)$/i,
-                /^c[eé]dula\s+o\s+(?:rif|r\.?i\.?f\.?)[:\s]+(.+)$/i,
-                /^c[eé]dula(?:\s+de\s+identidad)?[:\s]+(.+)$/i,
-                /^n[uú]mero\s+de\s+c[eé]dula[:\s]+(.+)$/i,
-                /^registro\s+de\s+informaci[oó]n\s+fiscal[:\s]+(.+)$/i,
-                /^(?:rif|r\.?i\.?f\.?)(?!\s+del\s+representante\s+legal)[:\s]+(.+)$/i,
-                /^identificaci[oó]n\s+(?:del\s+cliente|fiscal)[:\s]+(.+)$/i,
-                /^documento\s+de\s+identidad[:\s]+(.+)$/i
+                /^(?:c[eé]dula(?:\s+de\s+identidad)?|rif|registro\s+fiscal|identificaci[oó]n(?:\s+del?\s+cliente)?)[\s:]+(.+)$/i
             ]
         },
         {
-            entidad: "cantidadRubrosExplotados",
+            entidad: "identificacionRepresentanteLegal",
             expresiones: [
-                /^cantidad\s+de\s+rubros(?:\s+explotados)?(?:\s*:\s*|\s+)(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
-                /^n[uú]mero\s+de\s+rubros(?:\s+explotados)?(?:\s*:\s*|\s+)(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
-                /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+rubros(?:\s+explotados)?$/i,
-                /^cantidad\s+de\s+actividades\s*:?\s*(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)$/i,
-                /^(?:tengo|exploto|manejo)\s+(\d+|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+actividades$/i
+                /^(?:representante(?:\s+legal)?|c[eé]dula\s+(?:del?\s+)?representante|identificaci[oó]n\s+(?:del?\s+)?representante)[\s:]+(.+)$/i
             ]
         },
+
+        // ==========================================
+        // 2. CARACTERIZACIÓN DE LA FINCA
+        // ==========================================
         {
-            entidad: "rubroSecundario",
-            indiceRubro: 0,
+            entidad: "sectorProduccion",
             expresiones: [
-                /^rubro\s+secundario[:\s]+(.+)$/i,
-                /^rubro\s+(?:2|dos|segundo)[:\s]+(.+)$/i,
-                /^segundo\s+rubro[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "rubroSecundario",
-            indiceRubro: 1,
-            expresiones: [
-                /^rubro\s+(?:3|tres|tercero)[:\s]+(.+)$/i,
-                /^tercer\s+rubro[:\s]+(.+)$/i,
-                /^tercero\s+rubro[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "rubroSecundario",
-            indiceRubro: 2,
-            expresiones: [
-                /^rubro\s+(?:4|cuatro|cuarto)[:\s]+(.+)$/i,
-                /^cuarto\s+rubro[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "rubroSecundario",
-            indiceRubro: 3,
-            expresiones: [
-                /^rubro\s+(?:5|cinco|quinto)[:\s]+(.+)$/i,
-                /^quinto\s+rubro[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "rubroPrincipal",
-            expresiones: [
-                /^rubro\s+principal[:\s]+(.+)$/i,
-                /^rubro(?!\s+secundario\b)[:\s]+(.+)$/i,
-                /^cultivo[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "subsector",
-            expresiones: [
-                /^sub\s*sector[:\s]+(.+)$/i,
-                /^subsector[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "tipoSubsector",
-            expresiones: [
-                /^tipo\s+de\s+sub\s*sector[:\s]+(.+)$/i,
-                /^tipo\s+de\s+subsector[:\s]+(.+)$/i,
-                /^tipo\s+sub\s*sector[:\s]+(.+)$/i,
-                /^tipo\s+subsector[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "sector",
-            expresiones: [
-                /^sector\s+(?:de\s+la\s+unidad\s+de\s+producci[oó]n|de\s+la\s+finca)[:\s]+(.+)$/i,
-                /^sector\s+(?:unidad\s+de\s+producci[oó]n)[:\s]+(.+)$/i,
-                /^sector(?:\s+de\s+unidad)?[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "direccionUnidadProduccion",
-            expresiones: [
-                /^direcci[oó]n\s+(?:exacta\s+)?(?:de\s+la\s+)?unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i,
-                /^direcci[oó]n\s+de\s+la\s+unidad[:\s]+(.+)$/i,
-                /^direcci[oó]n\s+unidad(?:\s+de\s+producci[oó]n)?[:\s]+(.+)$/i,
-                /^ubicaci[oó]n\s+(?:exacta\s+)?(?:de\s+la\s+)?unidad\s+de\s+producci[oó]n[:\s]+(.+)$/i
+                /^(?:sector(?:\s+productivo)?|zona|caser[ií]o|ubicaci[oó]n|sitio)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "centroMercado",
             expresiones: [
-                /^centro\s+de\s+mercado[:\s]+(.+?)(?=\s+tipo\s+de\s+mercado\b|$)/i,
-                /^centro\s+mercado[:\s]+(.+?)(?=\s+tipo\s+de\s+mercado\b|$)/i,
-                /^mercado\s+(?:principal|de\s+referencia)[:\s]+(.+)$/i,
-                /^(?:ciudad|poblaci[oó]n)\s+(?:del|de)\s+(?:centro\s+de\s+)?mercado[:\s]+(.+)$/i,
-                /^(?:ciudad|poblaci[oó]n)\s+del\s+mercado[:\s]+(.+)$/i
-            ]
-        },
-        {entidad:"tipoMercado",expresiones:[/^(?:tipo\s+de\s+mercado|mercado\s+tipo)[:\s]+(.+)$/i]},
-        {
-            entidad:"destinoProduccion",
-            expresiones:[
-                /^destino\s+(?:de\s+la\s+)?producci[oó]n[:\s]+(.+)$/i,
-                /^producci[oó]n\s+destinada\s+a[:\s]+(.+)$/i
+                /^(?:centro\s+(?:de\s+)?mercado|mercado\s+(?:cercano|principal)|ciudad\s+mercado|poblaci[oó]n\s+mercado)[\s:]+(.+)$/i
             ]
         },
         {
-            entidad:"viasAcceso",
-            expresiones:[
-                /^v[ií]as?\s+de\s+acceso[:\s]+(.+)$/i,
-                /^acceso\s+(?:a\s+la\s+)?(?:finca|unidad\s+de\s+producci[oó]n)[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad:"tenenciaTierra",
-            expresiones:[
-                /^tenencia\s+(?:de\s+la\s+)?tierra[:\s]+(.+)$/i,
-                /^tenencia[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "sectorProduccion",
+            entidad: "tipoMercado",
             expresiones: [
-                /^sector\s+de\s+la\s+producci[oó]n[:\s]+(.+)$/i,
-                /^sector\s+producci[oó]n[:\s]+(.+)$/i,
-                /^sector\s+productivo[:\s]+(.+)$/i
+                /^(?:tipo\s+(?:de\s+)?mercado|mercado\s+tipo|nivel\s+de\s+mercado)[\s:]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "destinoProduccion",
+            expresiones: [
+                /^(?:destino\s+(?:de\s+la\s+)?producci[oó]n|destino\s+producci[oó]n|destino|producci[oó]n\s+destinada\s+a?|destino\s+(?:de\s+la\s+)?cosecha|se\s+vende\s+a)[\s:]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "viasAcceso",
+            expresiones: [
+                /^(?:[vd]i[ií]as?\s+(?:de\s+)?acceso|caminos?\s+(?:de\s+)?acceso|[vd]i[ií]as?|caminos?|carreteras?|entradas?|acceso\s+(?:a\s+la\s+)?(?:finca|unidad(?:\s+de\s+producci[oó]n)?))[\s:]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "tenenciaTierra",
+            expresiones: [
+                /^(?:tenencia\s+(?:de\s+la\s+)?tierra|tenencia\s+tierra|tenencia|condici[oó]n\s+(?:de\s+la\s+)?tierra|estatus\s+jur[ií]dico|propiedad\s+(?:de\s+la\s+)?tierra)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "superficieTotal",
             expresiones: [
-                /^superficie\s+total[:\s]+(.+)$/i,
-                /^superficie[:\s]+(?!aprovechable\b|cultivada\b)(.+)$/i,
-                /^tiene\s+sembradas[:\s]+(.+)$/i,
-                /^tiene\s+(.+)\s+hect[aá]reas$/i
+                /^(?:superficie\s+total(?:\s+de\s+la\s+finca)?|[aá]rea\s+total|extensi[oó]n\s+total|total\s+(?:de\s+)?hect[aá]reas)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "superficieAprovechable",
             expresiones: [
-                /^superficie\s+aprovechable[:\s]+(.+)$/i,
-                /^área\s+aprovechable[:\s]+(.+)$/i,
-                /^area\s+aprovechable[:\s]+(.+)$/i
+                /^(?:superficie\s+aprovechable|[aá]rea\s+aprovechable|superficie\s+[uú]til|[aá]rea\s+[uú]til)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "superficieCultivada",
             expresiones: [
-                /^superficie\s+cultivada[:\s]+(.+)$/i,
-                /^área\s+cultivada[:\s]+(.+)$/i,
-                /^area\s+cultivada[:\s]+(.+)$/i
+                /^(?:superficie\s+cultivada|[aá]rea\s+cultivada|[aá]rea\s+sembrada|superficie\s+sembrada)[\s:]+(.+)$/i
             ]
         },
+
+        // ==========================================
+        // 3. SERVICIOS E INFRAESTRUCTURA PRODUCTIVA
+        // ==========================================
         {
             entidad: "fuenteAgua",
             expresiones: [
-                /^fuente\s+de\s+agua[:\s]+(.+)$/i,
-                /^agua\s+(?:proviene|procede)\s+de[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "disponibilidadAgua",
-            expresiones: [
-                /^disponibilidad\s+de\s+agua[:\s]+(.+)$/i,
-                /^agua\s+disponible[:\s]+(.+)$/i
+                /^(?:fuente\s+(?:de\s+)?agua|origen\s+(?:del\s+)?agua|agua|suministro\s+(?:de\s+)?agua)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "sistemaRiego",
             expresiones: [
-                /^sistema\s+de\s+riego[:\s]+(.+)$/i,
-                /^riego[:\s]+(.+)$/i
+                /^(?:sistema\s+(?:de\s+)?riego|riego|m[eé]todo\s+(?:de\s+)?riego|tipo\s+(?:de\s+)?riego)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "electricidad",
             expresiones: [
-                /^electricidad[:\s]+(.+)$/i,
-                /^servicio\s+el[eé]ctrico[:\s]+(.+)$/i
+                /^(?:electricidad|energ[ií]a\s+el[eé]ctrica|servicio\s+el[eé]ctrico|luz)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "conectividad",
             expresiones: [
-                /^(?:telefon[ií]a|conectividad|internet)[:\s]+(.+)$/i
+                /^(?:conectividad|se[nñ]al(?:\s+telef[oó]nica)?|internet|comunicaciones|cobertura)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "infraestructuraProductiva",
             expresiones: [
-                /^infraestructura\s+productiva[:\s]+(.+)$/i,
-                /^infraestructura[:\s]+(.+)$/i
+                /^(?:infraestructura(?:\s+productiva)?|instalaciones|bienhechur[ií]as|construcciones|galpones)[\s:]+(.+)$/i
             ]
         },
         {
             entidad: "maquinariaEquipos",
             expresiones: [
-                /^maquinaria(?:\s+y\s+equipos)?[:\s]+(.+)$/i,
-                /^equipos[:\s]+(.+)$/i
+                /^(?:maquinaria(?:\s+y\s+equipos)?|equipos|mecanizaci[oó]n|tractores|implementos)[\s:]+(.+)$/i
             ]
         },
+
+        // ==========================================
+        // 4. EVALUACIÓN Y CONDICIONES GENERALES
+        // ==========================================
         {
-            entidad: "condicionGeneralFinca",
+            entidad: "condicionGeneral",
             expresiones: [
-                /^condici[oó]n\s+general\s+(?:de\s+la\s+)?finca[:\s]+(.+)$/i,
-                /^estado\s+general\s+(?:de\s+la\s+)?finca[:\s]+(.+)$/i
-            ]
-        },
-        {
-            entidad: "estadoFitosanitario",
-            expresiones: [
-                /^estado\s+fitosanitario[:\s]+(.+)$/i,
-                /^condici[oó]n\s+fitosanitaria[:\s]+(.+)$/i
+                /^(?:condici[oó]n\s+general(?:\s+de\s+la\s+finca)?|estado\s+general|evaluaci[oó]n\s+general|observaciones\s+generales)[\s:]+(.+)$/i
             ]
         }
     ];
+       // Recorrido e interpretación flexible de patrones
+    for (const item of patrones) {
+        for (const exp of item.expresiones) {
+            const coincidencia = texto.match(exp);
+            if (coincidencia && coincidencia[1]) {
+                const valorLimpio = coincidencia[1].trim();
+                registrarDato(item.entidad, valorLimpio);
+            }
+        }
+    }
+}
 
     function capitalizarTexto(textoValor) {
         return String(textoValor ?? "")
