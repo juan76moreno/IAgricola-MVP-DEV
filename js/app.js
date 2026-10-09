@@ -1327,7 +1327,7 @@ function obtenerNombreCampoVoz(patron) {
     const nombres = {
         fechaVisita: "la fecha de visita",
         horaInicio: "la hora de inicio",
-        tecnico: "el técnico responsable",
+        tecnico: "el especialista responsable",
         tipoVisita: "el tipo de visita",
         cliente: "el nombre del cliente",
         codigoCliente: "el código de cliente",
@@ -1379,7 +1379,7 @@ function obtenerEjemploVoz(patron) {
     const ejemplos = {
         fechaVisita: "Fecha de visita 02/10/2026",
         horaInicio: "Hora de inicio 08:30",
-        tecnico: "Técnico responsable Juan Moreno",
+        tecnico: "Especialista responsable Juan Moreno",
         tipoVisita: "Tipo de visita programada",
         cliente: "Cliente Juan Moreno",
         codigoCliente: "Código de cliente 00000001",
