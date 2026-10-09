@@ -1762,13 +1762,12 @@ function interpretarVoz(texto) {
         },
         {
             entidad: "codigoCliente",
-            expresiones: [
-                /^c[oó]digo(?:\s+(?:de|del))?\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
-                /^cliente\s+n[uú]mero[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
-                /^n[uú]mero\s+de\s+cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i,
-                /^cliente[:\s]+([0-9\s]+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:\s+(?:cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve))*)$/i
-            ]
-        },
+        expresiones: [
+            /^c[oó]digo\s+(?:del\s+)?cliente[\s:]+(.+)$/i,
+            /^n[uú]mero\s+de\s+cliente[\s:]+(.+)$/i,
+            /^c[oó]digo[\s:]+(.+)$/i
+        ]
+    },
         {
             entidad: "identificacionRepresentanteLegal",
             expresiones: [
