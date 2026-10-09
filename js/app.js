@@ -1802,15 +1802,7 @@ function interpretarVoz(texto) {
         }
     ];
        // Recorrido e interpretación flexible de patrones
-    for (const item of patrones) {
-        for (const exp of item.expresiones) {
-            const coincidencia = texto.match(exp);
-            if (coincidencia && coincidencia[1]) {
-                const valorLimpio = coincidencia[1].trim();
-                registrarDato(item.entidad, valorLimpio);
-            }
-        }
-    }
+    
 }
 
     function capitalizarTexto(textoValor) {
