@@ -1749,16 +1749,10 @@ function interpretarVoz(texto) {
         },
         {
             entidad: "identificacionCliente",
-            expresiones: [
-                /^c[eé]dula\s+(?:de\s+identidad\s+)?(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^c[eé]dula\s+(?:de\s+identidad\s+)?(?:de\s+)?cliente[:\s]+(.+)$/i,
-                /^(?:rif|r\.?i\.?f\.?)\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^identificaci[oó]n\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^identificaci[oó]n\s+cliente[:\s]+(.+)$/i,
-                /^c[eé]dula\s+de\s+identidad\s+cliente[:\s]+(.+)$/i,
-                /^n[uú]mero\s+de\s+identificaci[oó]n\s+(?:del\s+)?cliente[:\s]+(.+)$/i,
-                /^documento\s+(?:de\s+identidad\s+)?(?:del\s+)?cliente[:\s]+(.+)$/i
-            ]
+expresiones: [
+    /^(?:c[eé]dula|rif|registro\s+tributario|identificaci[oó]n)(?:\s+(?:de\s+identidad|del\s+cliente|de\s+la\s+empresa|de\s+la\s+persona\s+jur[ií]dica))?(?:\s+(?:es|n[uú]mero))?[\s:]+([A-Za-z-]?\s*\d[\d\s\.\-]*)$/i,
+    /^(?:el\s+rif|la\s+c[eé]dula)(?:\s+(?:es|del\s+cliente\s+es|de\s+la\s+empresa\s+es))?[\s:]+([A-Za-z-]?\s*\d[\d\s\.\-]*)$/i
+]
         },
         {
             entidad: "codigoCliente",
