@@ -1788,14 +1788,16 @@ expresiones: [
         {
             entidad: "erosion",
             expresiones: [
-                /^(?:evidencia\s+de\s+erosi[oó]n|erosi[oó]n)[\s:]+(no|leve|moderada|severa)$/i,
-                /^(?:no\s+presenta\s+erosi[oó]n|sin\s+erosi[oó]n)$/i
+                /^(?:evidencia\s+de\s+)?erosi[oó]n[\s:]+(no|leve|moderada|severa)$/i,
+                /^(?:no\s+presenta\s+erosi[oó]n|sin\s+erosi[oó]n|sin\s+evidencia\s+de\s+erosi[oó]n)$/i,
+                /^con\s+evidencia\s+de\s+erosi[oó]n\s+(leve|moderada|severa)$/i
             ]
         },
         {
             entidad: "texturaSuelo",
             expresiones: [
-                /^(?:textura(?:\s+del\s+suelo)?|suelo|tipo\s+de\s+suelo)[\s:]+(arenoso|franco|arcilloso|franco\s+arcilloso|otra)$/i
+                /^(?:textura(?:\s+del\s+suelo)?|suelo|tipo\s+de\s+suelo)[\s:]+(arenoso|franco|arcilloso|franco\s+arcilloso|otra)$/i,
+                /^(?:textura\s+del\s+suelo|textura)\s+(arenoso|franco|arcilloso|franco\s+arcilloso|otra)$/i
             ]
         },
         {
@@ -3442,9 +3444,9 @@ expresiones: [
     }
 
     function procesarTextoVoz(textoProcesar) {
-        // Segmentador para discriminación de frases compuestas en caracterización
+        // Segmentador Universal para toda la Agenda Inteligente
     if (textoProcesar && typeof textoProcesar === "string" && !textoProcesar.__segmentado) {
-        const partes = textoProcesar.split(/[,;]|\s+y\s+(?=(?:se\s+abastece|cuenta\s+con|con\s+riego|buen|regular|deficiente|el\s+drenaje))|\s+(?=(?:se\s+abastece|cuenta\s+con|el\s+terreno|la\s+topograf[ií]a|con\s+riego|riego\s+por|buen\s+drenaje|el\s+drenaje))/i);
+        const partes = textoProcesar.split(/[,;]|\.\s+|\s+(?:e|adem[aá]s)\s+|\s+y\s+(?!equipos\b)/i);
         if (partes.length > 1) {
             partes.forEach(parte => {
                 const subTexto = parte.trim();
