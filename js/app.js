@@ -1780,7 +1780,9 @@ expresiones: [
             entidad: "drenaje",
             expresiones: [
                 /^(?:condici[oó]n\s+de\s+drenaje|drenaje)[\s:]+(bueno|regular|deficiente)$/i,
-                /^(?:el\s+drenaje\s+es)\s+(bueno|regular|deficiente|malo)$/i
+                /^(?:el\s+drenaje\s+es)\s+(bueno|regular|deficiente|malo)$/i,
+                /^(buen|mal|excelente|p[eé]simo)\s+drenaje$/i,
+                /^drenaje\s+(bueno|regular|deficiente|malo)$/i
             ]
         },
         {
