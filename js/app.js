@@ -1755,6 +1755,48 @@ expresiones: [
 ]
         },
         {
+            entidad: "topografia",
+            expresiones: [
+                /^(?:topograf[ií]a|terreno|relieve)[\s:]+(plana|ondulada|quebrada|monta[ñn]osa)$/i,
+                /^(?:la\s+topograf[ií]a\s+es|el\s+terreno\s+es)\s+(plano|ondulado|quebrado|monta[ñn]oso)$/i
+            ]
+        },
+        {
+            entidad: "fuenteAgua",
+            expresiones: [
+                /^(?:fuente\s+(?:principal\s+)?(?:de\s+)?agua|agua|suministro\s+de\s+agua)[\s:]+(pozo|r[ií]o|quebrada|nacimiento|embalse|lluvia|otra)$/i,
+                /^(?:cuenta\s+con\s+agua\s+de|se\s+abastece\s+de)\s+(pozo|r[ií]o|quebrada|nacimiento|embalse|lluvia)$/i
+            ]
+        },
+        {
+            entidad: "sistemaRiego",
+            expresiones: [
+                /^(?:sistema\s+de\s+riego|riego)[\s:]+(no\s+posee|gravedad|aspersi[oó]n|goteo|microaspersi[oó]n|otro)$/i,
+                /^(?:riego\s+por|cuenta\s+con\s+riego\s+de)\s+(gravedad|aspersi[oó]n|goteo|microaspersi[oó]n)$/i,
+                /^(?:no\s+tiene\s+riego|sin\s+riego|es\s+de\s+secano)$/i
+            ]
+        },
+        {
+            entidad: "drenaje",
+            expresiones: [
+                /^(?:condici[oó]n\s+de\s+drenaje|drenaje)[\s:]+(bueno|regular|deficiente)$/i,
+                /^(?:el\s+drenaje\s+es)\s+(bueno|regular|deficiente|malo)$/i
+            ]
+        },
+        {
+            entidad: "erosion",
+            expresiones: [
+                /^(?:evidencia\s+de\s+erosi[oó]n|erosi[oó]n)[\s:]+(no|leve|moderada|severa)$/i,
+                /^(?:no\s+presenta\s+erosi[oó]n|sin\s+erosi[oó]n)$/i
+            ]
+        },
+        {
+            entidad: "texturaSuelo",
+            expresiones: [
+                /^(?:textura(?:\s+del\s+suelo)?|suelo|tipo\s+de\s+suelo)[\s:]+(arenoso|franco|arcilloso|franco\s+arcilloso|otra)$/i
+            ]
+        },
+        {
             entidad: "codigoCliente",
         expresiones: [
             /^c[oó]digo\s+(?:del\s+)?cliente[\s:]+(.+)$/i,
