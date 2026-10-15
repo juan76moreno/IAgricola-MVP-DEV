@@ -3546,30 +3546,52 @@ expresiones: [
 
             switch (entidadDestino) {
 
-            case "topografia":
-                    asignarValorSelect("topografia", valorExtraido);
-                    actualizarExpediente("finca", "topografia", valorExtraido);
+             case "topografia":
+                    if (/plano?/i.test(valor)) valor = "Plana";
+                    else if (/ondulado?/i.test(valor)) valor = "Ondulada";
+                    else if (/quebrado?/i.test(valor)) valor = "Quebrada";
+                    else if (/monta[ñn]oso?/i.test(valor)) valor = "Montañosa";
                     break;
+
                 case "fuenteAgua":
-                    asignarValorSelect("fuenteAgua", valorExtraido);
-                    actualizarExpediente("finca", "fuenteAgua", valorExtraido);
+                    if (/pozo/i.test(valor)) valor = "Pozo";
+                    else if (/r[ií]o/i.test(valor)) valor = "Río";
+                    else if (/quebrada/i.test(valor)) valor = "Quebrada";
+                    else if (/nacimiento|naciente/i.test(valor)) valor = "Nacimiento";
+                    else if (/embalse|represa/i.test(valor)) valor = "Embalse";
+                    else if (/lluvia/i.test(valor)) valor = "Lluvia";
+                    else valor = "Otra";
                     break;
+
                 case "sistemaRiego":
-                    asignarValorSelect("sistemaRiego", valorExtraido);
-                    actualizarExpediente("finca", "sistemaRiego", valorExtraido);
+                    if (/no|sin|secano/i.test(valor)) valor = "No posee";
+                    else if (/gravedad/i.test(valor)) valor = "Gravedad";
+                    else if (/microaspersi[oó]n/i.test(valor)) valor = "Microaspersión";
+                    else if (/aspersi[oó]n|aspersores/i.test(valor)) valor = "Aspersión";
+                    else if (/goteo/i.test(valor)) valor = "Goteo";
+                    else valor = "Otro";
                     break;
+
                 case "drenaje":
-                    asignarValorSelect("drenaje", valorExtraido);
-                    actualizarExpediente("finca", "drenaje", valorExtraido);
+                    if (/buen/i.test(valor)) valor = "Bueno";
+                    else if (/regular/i.test(valor)) valor = "Regular";
+                    else if (/deficiente|mal|inunda/i.test(valor)) valor = "Deficiente";
                     break;
+
                 case "erosion":
-                    asignarValorSelect("erosion", valorExtraido);
-                    actualizarExpediente("finca", "erosion", valorExtraido);
+                    if (/no|sin/i.test(valor)) valor = "No";
+                    else if (/leve/i.test(valor)) valor = "Leve";
+                    else if (/moderada/i.test(valor)) valor = "Moderada";
+                    else if (/severa/i.test(valor)) valor = "Severa";
                     break;
+
                 case "texturaSuelo":
-                    asignarValorSelect("texturaSuelo", valorExtraido);
-                    actualizarExpediente("finca", "texturaSuelo", valorExtraido);
-                    break;    
+                    if (/arenos/i.test(valor)) valor = "Arenoso";
+                    else if (/franco\s+arcillos/i.test(valor)) valor = "Franco Arcilloso";
+                    else if (/arcillos/i.test(valor)) valor = "Arcilloso";
+                    else if (/franc/i.test(valor)) valor = "Franco";
+                    else valor = "Otra";
+                    break;   
                 case "codigoCliente":
                     valor = normalizarCodigoClienteVozInterno(valor);
                     break;
