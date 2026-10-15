@@ -730,3 +730,48 @@ function calcularProduccionRubro(parametrosEconomicos, has, fechaSiembraStr, ren
 
 // Exponer la función para que pueda ser probada globalmente
 window.calcularProduccionRubro = calcularProduccionRubro;
+/**
+ * Clasifica los ingresos y egresos en semestres (H1: Ene-Jun, H2: Jul-Dic)
+ * Replicando la hoja FLUJO DE FONDOS Año 0 al 6
+ */
+function generarFlujoFondos(listaProduccion) {
+    const flujo = {};
+
+    // Función auxiliar para determinar el semestre (Ej. 2026-05-01 -> "2026-H1")
+    function obtenerSemestre(fechaStr) {
+        if (!fechaStr) return null;
+        const partes = fechaStr.split("-");
+        const año = partes[0];
+        const mes = parseInt(partes[1], 10);
+        const semestre = mes <= 6 ? "H1" : "H2";
+        return `${año}-${semestre}`;
+    }
+
+    listaProduccion.forEach(item => {
+        if (!item) return;
+
+        const semEgreso = obtenerSemestre(item.fechaSiembra);
+        const semIngreso = obtenerSemestre(item.fechaCobro);
+
+        // Registrar Egreso (Inversión)
+        if (semEgreso) {
+            if (!flujo[semEgreso]) flujo[semEgreso] = { ingresos: 0, egresos: 0, neto: 0 };
+            flujo[semEgreso].egresos += item.totalInversion;
+        }
+
+        // Registrar Ingreso (Venta/Cobro)
+        if (semIngreso) {
+            if (!flujo[semIngreso]) flujo[semIngreso] = { ingresos: 0, egresos: 0, neto: 0 };
+            flujo[semIngreso].ingresos += item.ingresosBrutos;
+        }
+    });
+
+    // Calcular el Neto (Ingresos - Egresos) para cada semestre registrado
+    Object.keys(flujo).forEach(sem => {
+        flujo[sem].neto = flujo[sem].ingresos - flujo[sem].egresos;
+    });
+
+    return flujo;
+}
+
+window.generarFlujoFondos = generarFlujoFondos;
