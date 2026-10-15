@@ -3440,6 +3440,21 @@ expresiones: [
     }
 
     function procesarTextoVoz(textoProcesar) {
+        // Segmentador para discriminación de frases compuestas en caracterización
+    if (textoProcesar && typeof textoProcesar === "string" && !textoProcesar.__segmentado) {
+        const partes = textoProcesar.split(/[,;]|\s+y\s+(?=(?:se\s+abastece|cuenta\s+con|con\s+riego|buen|regular|deficiente|el\s+drenaje))|\s+(?=(?:se\s+abastece|cuenta\s+con|el\s+terreno|la\s+topograf[ií]a|con\s+riego|riego\s+por|buen\s+drenaje|el\s+drenaje))/i);
+        if (partes.length > 1) {
+            partes.forEach(parte => {
+                const subTexto = parte.trim();
+                if (subTexto) {
+                    const objSub = new String(subTexto);
+                    objSub.__segmentado = true;
+                    procesarTextoVoz(objSub.toString());
+                }
+            });
+            return;
+        }
+    }
         for (const patron of patrones) {
 
             let coincidencia = null;
