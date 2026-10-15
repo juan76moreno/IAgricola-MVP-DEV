@@ -734,41 +734,55 @@ window.calcularProduccionRubro = calcularProduccionRubro;
  * Clasifica los ingresos y egresos en semestres (H1: Ene-Jun, H2: Jul-Dic)
  * Replicando la hoja FLUJO DE FONDOS Año 0 al 6
  */
-function generarFlujoFondos(listaProduccion) {
+/**
+ * Clasifica los ingresos y egresos según la periodicidad bancaria:
+ * 'MENSUAL', 'BIMENSUAL', 'TRIMESTRAL' o 'SEMESTRAL' (por defecto)
+ * Soporta horizontes plurianuales continuos.
+ */
+function generarFlujoFondos(listaProduccion, periodicidad = "SEMESTRAL") {
     const flujo = {};
 
-    // Función auxiliar para determinar el semestre (Ej. 2026-05-01 -> "2026-H1")
-    function obtenerSemestre(fechaStr) {
+    function obtenerPeriodo(fechaStr, tipo) {
         if (!fechaStr) return null;
         const partes = fechaStr.split("-");
         const año = partes[0];
         const mes = parseInt(partes[1], 10);
-        const semestre = mes <= 6 ? "H1" : "H2";
-        return `${año}-${semestre}`;
+
+        switch (tipo.toUpperCase()) {
+            case "MENSUAL":
+                return `${año}-M${String(mes).padStart(2, "0")}`;
+            case "BIMENSUAL":
+                const bimes = Math.ceil(mes / 2);
+                return `${año}-B${bimes}`;
+            case "TRIMESTRAL":
+                const trim = Math.ceil(mes / 3);
+                return `${año}-T${trim}`;
+            case "SEMESTRAL":
+            default:
+                const sem = mes <= 6 ? "H1" : "H2";
+                return `${año}-${sem}`;
+        }
     }
 
     listaProduccion.forEach(item => {
         if (!item) return;
 
-        const semEgreso = obtenerSemestre(item.fechaSiembra);
-        const semIngreso = obtenerSemestre(item.fechaCobro);
+        const pEgreso = obtenerPeriodo(item.fechaSiembra, periodicidad);
+        const pIngreso = obtenerPeriodo(item.fechaCobro, periodicidad);
 
-        // Registrar Egreso (Inversión)
-        if (semEgreso) {
-            if (!flujo[semEgreso]) flujo[semEgreso] = { ingresos: 0, egresos: 0, neto: 0 };
-            flujo[semEgreso].egresos += item.totalInversion;
+        if (pEgreso) {
+            if (!flujo[pEgreso]) flujo[pEgreso] = { ingresos: 0, egresos: 0, neto: 0 };
+            flujo[pEgreso].egresos += item.totalInversion;
         }
 
-        // Registrar Ingreso (Venta/Cobro)
-        if (semIngreso) {
-            if (!flujo[semIngreso]) flujo[semIngreso] = { ingresos: 0, egresos: 0, neto: 0 };
-            flujo[semIngreso].ingresos += item.ingresosBrutos;
+        if (pIngreso) {
+            if (!flujo[pIngreso]) flujo[pIngreso] = { ingresos: 0, egresos: 0, neto: 0 };
+            flujo[pIngreso].ingresos += item.ingresosBrutos;
         }
     });
 
-    // Calcular el Neto (Ingresos - Egresos) para cada semestre registrado
-    Object.keys(flujo).forEach(sem => {
-        flujo[sem].neto = flujo[sem].ingresos - flujo[sem].egresos;
+    Object.keys(flujo).forEach(p => {
+        flujo[p].neto = flujo[p].ingresos - flujo[p].egresos;
     });
 
     return flujo;

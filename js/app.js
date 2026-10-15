@@ -4738,3 +4738,46 @@ riesgos: [
     }
 ]
 };
+
+/**
+ * Conecta los campos de pantalla con el cálculo financiero y el Expediente Inteligente
+ */
+function procesarCalculoRubroPantalla() {
+    const selRubro = document.getElementById("rubroPrincipal");
+    const inpSuperficie = document.getElementById("superficieCultivada") || document.getElementById("superficieTotal");
+    
+    // Obtenemos los valores ingresados o dictados
+    const rubroNombre = selRubro ? selRubro.value : "";
+    const has = inpSuperficie ? parseFloat(inpSuperficie.value) : 0;
+    
+    // Fecha de siembra (por defecto la fecha actual si no existe campo específico aún)
+    const fechaSiembra = new Date().toISOString().split("T")[0];
+
+    if (!rubroNombre || has <= 0) return;
+
+    // Buscar parámetros económicos del rubro en la Base Maestra
+    const datosBase = window.obtenerDatosMultirrubro ? window.obtenerDatosMultirrubro() : null;
+    let parametros = null;
+    if (datosBase && datosBase.registros) {
+        const reg = datosBase.registros.find(r => r.rubro === rubroNombre || r.rubroCasuisticaOrigen === rubroNombre);
+        if (reg && reg.parametrosEconomicos) {
+            parametros = reg.parametrosEconomicos;
+        }
+    }
+
+    // Si no están en la base aún, se aplican parámetros por defecto (Referencia: Arroz)
+    if (!parametros) {
+        parametros = { costoProduccion: 1847, porcentajeFinanciable: 0.80, rendimiento: 5500, precio: 0.56, ciclo: 180 };
+    }
+
+    const resultadoCalculo = window.calcularProduccionRubro(parametros, has, fechaSiembra);
+    
+    if (resultadoCalculo && window.expedienteInteligente) {
+        window.expedienteInteligente.produccionCalculada = resultadoCalculo;
+        // Por defecto se configura SEMESTRAL, posteriormente conectaremos el selector de periodicidad
+        window.expedienteInteligente.flujoFondos = window.generarFlujoFondos([resultadoCalculo], "SEMESTRAL");
+        console.log("Cálculo económico y flujo actualizados en Expediente:", resultadoCalculo);
+    }
+}
+
+window.procesarCalculoRubroPantalla = procesarCalculoRubroPantalla;
