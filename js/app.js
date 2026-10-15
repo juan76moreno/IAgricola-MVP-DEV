@@ -1789,7 +1789,7 @@ expresiones: [
             entidad: "erosion",
             expresiones: [
                 /^(?:evidencia\s+de\s+)?erosi[oó]n[\s:]+(no|leve|moderada|severa)$/i,
-                /^(?:no\s+presenta\s+erosi[oó]n|sin\s+erosi[oó]n|sin\s+evidencia\s+de\s+erosi[oó]n)$/i,
+                /^(no\s+presenta\s+erosi[oó]n|sin\s+erosi[oó]n|sin\s+evidencia\s+de\s+erosi[oó]n)$/i,
                 /^con\s+evidencia\s+de\s+erosi[oó]n\s+(leve|moderada|severa)$/i
             ]
         },
