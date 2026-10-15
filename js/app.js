@@ -4740,24 +4740,63 @@ riesgos: [
 };
 
 /**
- * Conecta los campos de pantalla con el cálculo financiero y el Expediente Inteligente
+ * Conecta los campos de pantalla con el cálculo financiero y el Expediente Inteligente,
+ * garantizando flexibilidad total en el orden de captura (asíncrono y no lineal).
  */
 function procesarCalculoRubroPantalla() {
+    const expActual = typeof obtenerExpediente === "function" ? obtenerExpediente() : null;
+    if (!expActual) return;
+
+    // 1. Obtención de Rubro (desde DOM o desde el expediente)
     const selRubro = document.getElementById("rubroPrincipal");
-    const inpSuperficie = document.getElementById("superficieCultivada") || document.getElementById("superficieTotal");
-    
-    // Obtenemos los valores ingresados o dictados
-    const rubroNombre = selRubro ? selRubro.value : "";
-    const has = inpSuperficie ? parseFloat(inpSuperficie.value) : 0;
-    
-    // Fecha de siembra (por defecto la fecha actual si no existe campo específico aún)
+    let rubroNombre = selRubro && selRubro.value ? selRubro.value : "";
+    if (!rubroNombre && expActual.perfilRubro && expActual.perfilRubro.rubroPrincipal) {
+        rubroNombre = expActual.perfilRubro.rubroPrincipal;
+    }
+
+    // 2. Obtención de Superficie (desde DOM en cualquier pantalla o desde el expediente)
+    const inpSupCult = document.getElementById("superficieCultivada");
+    const inpSupTot = document.getElementById("superficieTotal");
+    const inpSupAprov = document.getElementById("superficieAprovechable");
+
+    let hasVal = "";
+    if (inpSupCult && inpSupCult.value !== "") {
+        hasVal = inpSupCult.value;
+    } else if (inpSupTot && inpSupTot.value !== "") {
+        hasVal = inpSupTot.value;
+    } else if (inpSupAprov && inpSupAprov.value !== "") {
+        hasVal = inpSupAprov.value;
+    } else if (expActual.unidadProduccion && expActual.unidadProduccion.superficieCultivada) {
+        hasVal = expActual.unidadProduccion.superficieCultivada;
+    }
+
+    const has = hasVal !== "" ? parseFloat(hasVal) : null;
+
+    // 3. Gestión de estados sin asumir ceros
+    if (!rubroNombre && (has === null || isNaN(has))) {
+        expActual.estadoCalculoProduccion = "PENDIENTE_DATOS";
+        return;
+    }
+
+    if (rubroNombre && (has === null || isNaN(has))) {
+        expActual.estadoCalculoProduccion = "PENDIENTE_SUPERFICIE";
+        expActual.rubroSeleccionado = rubroNombre;
+        console.log(`[IAgrícola] Rubro '${rubroNombre}' registrado. Estado: PENDIENTE_SUPERFICIE (no se asume cero).`);
+        return;
+    }
+
+    if (!rubroNombre && has !== null && !isNaN(has) && has > 0) {
+        expActual.estadoCalculoProduccion = "PENDIENTE_RUBRO";
+        expActual.superficieRegistrada = has;
+        console.log(`[IAgrícola] Superficie de ${has} ha registrada. Estado: PENDIENTE_RUBRO (no se asume cero).`);
+        return;
+    }
+
+    // 4. Parámetros Económicos desde la Base Maestra
     const fechaSiembra = new Date().toISOString().split("T")[0];
-
-    if (!rubroNombre || has <= 0) return;
-
-    // Buscar parámetros económicos del rubro en la Base Maestra
     const datosBase = window.obtenerDatosMultirrubro ? window.obtenerDatosMultirrubro() : null;
     let parametros = null;
+
     if (datosBase && datosBase.registros) {
         const reg = datosBase.registros.find(r => r.rubro === rubroNombre || r.rubroCasuisticaOrigen === rubroNombre);
         if (reg && reg.parametrosEconomicos) {
@@ -4765,54 +4804,50 @@ function procesarCalculoRubroPantalla() {
         }
     }
 
-    // Si no están en la base aún, se aplican parámetros por defecto (Referencia: Arroz)
     if (!parametros) {
         parametros = { costoProduccion: 1847, porcentajeFinanciable: 0.80, rendimiento: 5500, precio: 0.56, ciclo: 180 };
     }
 
-    const resultadoCalculo = window.calcularProduccionRubro(parametros, has, fechaSiembra);
-    
-    // Obtener el expediente mediante la función oficial del MVP
-    const expActual = typeof obtenerExpediente === "function" ? obtenerExpediente() : null;
-
-    if (resultadoCalculo && expActual) {
-        expActual.produccionCalculada = resultadoCalculo;
-        expActual.flujoFondos = window.generarFlujoFondos([resultadoCalculo], "SEMESTRAL");
-        console.log("Cálculo económico y flujo actualizados en Expediente:", resultadoCalculo);
-    } else {
-        console.log("Cálculo realizado, pero no se encontró el Expediente:", resultadoCalculo);
+    // 5. Ejecución del cálculo paramétrico y distribución temporal
+    if (typeof window.calcularProduccionRubro === "function") {
+        const resultadoCalculo = window.calcularProduccionRubro(parametros, has, fechaSiembra);
+        if (resultadoCalculo) {
+            expActual.produccionCalculada = resultadoCalculo;
+            expActual.estadoCalculoProduccion = "CALCULADO";
+            
+            if (typeof window.generarFlujoFondos === "function") {
+                expActual.flujoFondos = window.generarFlujoFondos([resultadoCalculo], "SEMESTRAL");
+            }
+            console.log("[IAgrícola] Cálculo económico y flujo de fondos consolidados en Expediente:", resultadoCalculo);
+        }
     }
+}
+
+/**
+ * Vincula listeners a todos los campos de superficie y rubro independientemente de la pantalla
+ */
+function inicializarCalculosAutomaticos() {
+    const elementosEscucha = [
+        { id: "rubroPrincipal", evento: "change" },
+        { id: "superficieCultivada", evento: "input" },
+        { id: "superficieTotal", evento: "input" },
+        { id: "superficieAprovechable", evento: "input" }
+    ];
+
+    elementosEscucha.forEach(item => {
+        const elem = document.getElementById(item.id);
+        if (elem) {
+            elem.addEventListener(item.evento, window.procesarCalculoRubroPantalla);
+        }
+    });
 }
 
 window.procesarCalculoRubroPantalla = procesarCalculoRubroPantalla;
-
-/**
- * Inicializador para activar el cálculo automático al cambiar datos en pantalla
- */
-function inicializarCalculosAutomaticos() {
-    const selRubro = document.getElementById("rubroPrincipal");
-    const inpSupCult = document.getElementById("superficieCultivada");
-    const inpSupTot = document.getElementById("superficieTotal");
-    
-    // Si los campos existen, escuchamos los cambios
-    if (selRubro) {
-        selRubro.addEventListener("change", window.procesarCalculoRubroPantalla);
-    }
-    // Para inputs de texto, escuchamos mientras el usuario escribe ('input')
-    if (inpSupCult) {
-        inpSupCult.addEventListener("input", window.procesarCalculoRubroPantalla);
-    }
-    if (inpSupTot) {
-        inpSupTot.addEventListener("input", window.procesarCalculoRubroPantalla);
-    }
-}
-
-// Exponer globalmente
 window.inicializarCalculosAutomaticos = inicializarCalculosAutomaticos;
 
-// Ejecutar la asignación de eventos después de 2 segundos para asegurar que el DOM cargó
+// Activación de observadores tras estabilización del DOM
 setTimeout(() => {
     if (typeof window.inicializarCalculosAutomaticos === "function") {
         window.inicializarCalculosAutomaticos();
     }
-}, 2000);
+}, 1500);
