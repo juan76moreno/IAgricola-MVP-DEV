@@ -3565,7 +3565,8 @@ expresiones: [
 
             switch (entidadDestino) {
 
-              case "topografia":
+              // --- 1. CARACTERIZACIÓN (VALIDADA) ---
+                case "topografia":
                     if (/plano?/i.test(valor)) valor = "Plana";
                     else if (/ondulado?/i.test(valor)) valor = "Ondulada";
                     else if (/quebrado?/i.test(valor)) valor = "Quebrada";
@@ -3616,7 +3617,40 @@ expresiones: [
                     else if (/franc/i.test(valor)) valor = "Franco";
                     else valor = "Otra";
                     try { let el = document.getElementById("texturaSuelo"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
-                    break; 
+                    break;
+
+                case "tenenciaTierra":
+                    if (/propia/i.test(valor)) valor = "Propia";
+                    else if (/arrendad/i.test(valor)) valor = "Arrendada";
+                    else if (/comodato/i.test(valor)) valor = "Comodato";
+                    else if (/adjudicad/i.test(valor)) valor = "Adjudicada";
+                    else valor = "Otra";
+                    try { let el = document.getElementById("tenenciaTierra"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
+                    break;
+
+                // --- 2. PERFIL TÉCNICO Y RUBROS ---
+                case "sectorProduccion":
+                    if (/primario/i.test(valor)) valor = "Agrícola Primario";
+                    else if (/agroindustrial/i.test(valor)) valor = "Agroindustrial";
+                    else if (/comercial/i.test(valor)) valor = "Comercializador";
+                    else valor = "Servicio";
+                    try { let el = document.getElementById("sectorProduccion"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
+                    break;
+
+                // --- 3. NARRATIVA EXTENSA Y BUFFER CONTINUO (TEXTAREA) ---
+                case "observacionesTerreno":
+                case "infraestructuraProductiva":
+                case "maquinariaEquipos":
+                case "condicionGeneral":
+                    try {
+                        let el = document.getElementById(entidadDestino);
+                        if (el) {
+                            el.value = el.value ? el.value.trim() + " " + valor : valor;
+                            el.dispatchEvent(new Event("input"));
+                            el.dispatchEvent(new Event("change"));
+                        }
+                    } catch(e){}
+                    break;
                 case "codigoCliente":
                     valor = normalizarCodigoClienteVozInterno(valor);
                     break;
