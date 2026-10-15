@@ -667,3 +667,66 @@ window.diagnosticarMultirrubro =
 cargarBaseMaestraDesdeCache();
 cargarBaseMaestraJSONP();
 
+/**
+ * Modela el cálculo paramétrico de la hoja PRODUCCIÓN
+ * Basado en TABLA DE DATOS-COSTOS PRODUCCION
+ */
+function calcularProduccionRubro(parametrosEconomicos, has, fechaSiembraStr, rendimientoAjustado = null) {
+    const superficie = parseFloat(has) || 0;
+    if (superficie <= 0 || !parametrosEconomicos) return null;
+
+    const rendimientoBase = parseFloat(parametrosEconomicos.rendimiento) || 0;
+    const costoBase = parseFloat(parametrosEconomicos.costoProduccion) || 0;
+    const porcentajeFinanc = parseFloat(parametrosEconomicos.porcentajeFinanciable) || 0.80;
+    const precioUnitario = parseFloat(parametrosEconomicos.precio) || 0;
+    const cicloDias = parseInt(parametrosEconomicos.ciclo, 10) || 0;
+
+    const rendimientoEsperado = (rendimientoAjustado !== null && parseFloat(rendimientoAjustado) > 0)
+        ? parseFloat(rendimientoAjustado)
+        : rendimientoBase;
+
+    const factorRendimiento = rendimientoBase > 0 ? (rendimientoEsperado / rendimientoBase) : 1;
+    const costoUnitarioAjustado = costoBase * factorRendimiento;
+
+    const totalInversion = superficie * costoUnitarioAjustado;
+    const financiamientoBanco = totalInversion * porcentajeFinanc;
+    const produccionBrutaKg = superficie * rendimientoEsperado;
+    const ingresosBrutos = produccionBrutaKg * precioUnitario;
+
+    let rentabilidad = 0;
+    if (totalInversion > 0) {
+        rentabilidad = (ingresosBrutos / totalInversion) - 1;
+    }
+
+    let fechaCobro = null;
+    if (fechaSiembraStr) {
+        const partes = fechaSiembraStr.split("-");
+        const fechaBase = new Date(partes[0], partes[1] - 1, partes[2]);
+        if (!isNaN(fechaBase.getTime())) {
+            fechaBase.setDate(fechaBase.getDate() + cicloDias);
+            const y = fechaBase.getFullYear();
+            const m = String(fechaBase.getMonth() + 1).padStart(2, '0');
+            const d = String(fechaBase.getDate()).padStart(2, '0');
+            fechaCobro = `${y}-${m}-${d}`;
+        }
+    }
+
+    return {
+        has: superficie,
+        fechaSiembra: fechaSiembraStr,
+        cicloDias: cicloDias,
+        fechaCobro: fechaCobro,
+        rendimientoKgHa: rendimientoEsperado,
+        costoPorHa: costoUnitarioAjustado,
+        totalInversion: totalInversion,
+        porcentajeFinanc: porcentajeFinanc,
+        financiamientoBanco: financiamientoBanco,
+        produccionBrutaKg: produccionBrutaKg,
+        precioUnitario: precioUnitario,
+        ingresosBrutos: ingresosBrutos,
+        rentabilidadPorcentaje: (rentabilidad * 100).toFixed(2) + "%"
+    };
+}
+
+// Exponer la función para que pueda ser probada globalmente
+window.calcularProduccionRubro = calcularProduccionRubro;
