@@ -3546,11 +3546,12 @@ expresiones: [
 
             switch (entidadDestino) {
 
-             case "topografia":
+              case "topografia":
                     if (/plano?/i.test(valor)) valor = "Plana";
                     else if (/ondulado?/i.test(valor)) valor = "Ondulada";
                     else if (/quebrado?/i.test(valor)) valor = "Quebrada";
                     else if (/monta[ñn]oso?/i.test(valor)) valor = "Montañosa";
+                    try { let el = document.getElementById("topografia"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
                     break;
 
                 case "fuenteAgua":
@@ -3561,6 +3562,7 @@ expresiones: [
                     else if (/embalse|represa/i.test(valor)) valor = "Embalse";
                     else if (/lluvia/i.test(valor)) valor = "Lluvia";
                     else valor = "Otra";
+                    try { let el = document.getElementById("fuenteAgua"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
                     break;
 
                 case "sistemaRiego":
@@ -3570,12 +3572,14 @@ expresiones: [
                     else if (/aspersi[oó]n|aspersores/i.test(valor)) valor = "Aspersión";
                     else if (/goteo/i.test(valor)) valor = "Goteo";
                     else valor = "Otro";
+                    try { let el = document.getElementById("sistemaRiego"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
                     break;
 
                 case "drenaje":
                     if (/buen/i.test(valor)) valor = "Bueno";
                     else if (/regular/i.test(valor)) valor = "Regular";
                     else if (/deficiente|mal|inunda/i.test(valor)) valor = "Deficiente";
+                    try { let el = document.getElementById("drenaje"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
                     break;
 
                 case "erosion":
@@ -3583,6 +3587,7 @@ expresiones: [
                     else if (/leve/i.test(valor)) valor = "Leve";
                     else if (/moderada/i.test(valor)) valor = "Moderada";
                     else if (/severa/i.test(valor)) valor = "Severa";
+                    try { let el = document.getElementById("erosion"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
                     break;
 
                 case "texturaSuelo":
@@ -3591,7 +3596,8 @@ expresiones: [
                     else if (/arcillos/i.test(valor)) valor = "Arcilloso";
                     else if (/franc/i.test(valor)) valor = "Franco";
                     else valor = "Otra";
-                    break;   
+                    try { let el = document.getElementById("texturaSuelo"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
+                    break; 
                 case "codigoCliente":
                     valor = normalizarCodigoClienteVozInterno(valor);
                     break;
