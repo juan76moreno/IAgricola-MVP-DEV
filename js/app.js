@@ -4785,3 +4785,34 @@ function procesarCalculoRubroPantalla() {
 }
 
 window.procesarCalculoRubroPantalla = procesarCalculoRubroPantalla;
+
+/**
+ * Inicializador para activar el cálculo automático al cambiar datos en pantalla
+ */
+function inicializarCalculosAutomaticos() {
+    const selRubro = document.getElementById("rubroPrincipal");
+    const inpSupCult = document.getElementById("superficieCultivada");
+    const inpSupTot = document.getElementById("superficieTotal");
+    
+    // Si los campos existen, escuchamos los cambios
+    if (selRubro) {
+        selRubro.addEventListener("change", window.procesarCalculoRubroPantalla);
+    }
+    // Para inputs de texto, escuchamos mientras el usuario escribe ('input')
+    if (inpSupCult) {
+        inpSupCult.addEventListener("input", window.procesarCalculoRubroPantalla);
+    }
+    if (inpSupTot) {
+        inpSupTot.addEventListener("input", window.procesarCalculoRubroPantalla);
+    }
+}
+
+// Exponer globalmente
+window.inicializarCalculosAutomaticos = inicializarCalculosAutomaticos;
+
+// Ejecutar la asignación de eventos después de 2 segundos para asegurar que el DOM cargó
+setTimeout(() => {
+    if (typeof window.inicializarCalculosAutomaticos === "function") {
+        window.inicializarCalculosAutomaticos();
+    }
+}, 2000);
