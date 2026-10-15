@@ -3546,6 +3546,30 @@ expresiones: [
 
             switch (entidadDestino) {
 
+            case "topografia":
+                    asignarValorSelect("topografia", valorExtraido);
+                    actualizarExpediente("finca", "topografia", valorExtraido);
+                    break;
+                case "fuenteAgua":
+                    asignarValorSelect("fuenteAgua", valorExtraido);
+                    actualizarExpediente("finca", "fuenteAgua", valorExtraido);
+                    break;
+                case "sistemaRiego":
+                    asignarValorSelect("sistemaRiego", valorExtraido);
+                    actualizarExpediente("finca", "sistemaRiego", valorExtraido);
+                    break;
+                case "drenaje":
+                    asignarValorSelect("drenaje", valorExtraido);
+                    actualizarExpediente("finca", "drenaje", valorExtraido);
+                    break;
+                case "erosion":
+                    asignarValorSelect("erosion", valorExtraido);
+                    actualizarExpediente("finca", "erosion", valorExtraido);
+                    break;
+                case "texturaSuelo":
+                    asignarValorSelect("texturaSuelo", valorExtraido);
+                    actualizarExpediente("finca", "texturaSuelo", valorExtraido);
+                    break;    
                 case "codigoCliente":
                     valor = normalizarCodigoClienteVozInterno(valor);
                     break;
