@@ -4771,14 +4771,17 @@ function procesarCalculoRubroPantalla() {
     }
 
     const resultadoCalculo = window.calcularProduccionRubro(parametros, has, fechaSiembra);
+    
+    // Obtener el expediente mediante la función oficial del MVP
+    const expActual = typeof obtenerExpediente === "function" ? obtenerExpediente() : null;
 
-// Obtener el expediente mediante la función oficial del MVP
-const expActual = typeof obtenerExpediente === "function" ? obtenerExpediente() : null;
-
-if (resultadoCalculo && expActual) {
-    expActual.produccionCalculada = resultadoCalculo;
-    expActual.flujoFondos = window.generarFlujoFondos([resultadoCalculo], "SEMESTRAL");
-    console.log("Cálculo económico y flujo actualizados en Expediente:", resultadoCalculo);
-} else {
-    console.log("Cálculo realizado, pero no se encontró el Expediente:", resultadoCalculo);
+    if (resultadoCalculo && expActual) {
+        expActual.produccionCalculada = resultadoCalculo;
+        expActual.flujoFondos = window.generarFlujoFondos([resultadoCalculo], "SEMESTRAL");
+        console.log("Cálculo económico y flujo actualizados en Expediente:", resultadoCalculo);
+    } else {
+        console.log("Cálculo realizado, pero no se encontró el Expediente:", resultadoCalculo);
+    }
 }
+
+window.procesarCalculoRubroPantalla = procesarCalculoRubroPantalla;
