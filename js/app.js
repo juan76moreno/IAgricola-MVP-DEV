@@ -4268,7 +4268,16 @@ for (let i = evento.resultIndex; i < evento.results.length; i++) {
 }
 
 texto = texto.trim();
-
+// --- NORMALIZACIÓN FONÉTICA DE RIF / CÉDULA (REQ-VOZ-02) ---
+   texto = texto.replace(/\b(jota|ge|ve|[jgvJGV])\s*[-–—]?\s*((?:\d[\s\.\-]*){6,10}\d)\b/gi, function(match, prefijo, numeros) {
+       let letra = prefijo.toLowerCase();
+       if (letra === "jota" || letra === "j") letra = "J";
+       else if (letra === "ge" || letra === "g") letra = "G";
+       else if (letra === "ve" || letra === "v") letra = "V";
+       else letra = letra.toUpperCase();
+       const numLimpio = numeros.replace(/[\s\.\-]/g, "");
+       return `${letra}-${numLimpio}`;
+   });
 if (!texto) {
     return;
 }
@@ -4298,12 +4307,20 @@ window.reconocimiento.onerror = function (evento) {
 
 };
 
-window.reconocimiento.onend = function () {
-
-    window.reconocimientoActivo = false;
-
-    console.log("Micrófono detenido");
-
+window.reconocimiento.onend = function() {
+    if (window.paroIntencional) {
+        window.reconocimientoActivo = false;
+        console.log("Micrófono detenido por el especialista.");
+        window.paroIntencional = false; // Se resetea para la próxima captura
+    } else {
+        console.log("[IAgrícola] Auto-reinicio de micrófono por silencio temporal en móvil...");
+        try {
+            window.reconocimiento.start();
+        } catch (error) {
+            console.log("[IAgrícola] Fallo al intentar reiniciar el micrófono de forma automática.");
+            window.reconocimientoActivo = false;
+        }
+    }
 };
 
     return true;
@@ -4331,7 +4348,7 @@ if (estadoVisita.estado !== "EN_VISITA" && estadoVisita.modulo === "preparacion"
     if (window.reconocimientoActivo) {
 
     console.log("Deteniendo micrófono por solicitud del especialista.");
-
+window.paroIntencional = true;
     window.reconocimiento.stop();
 
     return;
