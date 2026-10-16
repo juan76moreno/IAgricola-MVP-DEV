@@ -4327,17 +4327,47 @@ window.reconocimiento.onerror = function (evento) {
 
 };
 
+// --- CONTROL DE SILENCIO INTELIGENTE Y AUTO-REINICIO (DEV-063) ---
+const procesarResultadoPrevio = window.reconocimiento.onresult;
+window.reconocimiento.onresult = function(evento) {
+    window.ultimoMomentoVoz = Date.now();
+    if (typeof procesarResultadoPrevio === "function") {
+        procesarResultadoPrevio.call(this, evento);
+    }
+};
+
+window.reconocimiento.onstart = function() {
+    if (!window.ultimoMomentoVoz) {
+        window.ultimoMomentoVoz = Date.now();
+    }
+};
+
 window.reconocimiento.onend = function() {
     if (window.paroIntencional) {
         window.reconocimientoActivo = false;
         console.log("Micrófono detenido por el especialista.");
-        window.paroIntencional = false; // Se resetea para la próxima captura
+        window.paroIntencional = false;
+        window.ultimoMomentoVoz = null;
+        return;
+    }
+
+    const ahora = Date.now();
+    if (!window.ultimoMomentoVoz) {
+        window.ultimoMomentoVoz = ahora;
+    }
+    const tiempoSilencio = ahora - window.ultimoMomentoVoz;
+
+    // Si transcurren 8 segundos o más de silencio continuo sin voz reconocida:
+    if (tiempoSilencio >= 8000) {
+        window.reconocimientoActivo = false;
+        console.log(`Micrófono detenido automáticamente por silencio prolongado (${Math.round(tiempoSilencio / 1000)}s).`);
+        window.ultimoMomentoVoz = null;
     } else {
-        console.log("[IAgrícola] Auto-reinicio de micrófono por silencio temporal en móvil...");
+        console.log(`[IAgrícola] Auto-reinicio por pausa breve (${Math.round(tiempoSilencio / 1000)}s de silencio)...`);
         try {
             window.reconocimiento.start();
         } catch (error) {
-            console.log("[IAgrícola] Fallo al intentar reiniciar el micrófono de forma automática.");
+            console.log("[IAgrícola] Fallo al reiniciar micrófono:", error);
             window.reconocimientoActivo = false;
         }
     }
