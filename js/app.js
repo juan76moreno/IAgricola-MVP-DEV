@@ -3637,19 +3637,32 @@ expresiones: [
                     try { let el = document.getElementById("sectorProduccion"); if(el){ el.value = valor; el.dispatchEvent(new Event("change")); } } catch(e){}
                     break;
 
-                // --- 3. NARRATIVA EXTENSA Y BUFFER CONTINUO (TEXTAREA) ---
+                // --- 3. NARRATIVA EXTENSA Y BUFFER HÍBRIDO (DEV-060) ---
                 case "observacionesTerreno":
+                case "direccionHabitacion":
+                case "direccionUnidadProduccion":
+                case "viasAcceso":
+                case "usoActualSuelo":
+                case "usoPotencialSuelo":
+                case "destinoProduccion":
+                case "centroMercado":
                 case "infraestructuraProductiva":
                 case "maquinariaEquipos":
                 case "condicionGeneral":
                     try {
-                        let el = document.getElementById(entidadDestino);
-                        if (el) {
-                            el.value = el.value ? el.value.trim() + " " + valor : valor;
-                            el.dispatchEvent(new Event("input"));
-                            el.dispatchEvent(new Event("change"));
+                        if (typeof window.procesarTextoLargoInteligente === "function") {
+                            window.procesarTextoLargoInteligente(entidadDestino, valor);
+                        } else {
+                            let el = document.getElementById(entidadDestino);
+                            if (el) {
+                                el.value = el.value ? el.value.trim() + ". " + valor : valor;
+                                el.dispatchEvent(new Event("input"));
+                                el.dispatchEvent(new Event("change"));
+                            }
                         }
-                    } catch(e){}
+                    } catch(e) {
+                        console.error("[IAgrícola] Error en buffer híbrido:", e);
+                    }
                     break;
                 case "codigoCliente":
                     valor = normalizarCodigoClienteVozInterno(valor);
@@ -4760,6 +4773,57 @@ riesgos: [
  * Conecta los campos de pantalla con el cálculo financiero y el Expediente Inteligente,
  * garantizando flexibilidad total en el orden de captura (asíncrono y no lineal).
  */
+
+/**
+ * Buffer Inteligente Híbrido para textos largos y narrativas descriptivas (DEV-060).
+ * Maneja acumulación limpia, deduplicación antieco y comandos de reemplazo/corrección por voz.
+ */
+function procesarTextoLargoInteligente(elementoOId, textoNuevo) {
+    const elemento = typeof elementoOId === "string" ? document.getElementById(elementoOId) : elementoOId;
+    if (!elemento || !textoNuevo) return;
+
+    let textoLimpio = String(textoNuevo).trim();
+    if (!textoLimpio) return;
+
+    // 1. Detección de comandos de corrección o reemplazo
+    const regexCorreccion = /^(?:corregir|cambiar|reemplazar|nueva|nuevo|borrar)\s+(?:la\s+|el\s+)?(?:direcci[oó]n|observaci[oó]n|observaciones|v[ií]as?|acceso|suelo|destino)?[:\s]*/i;
+    const esCorreccion = regexCorreccion.test(textoLimpio);
+
+    if (esCorreccion) {
+        textoLimpio = textoLimpio.replace(regexCorreccion, "").trim();
+        if (textoLimpio.length > 0) {
+            textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
+            elemento.value = textoLimpio;
+        } else {
+            elemento.value = "";
+        }
+        console.log(`[IAgrícola - Buffer] Campo '${elemento.id}' corregido/reemplazado por voz.`);
+    } else {
+        // 2. Acumulación progresiva con filtro antieco
+        let valorActual = (elemento.value || "").trim();
+        if (!valorActual) {
+            textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
+            elemento.value = textoLimpio;
+        } else {
+            if (!valorActual.toLowerCase().includes(textoLimpio.toLowerCase())) {
+                textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
+                const separador = /[.\n]$/.test(valorActual) ? " " : ". ";
+                elemento.value = valorActual + separador + textoLimpio;
+                console.log(`[IAgrícola - Buffer] Texto acumulado en '${elemento.id}'.`);
+            } else {
+                console.log(`[IAgrícola - Buffer] Eco descartado en '${elemento.id}'.`);
+            }
+        }
+    }
+
+    // 3. Persistencia en expediente inteligente y disparo de eventos DOM
+    if (typeof registrarDato === "function") {
+        registrarDato(elemento.id, elemento.value);
+    }
+    elemento.dispatchEvent(new Event("input", { bubbles: true }));
+    elemento.dispatchEvent(new Event("change", { bubbles: true }));
+}
+window.procesarTextoLargoInteligente = procesarTextoLargoInteligente;
 function procesarCalculoRubroPantalla() {
     const expActual = typeof obtenerExpediente === "function" ? obtenerExpediente() : null;
     if (!expActual) return;
