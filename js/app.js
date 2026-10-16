@@ -2070,15 +2070,15 @@ expresiones: [
         {
             entidad: "altitud",
             expresiones: [
-                /^(?:altitud|altura)(?:\s+(?:es|de|es\s+de))?[\s:]+([\d\.,]+)(?:\s*(?:metros?|msnm|metros\s+sobre\s+el\s+nivel\s+del\s+mar))?$/i,
-                /^(?:estamos\s+a\s+(?:una\s+)?altitud\s+de)\s+([\d\.,]+)(?:\s*(?:metros?|msnm))?$/i
+                /^(?:altitud|altura)\b.*?\b([\d\.,]+)(?:\s*(?:metros?(?:\s+sobre\s+el\s+nivel\s+del\s+mar)?|msnm|sobre\s+el\s+nivel\s+del\s+mar))?[.\s]*$/i,
+                /^(?:estamos\s+a\s+(?:una\s+)?altitud\s+de)\s+([\d\.,]+)(?:\s*(?:metros?|msnm))?[.\s]*$/i
             ]
         },
         {
             entidad: "precipitacion",
             expresiones: [
-                /^(?:precipitaci[oó]n(?:\s+anual)?|lluvia(?:\s+anual)?)(?:\s+(?:es|de|es\s+de))?[\s:]+([\d\.,]+)(?:\s*(?:mm|mil[ií]metros?(?:\s+por\s+a[ñn]o)?))?$/i,
-                /^(?:la\s+precipitaci[oó]n\s+es\s+de|llueve\s+unos)\s+([\d\.,]+)(?:\s*(?:mm|mil[ií]metros?))?$/i
+                /^(?:precipitaci[oó]n|lluvia)\b.*?\b([\d\.,]+)(?:\s*(?:mm|mil[ií]metros?(?:\s+por\s+a[ñn]o)?|anual(?:es)?))?[.\s]*$/i,
+                /^(?:la\s+precipitaci[oó]n\s+es\s+de|llueve\s+unos)\s+([\d\.,]+)(?:\s*(?:mm|mil[ií]metros?))?[.\s]*$/i
             ]
         },
 
@@ -3686,34 +3686,41 @@ expresiones: [
                         console.error("[IAgrícola] Error en buffer híbrido:", e);
                     }
                     break;
-              case "altitud":
-        case "precipitacion":
+      case "altitud":
+        case "precipitacion": {
             let valorNumericoLimpio = null;
             let matchNum = String(valor).match(/([\d\.,]+)/);
             
             if (matchNum && matchNum[1]) {
-                // Elimina puntos de miles y estandariza coma decimal
-                valorNumericoLimpio = matchNum[1].replace(/\.(?=\d{3})/g, '').replace(',', '.');
+                // Elimina puntos residuales finales, comas o separadores de miles
+                let rawNum = matchNum[1].replace(/[.,]$/, '');
+                valorNumericoLimpio = rawNum.replace(/\.(?=\d{3})/g, '').replace(',', '.');
             }
 
             if (valorNumericoLimpio !== null) {
-                let elCampo = document.getElementById(entidadDestino);
+                // Localizador resiliente: busca por ID directo o por atributo placeholder
+                let elCampo = document.getElementById(entidadDestino) || 
+                    (entidadDestino === "altitud" 
+                        ? (document.getElementById("altitudMsnm") || document.querySelector('input[placeholder*="nivel del mar"]') || document.querySelector('input[placeholder*="Metros"]'))
+                        : (document.getElementById("precipitacionAnual") || document.getElementById("precipitacionAproximada") || document.querySelector('input[placeholder*="Milímetros"]')));
+
                 if (elCampo) {
                     elCampo.value = valorNumericoLimpio;
                     elCampo.dispatchEvent(new Event("input", { bubbles: true }));
                     elCampo.dispatchEvent(new Event("change", { bubbles: true }));
-                    
-                    // Asignación de unidad implícita por defecto
-                    const unidadTecnica = entidadDestino === "altitud" ? "msnm" : "mm";
-                    if (typeof registrarDato === "function") {
-                        registrarDato(entidadDestino, valorNumericoLimpio, unidadTecnica);
-                    }
-                    console.log(`[IAgrícola] ${entidadDestino} registrada: ${valorNumericoLimpio} (Unidad asumida: ${unidadTecnica}).`);
                 }
+
+                // Asignación de unidad normativa por defecto (msnm / mm)
+                const unidadTecnica = entidadDestino === "altitud" ? "msnm" : "mm";
+                if (typeof registrarDato === "function") {
+                    registrarDato(entidadDestino, valorNumericoLimpio, unidadTecnica);
+                }
+                console.log(`[IAgrícola] ${entidadDestino} registrada: ${valorNumericoLimpio} (Unidad asumida: ${unidadTecnica}).`);
             } else {
                 console.warn(`[IAgrícola] No se detectó valor numérico válido para ${entidadDestino}.`);
             }
             break;
+        }
                     case "codigoCliente":
                     valor = normalizarCodigoClienteVozInterno(valor);
                     break;
