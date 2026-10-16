@@ -2081,7 +2081,7 @@ expresiones: [
                 /^(?:la\s+precipitaci[oó]n\s+es\s+de|llueve\s+unos)\s+([\d\.,]+)(?:\s*(?:mm|mil[ií]metros?))?$/i
             ]
         },
-        
+
         {
             entidad: "fuenteAgua",
             expresiones: [
@@ -3686,7 +3686,16 @@ expresiones: [
                         console.error("[IAgrícola] Error en buffer híbrido:", e);
                     }
                     break;
-                case "codigoCliente":
+               case "altitud":
+        case "precipitacion":
+            let elNum = document.getElementById(entidadDestino);
+            if (elNum) {
+                elNum.value = valor;
+                elNum.dispatchEvent(new Event("input", { bubbles: true }));
+                elNum.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            break;
+                    case "codigoCliente":
                     valor = normalizarCodigoClienteVozInterno(valor);
                     break;
 
