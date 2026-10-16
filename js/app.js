@@ -4792,21 +4792,18 @@ function procesarTextoLargoInteligente(elementoOId, textoNuevo) {
     let textoLimpio = String(textoNuevo).trim();
     if (!textoLimpio) return;
 
-    // 1. Detección de comandos de corrección o reemplazo
-    const regexCorreccion = /^(?:corregir|cambiar|reemplazar|nueva|nuevo|borrar)\s+(?:la\s+|el\s+)?(?:direcci[oó]n|observaci[oó]n|observaciones|v[ií]as?|acceso|suelo|destino)?[:\s]*/i;
-    const esCorreccion = regexCorreccion.test(textoLimpio);
+    // 1. Comando de corrección explícito ("corregir observación", "reemplazar dirección", etc.)
+    const regexCorreccion = /^(?:corregir|cambiar|reemplazar|borrar)\s+(?:la\s+|el\s+)?(?:direcci[oó]n|observaci[oó]n|observaciones|v[ií]as?|acceso|suelo|destino|texto)?[\s:]+(.+)$/i;
+    const matchCorreccion = textoLimpio.match(regexCorreccion);
 
-    if (esCorreccion) {
-        textoLimpio = textoLimpio.replace(regexCorreccion, "").trim();
-        if (textoLimpio.length > 0) {
-            textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
-            elemento.value = textoLimpio;
-        } else {
-            elemento.value = "";
-        }
-        console.log(`[IAgrícola - Buffer] Campo '${elemento.id}' corregido/reemplazado por voz.`);
+    if (matchCorreccion) {
+        // Reemplazo total: purga y coloca la versión corregida
+        textoLimpio = matchCorreccion[1].trim();
+        textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
+        elemento.value = textoLimpio;
+        console.log(`[IAgrícola - Buffer] Campo '${elemento.id}' reemplazado por comando de voz.`);
     } else {
-        // 2. Acumulación progresiva con filtro antieco
+        // 2. Acumulación progresiva por defecto (sin borrar lo anterior)
         let valorActual = (elemento.value || "").trim();
         if (!valorActual) {
             textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
@@ -4823,7 +4820,6 @@ function procesarTextoLargoInteligente(elementoOId, textoNuevo) {
         }
     }
 
-    // 3. Persistencia en expediente inteligente y disparo de eventos DOM
     if (typeof registrarDato === "function") {
         registrarDato(elemento.id, elemento.value);
     }
