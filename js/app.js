@@ -2081,6 +2081,7 @@ expresiones: [
                 /^(?:la\s+precipitaci[oó]n\s+es\s+de|llueve\s+unos)\s+([\d\.,]+)(?:\s*(?:mm|mil[ií]metros?))?$/i
             ]
         },
+        
         {
             entidad: "fuenteAgua",
             expresiones: [
