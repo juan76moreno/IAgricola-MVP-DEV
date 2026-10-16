@@ -2036,6 +2036,13 @@ expresiones: [
             ]
         },
         {
+            entidad: "observacionesTerreno",
+            expresiones: [
+                /^(?:observaciones(?:\s+del\s+terreno)?|observaci[oó]n(?:\s+del\s+terreno)?|detalles?(?:\s+del\s+terreno)?|notas?(?:\s+de\s+campo)?)[\s:]+(.+)$/i,
+                /^(?:en\s+el\s+terreno\s+se\s+observa|se\s+observa\s+en\s+el\s+terreno)[\s:]+(.+)$/i
+            ]
+        },
+        {
             entidad: "superficieTotal",
             expresiones: [
                 /^superficie\s+total[:\s]+(.+)$/i,
