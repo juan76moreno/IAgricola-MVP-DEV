@@ -2068,6 +2068,20 @@ expresiones: [
             ]
         },
         {
+            entidad: "altitud",
+            expresiones: [
+                /^(?:altitud|altura)(?:\s+(?:sobre\s+el\s+nivel\s+del\s+mar|msnm))?[\s:]+([\d\.,]+)(?:\s*(?:metros?|msnm|sobre\s+el\s+nivel\s+del\s+mar))?$/i,
+                /^(?:estamos\s+a\s+una\s+altitud\s+de|altitud\s+es\s+de)\s+([\d\.,]+)(?:\s*(?:metros?|msnm))?$/i
+            ]
+        },
+        {
+            entidad: "precipitacion",
+            expresiones: [
+                /^(?:precipitaci[oó]n(?:\s+anual)?|lluvia(?:\s+anual)?)[\s:]+([\d\.,]+)(?:\s*(?:mm|mil[ií]metros?(?:\s+por\s+a[ñn]o)?))?$/i,
+                /^(?:la\s+precipitaci[oó]n\s+es\s+de|llueve\s+unos)\s+([\d\.,]+)(?:\s*(?:mm|mil[ií]metros?))?$/i
+            ]
+        },
+        {
             entidad: "fuenteAgua",
             expresiones: [
                 /^fuente\s+de\s+agua[:\s]+(.+)$/i,
