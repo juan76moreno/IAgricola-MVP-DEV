@@ -4792,41 +4792,46 @@ function procesarTextoLargoInteligente(elementoOId, textoNuevo) {
     let textoLimpio = String(textoNuevo).trim();
     if (!textoLimpio) return;
 
-    // 1. Comando de corrección explícito ("corregir observación", "reemplazar dirección", etc.)
     const regexCorreccion = /^(?:corregir|cambiar|reemplazar|borrar)\s+(?:la\s+|el\s+)?(?:direcci[oó]n|observaci[oó]n|observaciones|v[ií]as?|acceso|suelo|destino|texto)?[\s:]+(.+)$/i;
     const matchCorreccion = textoLimpio.match(regexCorreccion);
 
+    let nuevoValor = "";
+
     if (matchCorreccion) {
-        // Reemplazo total: purga y coloca la versión corregida
         textoLimpio = matchCorreccion[1].trim();
         textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
-        elemento.value = textoLimpio;
+        nuevoValor = textoLimpio;
         console.log(`[IAgrícola - Buffer] Campo '${elemento.id}' reemplazado por comando de voz.`);
     } else {
-        // 2. Acumulación progresiva por defecto (sin borrar lo anterior)
         let valorActual = (elemento.value || "").trim();
         if (!valorActual) {
             textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
-            elemento.value = textoLimpio;
+            nuevoValor = textoLimpio;
         } else {
             if (!valorActual.toLowerCase().includes(textoLimpio.toLowerCase())) {
                 textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
                 const separador = /[.\n]$/.test(valorActual) ? " " : ". ";
-                elemento.value = valorActual + separador + textoLimpio;
+                nuevoValor = valorActual + separador + textoLimpio;
                 console.log(`[IAgrícola - Buffer] Texto acumulado en '${elemento.id}'.`);
             } else {
+                nuevoValor = valorActual;
                 console.log(`[IAgrícola - Buffer] Eco descartado en '${elemento.id}'.`);
             }
         }
     }
 
+    elemento.value = nuevoValor;
+
     if (typeof registrarDato === "function") {
-        registrarDato(elemento.id, elemento.value);
+        registrarDato(elemento.id, nuevoValor);
     }
-    elemento.dispatchEvent(new Event("input", { bubbles: true }));
-    elemento.dispatchEvent(new Event("change", { bubbles: true }));
+    
+    setTimeout(() => {
+        elemento.value = nuevoValor;
+        elemento.dispatchEvent(new Event("input", { bubbles: true }));
+        elemento.dispatchEvent(new Event("change", { bubbles: true }));
+    }, 50);
 }
-window.procesarTextoLargoInteligente = procesarTextoLargoInteligente;
 function procesarCalculoRubroPantalla() {
     const expActual = typeof obtenerExpediente === "function" ? obtenerExpediente() : null;
     if (!expActual) return;
