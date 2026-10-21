@@ -1528,10 +1528,19 @@ const MARCADORES_CAMPOS_VOZ=[
  "fecha de visita","fecha visita","hora de inicio","hora inicio",
  "tecnico responsable","técnico responsable","especialista agricola","especialista agrícola","tecnico","técnico",
  "tipo de visita","cliente","finca","municipio","parroquia",
- "cedula del cliente","cédula del cliente","codigo de cliente","código de cliente",
- "representante legal","telefono principal","teléfono principal","telefono alternativo","teléfono alternativo",
- "correo electronico","correo electrónico","sector",
- "direccion exacta de la unidad de produccion","dirección exacta de la unidad de producción",
+ "codigo de cliente","código de cliente","codigo cliente","código cliente",
+ "cedula del cliente","cédula del cliente","cedula de identidad","cédula de identidad","cedula","cédula","rif del cliente","rif",
+ "cedula del representante legal","cédula del representante legal","cedula representante legal","cédula representante legal",
+ "rif del representante legal","identificacion del representante legal","identificación del representante legal",
+ "representante legal",
+ "telefono principal","teléfono principal","telefono alternativo","teléfono alternativo",
+ "correo electronico","correo electrónico","email","e mail",
+ "direccion de habitacion","dirección de habitación","direccion habitacion","dirección habitación","domicilio",
+ "numero de registro del ministerio de agricultura","número de registro del ministerio de agricultura",
+ "registro del ministerio de agricultura","registro ministerio de agricultura","registro mat",
+ "fecha de vencimiento del registro","fecha vencimiento del registro","vencimiento del registro","fecha de vencimiento","fecha vencimiento",
+ "numero de registro tributario","número de registro tributario","registro tributario",
+ "sector","direccion exacta de la unidad de produccion","dirección exacta de la unidad de producción",
  "centro de mercado","tipo de mercado","destino de la produccion","destino de la producción",
  "vias de acceso","vías de acceso","tenencia de la tierra",
  "superficie total","superficie aprovechable","superficie cultivada",
@@ -1544,24 +1553,42 @@ function segmentarDictadoVoz(textoOriginal){
  const texto=String(textoOriginal||"").replace(/\s+/g," ").trim();
  if(!texto)return [];
  const normal=normalizarClave(texto);
- const posiciones=[];
- MARCADORES_CAMPOS_VOZ.forEach(m=>{
-  const mk=normalizarClave(m);let desde=0,idx;
-  while((idx=normal.indexOf(mk,desde))>=0){
-   const antes=idx===0||/\s|[,;:.]/.test(normal[idx-1]);
-   const despues=idx+mk.length===normal.length||/\s|[,;:.]/.test(normal[idx+mk.length]);
-   if(antes&&despues)posiciones.push({idx,marker:mk});
-   desde=idx+mk.length;
+ 
+ // Ordenar marcadores de mayor a menor longitud para priorizar frases compuestas
+ const marcadoresOrdenados = [...MARCADORES_CAMPOS_VOZ].sort(function(a, b) {
+  return normalizarClave(b).length - normalizarClave(a).length;
+ });
+
+ const coincidencias = [];
+ marcadoresOrdenados.forEach(m => {
+  const mk = normalizarClave(m);
+  let desde = 0, idx;
+  while((idx = normal.indexOf(mk, desde)) >= 0){
+   const antes = idx === 0 || /\s|[,;:.]/.test(normal[idx-1]);
+   const despues = (idx + mk.length === normal.length) || /\s|[,;:.]/.test(normal[idx+mk.length]);
+   if(antes && despues){
+    const fin = idx + mk.length;
+    // Evitar que marcadores breves solapen o corten marcadores compuestos más largos
+    const solapado = coincidencias.some(function(ex) {
+     return !(fin <= ex.ini || idx >= ex.fin);
+    });
+    if(!solapado){
+     coincidencias.push({ini: idx, fin: fin, marker: mk});
+    }
+   }
+   desde = idx + mk.length;
   }
  });
- posiciones.sort((a,b)=>a.idx-b.idx);
- const unicas=posiciones.filter((x,n,a)=>n===0||x.idx!==a[n-1].idx);
- if(unicas.length<=1)return [texto];
- const partes=[];
- for(let n=0;n<unicas.length;n++){
-  const ini=unicas[n].idx,fin=n+1<unicas.length?unicas[n+1].idx:texto.length;
-  const parte=texto.slice(ini,fin).replace(/^[,;:.\s]+|[,;:.\s]+$/g,"").trim();
-  if(parte)partes.push(parte);
+
+ coincidencias.sort((a, b) => a.ini - b.ini);
+ if(coincidencias.length <= 1) return [texto];
+
+ const partes = [];
+ for(let n = 0; n < coincidencias.length; n++){
+  const ini = coincidencias[n].ini;
+  const fin = n + 1 < coincidencias.length ? coincidencias[n+1].ini : texto.length;
+  const parte = texto.slice(ini, fin).replace(/^[,;:.\s]+|[,;:.\s]+$/g, "").trim();
+  if(parte) partes.push(parte);
  }
  return partes;
 }
