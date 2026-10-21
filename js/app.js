@@ -1528,33 +1528,21 @@ const MARCADORES_CAMPOS_VOZ=[
  "fecha de visita","fecha visita","hora de inicio","hora inicio",
  "tecnico responsable","técnico responsable","especialista agricola","especialista agrícola","tecnico","técnico",
  "tipo de visita","cliente","finca","municipio","parroquia",
- "codigo de cliente","código de cliente","codigo cliente","código cliente",
- "cedula del cliente","cédula del cliente","cedula de identidad","cédula de identidad","cedula","cédula","rif del cliente","rif",
+ "cedula del cliente","cédula del cliente","codigo de cliente","código de cliente",
  "cedula del representante legal","cédula del representante legal","cedula representante legal","cédula representante legal",
- "rif del representante legal","identificacion del representante legal","identificación del representante legal",
+ "identificacion del representante legal","identificación del representante legal",
  "representante legal",
- "telefono principal","teléfono principal","telefono alternativo","teléfono alternativo",
- "correo electronico","correo electrónico","email","e mail",
- "direccion de habitacion","dirección de habitación","direccion habitacion","dirección habitación","domicilio",
- "numero de registro del ministerio de agricultura","número de registro del ministerio de agricultura",
- "registro del ministerio de agricultura","registro ministerio de agricultura","registro mat",
- "fecha de vencimiento del registro","fecha vencimiento del registro","vencimiento del registro","fecha de vencimiento","fecha vencimiento",
- "numero de registro tributario","número de registro tributario","registro tributario",
- "sector","direccion exacta de la unidad de produccion","dirección exacta de la unidad de producción",
- "centro de mercado","tipo de mercado","destino de la produccion","destino de la producción",
- "vias de acceso","vías de acceso","tenencia de la tierra",
- "superficie total","superficie aprovechable","superficie cultivada",
- "altitud","altura","precipitacion","precipitación","lluvia",
- "fuente de agua","disponibilidad de agua","sistema de riego",
- "electricidad","conectividad","infraestructura productiva",
- "maquinaria y equipos","maquinaria","condicion general de la finca","condición general de la finca"
+ "telefono principal","teléfono principal","telefono alternativo","teléfono alternativo","correo electronico","correo electrónico",
+ "sector","direccion exacta de la unidad de produccion","dirección exacta de la unidad de producción","centro de mercado","tipo de mercado",
+ "destino de la produccion","destino de la producción","vias de acceso","vías de acceso","tenencia de la tierra",
+ "superficie total","superficie aprovechable","superficie cultivada","fuente de agua","disponibilidad de agua","sistema de riego",
+ "electricidad","conectividad","infraestructura productiva","maquinaria y equipos","maquinaria","condicion general de la finca","condición general de la finca"
 ];
 function segmentarDictadoVoz(textoOriginal){
  const texto=String(textoOriginal||"").replace(/\s+/g," ").trim();
  if(!texto)return [];
  const normal=normalizarClave(texto);
  
- // Priorizar marcadores largos ("cédula del cliente") antes que cortos ("cliente")
  const marcadoresOrdenados = [...MARCADORES_CAMPOS_VOZ].sort(function(a, b) {
   return normalizarClave(b).length - normalizarClave(a).length;
  });
