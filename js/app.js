@@ -1525,13 +1525,20 @@ function patronUnidadSuperficieVoz(){
 
 
 const MARCADORES_CAMPOS_VOZ=[
- "fecha de visita","fecha visita","hora de inicio","hora inicio","tecnico responsable","técnico responsable","tipo de visita",
- "cliente","finca","municipio","parroquia","cedula del cliente","cédula del cliente","codigo de cliente","código de cliente",
- "representante legal","telefono principal","teléfono principal","telefono alternativo","teléfono alternativo","correo electronico","correo electrónico",
- "sector","direccion exacta de la unidad de produccion","dirección exacta de la unidad de producción","centro de mercado","tipo de mercado",
- "destino de la produccion","destino de la producción","vias de acceso","vías de acceso","tenencia de la tierra",
- "superficie total","superficie aprovechable","superficie cultivada","fuente de agua","disponibilidad de agua","sistema de riego",
- "electricidad","conectividad","infraestructura productiva","maquinaria y equipos","maquinaria","condicion general de la finca","condición general de la finca"
+ "fecha de visita","fecha visita","hora de inicio","hora inicio",
+ "tecnico responsable","técnico responsable","especialista agricola","especialista agrícola","tecnico","técnico",
+ "tipo de visita","cliente","finca","municipio","parroquia",
+ "cedula del cliente","cédula del cliente","codigo de cliente","código de cliente",
+ "representante legal","telefono principal","teléfono principal","telefono alternativo","teléfono alternativo",
+ "correo electronico","correo electrónico","sector",
+ "direccion exacta de la unidad de produccion","dirección exacta de la unidad de producción",
+ "centro de mercado","tipo de mercado","destino de la produccion","destino de la producción",
+ "vias de acceso","vías de acceso","tenencia de la tierra",
+ "superficie total","superficie aprovechable","superficie cultivada",
+ "altitud","altura","precipitacion","precipitación","lluvia",
+ "fuente de agua","disponibilidad de agua","sistema de riego",
+ "electricidad","conectividad","infraestructura productiva",
+ "maquinaria y equipos","maquinaria","condicion general de la finca","condición general de la finca"
 ];
 function segmentarDictadoVoz(textoOriginal){
  const texto=String(textoOriginal||"").replace(/\s+/g," ").trim();
@@ -3781,7 +3788,31 @@ expresiones: [
                     valor = capitalizarNombreFinca(valor.replace(/\s{2,}/g, " ").trim());
                     break;
 
-                case "cliente":
+                // --- DESLINDE SEMÁNTICO Y ENLACE DE CLIENTE (REQ-DOC-01) ---
+                case "cliente": {
+                    const matchTecnico = valor.match(/^(.*?)\s+(?:t[eé]cnic[oa](?:\s+responsable)?|especialista\s+agr[ií]cola)[:\s]+(.+)$/i);
+                    if (matchTecnico) {
+                        valor = normalizarTextoLibreVoz(matchTecnico[1].trim());
+                        const restoTecnico = matchTecnico[2].trim();
+                        console.log(`[IAgrícola - REQ-DOC-01] Deslinde ejecutado: Cliente='${valor}' | Técnico='${restoTecnico}'`);
+                        setTimeout(() => {
+                            procesarTextoVoz("técnico responsable " + restoTecnico);
+                        }, 50);
+                    } else {
+                        const matchCodigo = valor.match(/^(.*?)\s+c[oó]digo(?:\s+(?:de|del))?\s+cliente[:\s]+(.+)$/i);
+                        if (matchCodigo) {
+                            valor = normalizarTextoLibreVoz(matchCodigo[1].trim());
+                            const restoCodigo = matchCodigo[2].trim();
+                            setTimeout(() => {
+                                procesarTextoVoz("código cliente " + restoCodigo);
+                            }, 50);
+                        } else {
+                            valor = normalizarTextoLibreVoz(valor.replace(/\s{2,}/g, " ").trim());
+                        }
+                    }
+                    break;
+                }
+
                 case "representanteLegal":
                 case "direccionHabitacion":
                 case "municipio":
