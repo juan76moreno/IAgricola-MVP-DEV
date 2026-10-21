@@ -1554,7 +1554,7 @@ function segmentarDictadoVoz(textoOriginal){
  if(!texto)return [];
  const normal=normalizarClave(texto);
  
- // Ordenar marcadores de mayor a menor longitud para priorizar frases compuestas
+ // Priorizar marcadores largos ("cédula del cliente") antes que cortos ("cliente")
  const marcadoresOrdenados = [...MARCADORES_CAMPOS_VOZ].sort(function(a, b) {
   return normalizarClave(b).length - normalizarClave(a).length;
  });
@@ -1568,7 +1568,6 @@ function segmentarDictadoVoz(textoOriginal){
    const despues = (idx + mk.length === normal.length) || /\s|[,;:.]/.test(normal[idx+mk.length]);
    if(antes && despues){
     const fin = idx + mk.length;
-    // Evitar que marcadores breves solapen o corten marcadores compuestos más largos
     const solapado = coincidencias.some(function(ex) {
      return !(fin <= ex.ini || idx >= ex.fin);
     });
@@ -1783,10 +1782,11 @@ function interpretarVoz(texto) {
         },
         {
             entidad: "identificacionCliente",
-expresiones: [
-    /^(?:c[eé]dula|rif|registro\s+tributario|identificaci[oó]n)(?:\s+(?:de\s+identidad|del\s+cliente|de\s+la\s+empresa|de\s+la\s+persona\s+jur[ií]dica))?(?:\s+(?:es|n[uú]mero))?[\s:]+([A-Za-z-]?\s*\d[\d\s\.\-]*)$/i,
-    /^(?:el\s+rif|la\s+c[eé]dula)(?:\s+(?:es|del\s+cliente\s+es|de\s+la\s+empresa\s+es))?[\s:]+([A-Za-z-]?\s*\d[\d\s\.\-]*)$/i
-]
+            expresiones: [
+                /^(?:c[eé]dula|rif|registro\s+tributario|identificaci[oó]n)(?:\s+(?:de\s+identidad|del\s+cliente|de\s+la\s+empresa|de\s+la\s+persona\s+jur[ií]dica))?(?:\s+(?:es|n[uú]mero))?[\s:]+([VEJPGvejpg]?(?:\s*[-–—]\s*)?\d[\d\s\.\-]*)$/i,
+                /^(?:el\s+rif|la\s+c[eé]dula)(?:\s+(?:es|del\s+cliente\s+es|de\s+la\s+empresa\s+es))?[\s:]+([VEJPGvejpg]?(?:\s*[-–—]\s*)?\d[\d\s\.\-]*)$/i,
+                /^(?:c[eé]dula|rif)(?:\s+del\s+cliente)?[\s:]+([A-Za-z0-9\s\.\-]+)$/i
+            ]
         },
         {
             entidad: "topografia",
@@ -2206,6 +2206,7 @@ expresiones: [
 
     function normalizarIdentificacionClienteVoz(valorOriginal) {
         let valor = String(valorOriginal ?? "")
+            .replace(/^(?:del\s+cliente|cliente)\s+/i, "")
             .trim()
             .replace(/\s{2,}/g, " ");
 
@@ -2225,8 +2226,6 @@ expresiones: [
         const soloDigitosSeparados = valor.match(/^[0-9\s]+$/);
 
         if (soloDigitosSeparados) {
-            // Regla de negocio: persona natural venezolana por defecto.
-            // Solo para campos de identificación (no código cliente).
             return "V-" + valor.replace(/\s+/g, "");
         }
 
