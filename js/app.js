@@ -815,7 +815,16 @@ function consultarHistoricoAntesVisita(){
     return false;
 }
  expedienteInteligente.antecedentesHistoricos[codigo]=JSON.parse(JSON.stringify(ant));if(e)e.textContent="Antecedente disponible: "+ant.fuente+" · fecha "+ant.fechaFuente+". Datos preparados para validación durante la visita.";
- Object.entries(ant.datos||{}).forEach(([campo,valor])=>{const x=document.getElementById(campo);if(x&&!String(x.value||"").trim()){x.value=valor;x.dataset.valorHistorico=String(valor);x.dataset.fuenteHistorica=ant.fuente;x.dataset.fechaFuenteHistorica=ant.fechaFuente;x.dataset.estadoHistorico="PENDIENTE_VALIDACION";}});return true;
+ Object.entries(ant.datos||{}).forEach(([campo,valor])=>{const x=document.getElementById(campo);if(x&&!String(x.value||"").trim()){x.value=valor;x.dataset.valorHistorico=String(valor);x.dataset.fuenteHistorica=ant.fuente;x.dataset.fechaFuenteHistorica=ant.fechaFuente;x.dataset.estadoHistorico="PENDIENTE_VALIDACION";}});
+ const especialistaHistorico = ant.metadatos?.especialistaUltimoInforme || ant.datos?.tecnico || ant.datos?.especialista || "";
+ if (especialistaHistorico && typeof window.vincularEspecialistaDesdeHistorico === "function") {
+     window.vincularEspecialistaDesdeHistorico(especialistaHistorico, {
+         fuente: ant.fuente,
+         fechaFuente: ant.fechaFuente,
+         referenciaFuente: ant.referenciaFuente
+     });
+ }
+ return true;
 }
 
 function aplicarAntecedenteHistoricoCliente(){
@@ -1313,6 +1322,23 @@ if (perfilTecnicoSeleccionado) {
 perfilRubroDinamico.innerHTML = "";
 });
 let superficiePendienteUnidad = null;
+function normalizarCodigoVPEspecialista(valorOriginal) {
+    const mapaDigitos = {
+        cero: "0", uno: "1", un: "1", una: "1", dos: "2", tres: "3",
+        cuatro: "4", cinco: "5", seis: "6", siete: "7", ocho: "8", nueve: "9"
+    };
+    let texto = normalizarClave(String(valorOriginal ?? ""))
+        .replace(/^vp(?:\s+del\s+especialista|\s+especialista)?\s*/i, "")
+        .replace(/^v\s*\.?\s*p\s*\.?\s*/i, "")
+        .trim();
+    const tokens = texto.split(/[\s-]+/).filter(Boolean);
+    const digitos = tokens.map(t => /^\d+$/.test(t) ? t : (mapaDigitos[t] ?? "")).join("");
+    if (digitos && digitos.length >= 3 && digitos.length <= 8) return "VP" + digitos;
+    const compacto = String(valorOriginal ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const m = compacto.match(/^(?:VP)?(\d{3,8})$/);
+    return m ? "VP" + m[1] : "";
+}
+
 function obtenerNombreCampoVoz(patron) {
     if (!patron) {
         return "el dato indicado";
@@ -1328,6 +1354,7 @@ function obtenerNombreCampoVoz(patron) {
         fechaVisita: "la fecha de visita",
         horaInicio: "la hora de inicio",
         tecnico: "el técnico responsable",
+        vpEspecialista: "el VP del especialista",
         tipoVisita: "el tipo de visita",
         cliente: "el nombre del cliente",
         codigoCliente: "el código de cliente",
@@ -1380,6 +1407,7 @@ function obtenerEjemploVoz(patron) {
         fechaVisita: "Fecha de visita 02/10/2026",
         horaInicio: "Hora de inicio 08:30",
         tecnico: "Técnico responsable Juan Moreno",
+        vpEspecialista: "VP del especialista VP43150",
         tipoVisita: "Tipo de visita programada",
         cliente: "Cliente Juan Moreno",
         codigoCliente: "Código de cliente 00000001",
@@ -1526,6 +1554,7 @@ function patronUnidadSuperficieVoz(){
 
 const MARCADORES_CAMPOS_VOZ=[
  "fecha de visita","fecha visita","hora de inicio","hora inicio",
+ "vp del especialista","vicepresidente del especialista","vp especialista",
  "tecnico responsable","técnico responsable","especialista agricola","especialista agrícola","tecnico","técnico",
  "tipo de visita","cliente","finca","municipio","parroquia",
  "cedula del cliente","cédula del cliente","codigo de cliente","código de cliente",
@@ -1720,6 +1749,13 @@ function interpretarVoz(texto) {
                 /^especialista\s+agr[ií]cola[:\s]+(.+)$/i,
                 /^t[eé]cnico[:\s]+(.+)$/i,
                 /^t[eé]cnica[:\s]+(.+)$/i
+            ]
+        },
+        {
+            entidad: "vpEspecialista",
+            expresiones: [
+                /^(?:vp\s+del\s+especialista|vicepresidente\s+del\s+especialista|vp\s+especialista)[:\s]+(.+)$/i,
+                /^(?:codigo\s+vp\s+del\s+especialista|c[oó]digo\s+vp)[:\s]+(.+)$/i
             ]
         },
         {
@@ -3783,6 +3819,17 @@ function interpretarVoz(texto) {
                     valor = normalizarHoraInicioVoz(valor);
                     break;
 
+                case "vpEspecialista":
+                    valor = normalizarCodigoVPEspecialista(valor);
+                    if (!valor) {
+                        notificarFalloVoz(
+                            patron,
+                            "No pude identificar un VP válido. Ejemplo: VP del especialista VP43150"
+                        );
+                        return true;
+                    }
+                    break;
+
                 case "tipoVisita":
                     valor = normalizarTipoVisitaVoz(valor);
                     break;
@@ -3957,17 +4004,21 @@ function interpretarVoz(texto) {
 
             valor = validacion.valor;
 
-            const registro = registrarDato(
-                entidadDestino,
-                valor,
-                (
-                    entidadDestino === "superficieTotal" ||
-                    entidadDestino === "superficieAprovechable" ||
-                    entidadDestino === "superficieCultivada"
-                )
-                    ? unidadSuperficieDetectada
-                    : null
-            );
+            // El VP se muestra y queda pendiente hasta la confirmación explícita del responsable.
+            // El resto de los campos conserva exactamente el registro habitual del motor.
+            const registro = entidadDestino === "vpEspecialista"
+                ? { pendienteConfirmacion: true }
+                : registrarDato(
+                    entidadDestino,
+                    valor,
+                    (
+                        entidadDestino === "superficieTotal" ||
+                        entidadDestino === "superficieAprovechable" ||
+                        entidadDestino === "superficieCultivada"
+                    )
+                        ? unidadSuperficieDetectada
+                        : null
+                );
 
             if (registro === null) {
                 return true;
@@ -3998,6 +4049,10 @@ function interpretarVoz(texto) {
                     valor,
                     unidadSuperficieDetectada
                 );
+                if (entidadDestino === "tecnico" &&
+                    typeof window.sincronizarEspecialistaPorNombre === "function") {
+                    window.sincronizarEspecialistaPorNombre(valor, { origen: "VOZ" });
+                }
             }
 
             return true;
